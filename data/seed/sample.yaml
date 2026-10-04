@@ -1,0 +1,50 @@
+﻿# Sample seed data
+#
+# This file contains the same demo data represented by
+# sql/03_seed_small.sql, but as plain data rather than SQL statements.
+
+accounts:
+  - email: customer01@example.test
+    password_hash: demo-hash
+    full_name: Nguyen Van A
+    phone: '0900000001'
+    role: customer
+    customer_code: CUS0001
+
+  - email: seller01@example.test
+    password_hash: demo-hash
+    full_name: Tran Van B
+    phone: '0900000002'
+    role: seller
+    seller_code: SEL0001
+    shop_name: Shop Demo
+    shop_status: ACTIVE
+
+categories:
+  - name: Điện tử
+    slug: dien-tu
+
+warehouses:
+  - code: WH-HCM-01
+    name: Kho TP.HCM
+
+products:
+  - seller_code: SEL0001
+    category_slug: dien-tu
+    name: Sản phẩm Demo
+    slug: san-pham-demo
+    status: ACTIVE
+
+product_variants:
+  - product_slug: san-pham-demo
+    sku: SKU-DEMO-001
+    color: Black
+    size: M
+    price: 100000
+
+inventory:
+  - warehouse_code: WH-HCM-01
+    variant_sku: SKU-DEMO-001
+    quantity_on_hand: 100
+    reserved_quantity: 0
+    reorder_level: 10

@@ -1,0 +1,144 @@
+erDiagram
+ACCOUNT ||--o| CUSTOMER : is
+ACCOUNT ||--o| SELLER : is
+CUSTOMER ||--o{ ADDRESS : owns
+SELLER ||--o{ PRODUCT : owns
+CATEGORY o|--o{ CATEGORY : parent_of
+CATEGORY ||--o{ PRODUCT : classifies
+PRODUCT ||--|{ PRODUCT_VARIANT : has
+CUSTOMER ||--o| CART : owns
+CART ||--o{ CART_ITEM : contains
+PRODUCT_VARIANT ||--o{ CART_ITEM : selected
+WAREHOUSE ||--o{ INVENTORY : stores
+PRODUCT_VARIANT ||--o{ INVENTORY : stocked
+PROMOTION ||--o{ PROMOTION_PRODUCT : targets
+PRODUCT ||--o{ PROMOTION_PRODUCT : eligible
+PROMOTION ||--o{ PROMOTION_CATEGORY : targets
+CATEGORY ||--o{ PROMOTION_CATEGORY : eligible
+CUSTOMER ||--o{ ORDERS : places
+ORDERS ||--|{ ORDER_ITEM : contains
+PRODUCT_VARIANT ||--o{ ORDER_ITEM : sold_as
+ORDERS ||--o{ ORDER_PROMOTION : applies
+PROMOTION ||--o{ ORDER_PROMOTION : used_by
+ORDERS ||--o{ PAYMENT : has
+ORDERS ||--o{ SHIPMENT : fulfills
+PRODUCT ||--o{ REVIEW : receives
+CUSTOMER ||--o{ REVIEW : writes
+
+ACCOUNT {
+  BIGINT account_id PK
+  VARCHAR email UK
+  VARCHAR password_hash
+  VARCHAR status
+}
+CUSTOMER {
+  BIGINT account_id PK,FK
+  VARCHAR customer_code UK
+}
+SELLER {
+  BIGINT account_id PK,FK
+  VARCHAR seller_code UK
+  VARCHAR shop_name UK
+}
+ADDRESS {
+  BIGINT address_id PK
+  BIGINT customer_id FK
+  VARCHAR recipient_name
+}
+CATEGORY {
+  BIGINT category_id PK
+  BIGINT parent_category_id FK
+  VARCHAR name
+  VARCHAR slug UK
+}
+PRODUCT {
+  BIGINT product_id PK
+  BIGINT seller_id FK
+  BIGINT category_id FK
+  VARCHAR name
+}
+PRODUCT_VARIANT {
+  BIGINT variant_id PK
+  BIGINT product_id FK
+  VARCHAR sku UK
+  DECIMAL price
+}
+CART {
+  BIGINT cart_id PK
+  BIGINT customer_id FK
+  VARCHAR status
+}
+CART_ITEM {
+  BIGINT cart_id PK,FK
+  BIGINT variant_id PK,FK
+  INT quantity
+}
+WAREHOUSE {
+  BIGINT warehouse_id PK
+  VARCHAR code UK
+  VARCHAR name
+}
+INVENTORY {
+  BIGINT warehouse_id PK,FK
+  BIGINT variant_id PK,FK
+  INT quantity_on_hand
+  INT reserved_quantity
+}
+PROMOTION {
+  BIGINT promotion_id PK
+  VARCHAR code UK
+  VARCHAR promotion_type
+  DECIMAL discount_value
+  DATETIME start_at
+  DATETIME end_at
+}
+PROMOTION_PRODUCT {
+  BIGINT promotion_id PK,FK
+  BIGINT product_id PK,FK
+}
+PROMOTION_CATEGORY {
+  BIGINT promotion_id PK,FK
+  BIGINT category_id PK,FK
+}
+ORDERS {
+  BIGINT order_id PK
+  VARCHAR order_number UK
+  BIGINT customer_id FK
+  VARCHAR status
+  DECIMAL subtotal
+  DECIMAL discount_total
+  DECIMAL shipping_fee
+  DECIMAL grand_total
+}
+ORDER_ITEM {
+  BIGINT order_item_id PK
+  BIGINT order_id FK
+  BIGINT variant_id FK
+  DECIMAL unit_price
+  INT quantity
+  DECIMAL line_total
+}
+ORDER_PROMOTION {
+  BIGINT order_id PK,FK
+  BIGINT promotion_id PK,FK
+  DECIMAL discount_amount
+}
+PAYMENT {
+  BIGINT payment_id PK
+  BIGINT order_id FK
+  VARCHAR status
+  DECIMAL amount
+}
+SHIPMENT {
+  BIGINT shipment_id PK
+  BIGINT order_id FK
+  VARCHAR tracking_number UK
+  VARCHAR status
+}
+REVIEW {
+  BIGINT review_id PK
+  BIGINT product_id FK
+  BIGINT customer_id FK
+  BIGINT order_item_id FK
+  TINYINT rating
+}

@@ -1,0 +1,1 @@
+-- Test matrix: negative price, duplicate SKU, bad FK, invalid inventory, invalid rating.
