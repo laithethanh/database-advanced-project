@@ -1,0 +1,137 @@
+Table account {
+    account_id bigint [pk]
+    email varchar(255) [not null, unique]
+    password_hash varchar(255) [not null]
+    status varchar(20) [not null]
+    created_at datetime [not null]
+    updated_at datetime [not null]
+}
+Table customer {
+    account_id bigint [pk, ref: > account.account_id]
+    customer_code varchar(30) [not null, unique]
+}
+Table seller {
+    account_id bigint [pk, ref: > account.account_id]
+    seller_code varchar(30) [not null, unique]
+    shop_name varchar(150) [not null, unique]
+}
+Table address {
+    address_id bigint [pk]
+    customer_id bigint [not null, ref: > customer.account_id]
+    recipient_name varchar(150) [not null]
+    phone varchar(30) [not null]
+    line1 varchar(255) [not null]
+    city varchar(100) [not null]
+    province varchar(100) [not null]
+    is_default boolean [not null]
+}
+Table category {
+    category_id bigint [pk]
+    parent_category_id bigint [ref: > category.category_id]
+    name varchar(150) [not null]
+    slug varchar(180) [not null, unique]
+    status varchar(20) [not null]
+}
+Table product {
+    product_id bigint [pk]
+    seller_id bigint [not null, ref: > seller.account_id]
+    category_id bigint [not null, ref: > category.category_id]
+    name varchar(255) [not null]
+    slug varchar(180) [not null]
+    status varchar(20) [not null]
+}
+Table product_variant {
+    variant_id bigint [pk]
+    product_id bigint [not null, ref: > product.product_id]
+    sku varchar(80) [not null, unique]
+    color varchar(60)
+    size varchar(60)
+    price decimal(15,2) [not null]
+    compare_at_price decimal(15,2)
+}
+Table cart {
+    cart_id bigint [pk]
+    customer_id bigint [not null, ref: > customer.account_id]
+    status varchar(20) [not null]
+}
+Table cart_item {
+    cart_id bigint [pk, ref: > cart.cart_id]
+    variant_id bigint [pk, ref: > product_variant.variant_id]
+    quantity int [not null]
+}
+Table warehouse {
+    warehouse_id bigint [pk]
+    code varchar(40) [not null, unique]
+    name varchar(150) [not null]
+}
+Table inventory {
+    warehouse_id bigint [pk, ref: > warehouse.warehouse_id]
+    variant_id bigint [pk, ref: > product_variant.variant_id]
+    quantity_on_hand int [not null]
+    reserved_quantity int [not null]
+    reorder_level int [not null]
+}
+Table promotion {
+    promotion_id bigint [pk]
+    code varchar(50) [unique]
+    name varchar(150) [not null]
+    promotion_type varchar(20) [not null]
+    discount_value decimal(15,2) [not null]
+    start_at datetime [not null]
+    end_at datetime [not null]
+    status varchar(20) [not null]
+}
+Table promotion_product {
+    promotion_id bigint [pk, ref: > promotion.promotion_id]
+    product_id bigint [pk, ref: > product.product_id]
+}
+Table promotion_category {
+    promotion_id bigint [pk, ref: > promotion.promotion_id]
+    category_id bigint [pk, ref: > category.category_id]
+}
+Table orders {
+    order_id bigint [pk]
+    order_number varchar(40) [not null, unique]
+    customer_id bigint [not null, ref: > customer.account_id]
+    status varchar(30) [not null]
+    subtotal decimal(15,2) [not null]
+    discount_total decimal(15,2) [not null]
+    shipping_fee decimal(15,2) [not null]
+    grand_total decimal(15,2) [not null]
+}
+Table order_item {
+    order_item_id bigint [pk]
+    order_id bigint [not null, ref: > orders.order_id]
+    variant_id bigint [not null, ref: > product_variant.variant_id]
+    unit_price decimal(15,2) [not null]
+    quantity int [not null]
+    line_discount decimal(15,2) [not null]
+    line_total decimal(15,2) [not null]
+}
+Table order_promotion {
+    order_id bigint [pk, ref: > orders.order_id]
+    promotion_id bigint [pk, ref: > promotion.promotion_id]
+    discount_amount decimal(15,2) [not null]
+}
+Table payment {
+    payment_id bigint [pk]
+    order_id bigint [not null, ref: > orders.order_id]
+    provider varchar(50) [not null]
+    transaction_ref varchar(120) [unique]
+    amount decimal(15,2) [not null]
+    status varchar(20) [not null]
+}
+Table shipment {
+    shipment_id bigint [pk]
+    order_id bigint [not null, ref: > orders.order_id]
+    carrier varchar(80) [not null]
+    tracking_number varchar(120) [unique]
+    status varchar(30) [not null]
+}
+Table review {
+    review_id bigint [pk]
+    product_id bigint [not null, ref: > product.product_id]
+    customer_id bigint [not null, ref: > customer.account_id]
+    order_item_id bigint [not null, ref: > order_item.order_item_id]
+    rating int [not null]
+}

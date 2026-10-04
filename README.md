@@ -1,4 +1,19 @@
 # database-advanced-project
+
+## Tài liệu thiết kế v1
+
+- [Cấu trúc dự án](docs/00-project-structure.md)
+- [Khảo sát nghiệp vụ và actor](docs/01-business-analysis.md)
+- [Business rules](docs/02-business-rules.md)
+- [EER/ERD và mapping](docs/03-eer-erd.md)
+- [Relational schema](docs/04-relational-schema.md)
+- [Data dictionary](docs/05-data-dictionary.md)
+- [Normalization baseline](docs/06-normalization.md)
+- [Requirements và backlog](docs/07-requirements-backlog.md)
+- [Catalog 25 query](docs/08-query-catalog.md)
+- [Transaction/concurrency](docs/09-transaction-concurrency.md)
+- [Benchmark](docs/10-benchmark.md)
+- [Reproducibility](docs/11-reproducibility.md)
 Đồ án CSDL thương mại điện tử và lập trình SQL nâng cao - thiết kế EER, chuẩn hóa dữ liệu, SQL nâng cao, transaction, trigger, procedure/function, dynamic SQL, recursive SQL và thực nghiệm trên 100.000+ đơn hàng.
 # Đồ án CSDL Nâng cao — Đề tài 7
 

@@ -1,0 +1,1 @@
+-- Test matrix: success, insufficient stock, mid-transaction failure, invalid state transition.

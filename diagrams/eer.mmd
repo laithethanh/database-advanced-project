@@ -1,0 +1,47 @@
+classDiagram
+direction LR
+class Account { +account_id PK +email UQ +status }
+class Customer { +account_id PK/FK +customer_code UQ }
+class Seller { +account_id PK/FK +seller_code UQ +shop_name UQ }
+class Address { +address_id PK +customer_id FK }
+class Category { +category_id PK +parent_category_id FK }
+class Product { +product_id PK +seller_id FK +category_id FK }
+class ProductVariant { +variant_id PK +product_id FK +sku UQ }
+class Cart { +cart_id PK +customer_id FK }
+class CartItem { +cart_id PK/FK +variant_id PK/FK +quantity }
+class Warehouse { +warehouse_id PK }
+class Inventory { +warehouse_id PK/FK +variant_id PK/FK +quantity_on_hand +reserved_quantity }
+class Promotion { +promotion_id PK +code UQ +start_at +end_at }
+class PromotionProduct { +promotion_id PK/FK +product_id PK/FK }
+class PromotionCategory { +promotion_id PK/FK +category_id PK/FK }
+class Order { +order_id PK +order_number UQ +status +grand_total }
+class OrderItem { +order_item_id PK +order_id FK +variant_id FK +unit_price +quantity }
+class OrderPromotion { +order_id PK/FK +promotion_id PK/FK +discount_amount }
+class Payment { +payment_id PK +order_id FK +status }
+class Shipment { +shipment_id PK +order_id FK +status }
+class Review { +review_id PK +product_id FK +customer_id FK +rating }
+Account <|-- Customer
+Account <|-- Seller
+Customer "1" -- "0..*" Address
+Seller "1" -- "0..*" Product
+Category "0..1" <-- "0..*" Category : parent
+Category "1" -- "0..*" Product
+Product "1" -- "1..*" ProductVariant
+Customer "1" -- "0..1" Cart
+Cart "1" -- "0..*" CartItem
+ProductVariant "1" -- "0..*" CartItem
+Warehouse "1" -- "0..*" Inventory
+ProductVariant "1" -- "0..*" Inventory
+Promotion "1" -- "0..*" PromotionProduct
+Product "1" -- "0..*" PromotionProduct
+Promotion "1" -- "0..*" PromotionCategory
+Category "1" -- "0..*" PromotionCategory
+Customer "1" -- "0..*" Order
+Order "1" -- "1..*" OrderItem
+ProductVariant "1" -- "0..*" OrderItem
+Order "1" -- "0..*" OrderPromotion
+Promotion "1" -- "0..*" OrderPromotion
+Order "1" -- "0..*" Payment
+Order "1" -- "0..*" Shipment
+Product "1" -- "0..*" Review
+Customer "1" -- "0..*" Review
