@@ -15,7 +15,8 @@ def find_products(keyword: str):
     try:
         with connection.cursor() as cursor:
             cursor.execute(
-                "SELECT product_id, name FROM product WHERE name LIKE %s",
+                "SELECT product_id, name, slug, status FROM product "
+                "WHERE status = 'ACTIVE' AND name LIKE %s ORDER BY name LIMIT 100",
                 (f"%{keyword}%",),
             )
             return cursor.fetchall()

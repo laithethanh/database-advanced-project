@@ -12,7 +12,7 @@ USE ecommerce_advanced;
 -- SELECT @order_id AS order_id;
 
 -- T02 insufficient stock must rollback the whole transaction:
--- Put more quantity in the demo cart than all warehouses can supply, then CALL sp_checkout(...).
+-- Put more quantity in the demo cart than the selected seller's inventory can supply, then CALL sp_checkout(...).
 -- Expected: ERROR 'insufficient inventory'; order count and inventory remain unchanged.
 
 -- T03 concurrency:

@@ -44,5 +44,5 @@ ALTER TABLE review
 -- 3) Review.order_item phải thuộc đúng customer/product và order DELIVERED.
 -- 4) Order status transition phải hợp lệ.
 -- 5) Category parent không tạo cycle.
--- 6) Seller phải ACTIVE mới được publish product.
+-- 6) Seller phải ACTIVE mới được bán variant thông qua inventory/cart.
 -- 7) Checkout không được làm available stock âm.

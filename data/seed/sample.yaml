@@ -21,30 +21,52 @@ accounts:
     shop_status: ACTIVE
 
 categories:
-  - name: Điện tử
+  - name: Dien tu
     slug: dien-tu
 
 warehouses:
-  - code: WH-HCM-01
-    name: Kho TP.HCM
+  - code: WH-HN
+    name: Kho nhà cung cấp Hà Nội
+    address_text: Hà Nội
+  - code: WH-DN
+    name: Kho nhà cung cấp Đà Nẵng
+    address_text: Đà Nẵng
+  - code: WH-HCM
+    name: Kho nhà cung cấp TP.HCM
+    address_text: TP. Hồ Chí Minh
 
 products:
-  - seller_code: SEL0001
-    category_slug: dien-tu
-    name: Sản phẩm Demo
+  - category_slug: dien-tu
+    name: San pham Demo
     slug: san-pham-demo
+    description: Demo catalog item
+    brand: Demo
     status: ACTIVE
 
 product_variants:
   - product_slug: san-pham-demo
+    warehouse_code: WH-HCM
     sku: SKU-DEMO-001
     color: Black
     size: M
     price: 100000
+    compare_at_price: 120000
+    warehouse_quantity: 100
+    status: ACTIVE
 
 inventory:
-  - warehouse_code: WH-HCM-01
+  - seller_code: SEL0001
     variant_sku: SKU-DEMO-001
-    quantity_on_hand: 100
+    quantity_on_hand: 20
     reserved_quantity: 0
-    reorder_level: 10
+    reorder_level: 5
+
+carts:
+  - customer_code: CUS0001
+    status: ACTIVE
+
+cart_items:
+  - customer_code: CUS0001
+    seller_code: SEL0001
+    variant_sku: SKU-DEMO-001
+    quantity: 1

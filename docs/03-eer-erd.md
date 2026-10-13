@@ -15,16 +15,17 @@
 - Account 1 — 0..1 Customer
 - Account 1 — 0..1 Seller
 - Customer 1 — N Address
-- Seller 1 — N Product
-- Product 1 — N ProductVariant
+- Product là catalog dùng chung, không có FK trực tiếp đến Seller.
+- Seller 1 — N Inventory; mỗi inventory row lưu lượng hàng shop đang có của một variant.
+- Product 1 — 0..N ProductVariant
 - Category 1 — N Category (parent/child)
 - Product N — 1 Category
-- Customer 1 — 0..1 active Cart; Cart 1 — N CartItem
-- ProductVariant 1 — N Inventory; Warehouse 1 — N Inventory
+- Customer 1 — 0..1 active Cart (enforced by `sql/02_constraints.sql`); Cart 1 — 0..N CartItem
+- ProductVariant thuộc một Product và một Warehouse cung cấp; ProductVariant 1 — N Inventory; Seller 1 — N Inventory.
 - Product N — N Promotion qua PromotionProduct
 - Category N — N Promotion qua PromotionCategory
-- Customer 1 — N Order; Order 1 — N OrderItem
-- ProductVariant 1 — N OrderItem
+- Customer 1 — N Order; Order 1 — 0..N OrderItem
+- Inventory 1 — 0..N CartItem/OrderItem through composite `(seller_id, variant_id)` FKs
 - Order N — N Promotion qua OrderPromotion
 - Order 1 — N Payment; Order 0..N Shipment; Product 1 — N Review
 
@@ -39,22 +40,22 @@ classDiagram
     Account "1" --> "0..1" Customer : profile
     Account "1" --> "0..1" Seller : profile
     Customer "1" --> "0..*" Address
-    Seller "1" --> "0..*" Product
     Category "1" --> "0..*" Category : parent
     Category "1" --> "0..*" Product
-    Product "1" --> "1..*" ProductVariant
+    Product "1" --> "0..*" ProductVariant
     Customer "1" --> "0..1" Cart
-    Cart "1" --> "1..*" CartItem
-    ProductVariant "1" --> "0..*" CartItem
-    Warehouse "1" --> "0..*" Inventory
+    Cart "1" --> "0..*" CartItem
+    Inventory "1" --> "0..*" CartItem
+    Warehouse "1" --> "0..*" ProductVariant
+    Seller "1" --> "0..*" Inventory
     ProductVariant "1" --> "0..*" Inventory
     Promotion "1" --> "0..*" PromotionProduct
     Product "1" --> "0..*" PromotionProduct
     Promotion "1" --> "0..*" PromotionCategory
     Category "1" --> "0..*" PromotionCategory
     Customer "1" --> "0..*" Order
-    Order "1" --> "1..*" OrderItem
-    ProductVariant "1" --> "0..*" OrderItem
+    Order "1" --> "0..*" OrderItem
+    Inventory "1" --> "0..*" OrderItem
     Order "1" --> "0..*" OrderPromotion
     Promotion "1" --> "0..*" OrderPromotion
     Order "1" --> "0..*" Payment
@@ -80,9 +81,10 @@ ERD vật lý phải thể hiện PK, FK, UNIQUE và các quan hệ N:N được
 | M:N Promotion–Product  | `promotion_product`                        |
 | M:N Promotion–Category | `promotion_category`                       |
 | M:N Order–Promotion    | `order_promotion`                          |
-| M:N Variant–Warehouse  | `inventory`                                |
-| Cart line               | `cart_item(cart_id, variant_id)`           |
-| Order line              | `order_item(order_id, variant_id)`         |
+| Seller stock per variant | `inventory(seller_id, variant_id)`        |
+| Supplier warehouse variant | `product_variant(warehouse_id, product_id, color, size)` |
+| Cart line               | `cart_item(cart_id, seller_id, variant_id)` |
+| Order line              | `order_item(order_id, seller_id, variant_id)` |
 
 ## 5. Integrity không biểu diễn đầy đủ bằng ERD
 

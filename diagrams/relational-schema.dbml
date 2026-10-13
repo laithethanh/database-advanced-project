@@ -1,137 +1,203 @@
 Table account {
-    account_id bigint [pk]
-    email varchar(255) [not null, unique]
-    password_hash varchar(255) [not null]
-    status varchar(20) [not null]
-    created_at datetime [not null]
-    updated_at datetime [not null]
+  account_id bigint [pk, increment]
+  email varchar(255) [not null, unique]
+  password_hash varchar(255) [not null]
+  full_name varchar(150) [not null]
+  phone varchar(30)
+  status enum('ACTIVE', 'BLOCKED', 'DELETED') [not null, default: 'ACTIVE']
+  created_at datetime [not null, default: `CURRENT_TIMESTAMP`]
+  updated_at datetime [not null, default: `CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`]
 }
 Table customer {
-    account_id bigint [pk, ref: > account.account_id]
-    customer_code varchar(30) [not null, unique]
+  account_id bigint [pk, ref: > account.account_id]
+  customer_code varchar(30) [not null, unique]
 }
 Table seller {
-    account_id bigint [pk, ref: > account.account_id]
-    seller_code varchar(30) [not null, unique]
-    shop_name varchar(150) [not null, unique]
+  account_id bigint [pk, ref: > account.account_id]
+  seller_code varchar(30) [not null, unique]
+  shop_name varchar(150) [not null, unique]
+  shop_status enum('PENDING', 'ACTIVE', 'SUSPENDED', 'CLOSED') [not null, default: 'PENDING']
+  created_at datetime [not null, default: `CURRENT_TIMESTAMP`]
 }
 Table address {
-    address_id bigint [pk]
-    customer_id bigint [not null, ref: > customer.account_id]
-    recipient_name varchar(150) [not null]
-    phone varchar(30) [not null]
-    line1 varchar(255) [not null]
-    city varchar(100) [not null]
-    province varchar(100) [not null]
-    is_default boolean [not null]
+  address_id bigint [pk, increment]
+  customer_id bigint [not null, ref: > customer.account_id]
+  recipient_name varchar(150) [not null]
+  phone varchar(30) [not null]
+  line1 varchar(255) [not null]
+  ward varchar(100)
+  district varchar(100)
+  city varchar(100) [not null]
+  province varchar(100) [not null]
+  postal_code varchar(20)
+  is_default boolean [not null, default: false]
 }
 Table category {
-    category_id bigint [pk]
-    parent_category_id bigint [ref: > category.category_id]
-    name varchar(150) [not null]
-    slug varchar(180) [not null, unique]
-    status varchar(20) [not null]
+  category_id bigint [pk, increment]
+  parent_category_id bigint [ref: > category.category_id]
+  name varchar(150) [not null]
+  slug varchar(180) [not null, unique]
+  status enum('ACTIVE', 'INACTIVE') [not null, default: 'ACTIVE']
+  created_at datetime [not null, default: `CURRENT_TIMESTAMP`]
 }
 Table product {
-    product_id bigint [pk]
-    seller_id bigint [not null, ref: > seller.account_id]
-    category_id bigint [not null, ref: > category.category_id]
-    name varchar(255) [not null]
-    slug varchar(180) [not null]
-    status varchar(20) [not null]
-}
-Table product_variant {
-    variant_id bigint [pk]
-    product_id bigint [not null, ref: > product.product_id]
-    sku varchar(80) [not null, unique]
-    color varchar(60)
-    size varchar(60)
-    price decimal(15,2) [not null]
-    compare_at_price decimal(15,2)
-}
-Table cart {
-    cart_id bigint [pk]
-    customer_id bigint [not null, ref: > customer.account_id]
-    status varchar(20) [not null]
-}
-Table cart_item {
-    cart_id bigint [pk, ref: > cart.cart_id]
-    variant_id bigint [pk, ref: > product_variant.variant_id]
-    quantity int [not null]
+  product_id bigint [pk, increment]
+  category_id bigint [not null, ref: > category.category_id]
+  name varchar(255) [not null]
+  slug varchar(180) [not null, unique]
+  description text
+  brand varchar(120)
+  status enum('DRAFT', 'ACTIVE', 'INACTIVE', 'ARCHIVED') [not null, default: 'DRAFT']
+  created_at datetime [not null, default: `CURRENT_TIMESTAMP`]
+  updated_at datetime [not null, default: `CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`]
+  indexes { (category_id, status) [name: 'idx_product_category_status'] }
 }
 Table warehouse {
-    warehouse_id bigint [pk]
-    code varchar(40) [not null, unique]
-    name varchar(150) [not null]
+  warehouse_id bigint [pk, increment]
+  code varchar(40) [not null, unique]
+  name varchar(150) [not null]
+  address_text varchar(500)
+  status enum('ACTIVE', 'INACTIVE') [not null, default: 'ACTIVE']
+}
+Table product_variant {
+  variant_id bigint [pk, increment]
+  warehouse_id bigint [not null, ref: > warehouse.warehouse_id]
+  product_id bigint [not null, ref: > product.product_id]
+  sku varchar(80) [not null, unique]
+  color varchar(60) [not null, default: '']
+  size varchar(60) [not null, default: '']
+  price decimal(15,2) [not null]
+  compare_at_price decimal(15,2)
+  warehouse_quantity int [not null, default: 0]
+  status enum('ACTIVE', 'INACTIVE', 'ARCHIVED') [not null, default: 'ACTIVE']
+  indexes {
+    (warehouse_id, product_id, color, size) [unique, name: 'uq_variant_warehouse_combination']
+    (product_id, status) [name: 'idx_variant_product_status']
+    (warehouse_id, product_id) [name: 'idx_variant_warehouse_product']
+  }
 }
 Table inventory {
-    warehouse_id bigint [pk, ref: > warehouse.warehouse_id]
-    variant_id bigint [pk, ref: > product_variant.variant_id]
-    quantity_on_hand int [not null]
-    reserved_quantity int [not null]
-    reorder_level int [not null]
+  seller_id bigint [not null, pk, ref: > seller.account_id]
+  variant_id bigint [not null, pk, ref: > product_variant.variant_id]
+  quantity_on_hand int [not null, default: 0]
+  reserved_quantity int [not null, default: 0]
+  reorder_level int [not null, default: 0]
+  updated_at datetime [not null, default: `CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`]
+  indexes { (variant_id) [name: 'idx_inventory_variant'] }
+}
+Table cart {
+  cart_id bigint [pk, increment]
+  customer_id bigint [not null, ref: > customer.account_id]
+  status enum('ACTIVE', 'CHECKED_OUT', 'ABANDONED') [not null, default: 'ACTIVE']
+  created_at datetime [not null, default: `CURRENT_TIMESTAMP`]
+  updated_at datetime [not null, default: `CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`]
+  indexes { (customer_id, status) [name: 'idx_cart_customer_status'] }
+}
+Table cart_item {
+  cart_id bigint [not null, pk, ref: > cart.cart_id]
+  seller_id bigint [not null, pk]
+  variant_id bigint [not null, pk]
+  quantity int [not null]
+  added_at datetime [not null, default: `CURRENT_TIMESTAMP`]
+  indexes { (variant_id) [name: 'idx_cart_item_variant'] }
 }
 Table promotion {
-    promotion_id bigint [pk]
-    code varchar(50) [unique]
-    name varchar(150) [not null]
-    promotion_type varchar(20) [not null]
-    discount_value decimal(15,2) [not null]
-    start_at datetime [not null]
-    end_at datetime [not null]
-    status varchar(20) [not null]
+  promotion_id bigint [pk, increment]
+  code varchar(50) [unique]
+  name varchar(150) [not null]
+  promotion_type enum('PERCENT', 'FIXED') [not null]
+  discount_value decimal(15,2) [not null]
+  min_order_amount decimal(15,2) [not null, default: 0]
+  max_discount decimal(15,2)
+  start_at datetime [not null]
+  end_at datetime [not null]
+  status enum('DRAFT', 'ACTIVE', 'INACTIVE', 'EXPIRED') [not null, default: 'DRAFT']
+  usage_limit int
+  used_count int [not null, default: 0]
 }
 Table promotion_product {
-    promotion_id bigint [pk, ref: > promotion.promotion_id]
-    product_id bigint [pk, ref: > product.product_id]
+  promotion_id bigint [not null, pk, ref: > promotion.promotion_id]
+  product_id bigint [not null, pk, ref: > product.product_id]
 }
 Table promotion_category {
-    promotion_id bigint [pk, ref: > promotion.promotion_id]
-    category_id bigint [pk, ref: > category.category_id]
+  promotion_id bigint [not null, pk, ref: > promotion.promotion_id]
+  category_id bigint [not null, pk, ref: > category.category_id]
 }
 Table orders {
-    order_id bigint [pk]
-    order_number varchar(40) [not null, unique]
-    customer_id bigint [not null, ref: > customer.account_id]
-    status varchar(30) [not null]
-    subtotal decimal(15,2) [not null]
-    discount_total decimal(15,2) [not null]
-    shipping_fee decimal(15,2) [not null]
-    grand_total decimal(15,2) [not null]
+  order_id bigint [pk, increment]
+  order_number varchar(40) [not null, unique]
+  customer_id bigint [not null, ref: > customer.account_id]
+  status enum('PENDING_PAYMENT', 'PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED', 'RETURN_REQUESTED', 'RETURNED') [not null, default: 'PENDING_PAYMENT']
+  recipient_name varchar(150) [not null]
+  recipient_phone varchar(30) [not null]
+  shipping_address varchar(600) [not null]
+  subtotal decimal(15,2) [not null, default: 0]
+  discount_total decimal(15,2) [not null, default: 0]
+  shipping_fee decimal(15,2) [not null, default: 0]
+  grand_total decimal(15,2) [not null, default: 0]
+  placed_at datetime
+  created_at datetime [not null, default: `CURRENT_TIMESTAMP`]
+  updated_at datetime [not null, default: `CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`]
+  indexes {
+    (customer_id, created_at) [name: 'idx_order_customer_created']
+    (status, created_at) [name: 'idx_order_status_created']
+  }
 }
 Table order_item {
-    order_item_id bigint [pk]
-    order_id bigint [not null, ref: > orders.order_id]
-    variant_id bigint [not null, ref: > product_variant.variant_id]
-    unit_price decimal(15,2) [not null]
-    quantity int [not null]
-    line_discount decimal(15,2) [not null]
-    line_total decimal(15,2) [not null]
+  order_item_id bigint [pk, increment]
+  order_id bigint [not null, ref: > orders.order_id]
+  seller_id bigint [not null]
+  variant_id bigint [not null]
+  product_name_snapshot varchar(255) [not null]
+  sku_snapshot varchar(80) [not null]
+  unit_price decimal(15,2) [not null]
+  quantity int [not null]
+  line_discount decimal(15,2) [not null, default: 0]
+  line_total decimal(15,2) [not null]
+  indexes {
+    (order_id, seller_id, variant_id) [unique, name: 'uq_order_seller_variant']
+    (variant_id) [name: 'idx_order_item_variant']
+    (seller_id, order_id) [name: 'idx_order_item_seller_order']
+  }
 }
 Table order_promotion {
-    order_id bigint [pk, ref: > orders.order_id]
-    promotion_id bigint [pk, ref: > promotion.promotion_id]
-    discount_amount decimal(15,2) [not null]
+  order_id bigint [not null, pk, ref: > orders.order_id]
+  promotion_id bigint [not null, pk, ref: > promotion.promotion_id]
+  discount_amount decimal(15,2) [not null]
+  promotion_code_snapshot varchar(50)
 }
 Table payment {
-    payment_id bigint [pk]
-    order_id bigint [not null, ref: > orders.order_id]
-    provider varchar(50) [not null]
-    transaction_ref varchar(120) [unique]
-    amount decimal(15,2) [not null]
-    status varchar(20) [not null]
+  payment_id bigint [pk, increment]
+  order_id bigint [not null, ref: > orders.order_id]
+  provider varchar(50) [not null]
+  transaction_ref varchar(120) [unique]
+  amount decimal(15,2) [not null]
+  status enum('PENDING', 'SUCCESS', 'FAILED', 'REFUNDED') [not null, default: 'PENDING']
+  paid_at datetime
+  created_at datetime [not null, default: `CURRENT_TIMESTAMP`]
+  indexes { (order_id, status) [name: 'idx_payment_order_status'] }
 }
 Table shipment {
-    shipment_id bigint [pk]
-    order_id bigint [not null, ref: > orders.order_id]
-    carrier varchar(80) [not null]
-    tracking_number varchar(120) [unique]
-    status varchar(30) [not null]
+  shipment_id bigint [pk, increment]
+  order_id bigint [not null, ref: > orders.order_id]
+  carrier varchar(80) [not null]
+  tracking_number varchar(120) [unique]
+  status enum('PENDING', 'SHIPPED', 'IN_TRANSIT', 'DELIVERED', 'RETURNED') [not null, default: 'PENDING']
+  shipped_at datetime
+  delivered_at datetime
 }
 Table review {
-    review_id bigint [pk]
-    product_id bigint [not null, ref: > product.product_id]
-    customer_id bigint [not null, ref: > customer.account_id]
-    order_item_id bigint [not null, ref: > order_item.order_item_id]
-    rating int [not null]
+  review_id bigint [pk, increment]
+  product_id bigint [not null, ref: > product.product_id]
+  customer_id bigint [not null, ref: > customer.account_id]
+  order_item_id bigint [not null, ref: > order_item.order_item_id]
+  rating tinyint [not null]
+  title varchar(200)
+  body text
+  status enum('PUBLISHED', 'HIDDEN', 'PENDING') [not null, default: 'PUBLISHED']
+  created_at datetime [not null, default: `CURRENT_TIMESTAMP`]
+  updated_at datetime [not null, default: `CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`]
+  indexes { (customer_id, product_id) [unique, name: 'uq_review_customer_product'] }
 }
+Ref: cart_item.(seller_id, variant_id) > inventory.(seller_id, variant_id)
+Ref: order_item.(seller_id, variant_id) > inventory.(seller_id, variant_id)

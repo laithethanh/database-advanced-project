@@ -6,19 +6,19 @@
 | ------ | -------------------------------------------------------------------------------------------------------- | --------------------------------------- |
 | BR-001 | Email tài khoản là duy nhất, không rỗng                                                            | `UNIQUE`, `NOT NULL`                |
 | BR-002 | Customer và Seller là subtype của Account; một Account có thể đồng thời là Customer và Seller | EER overlapping specialization + FK 1:1 |
-| BR-003 | Seller phải ở trạng thái active mới được bán                                                    | CHECK + procedure/trigger               |
+| BR-003 | Seller phải ở trạng thái ACTIVE mới được bán                                                    | trigger/procedure               |
 | BR-004 | Seller phải có shop name duy nhất                                                                     | `UNIQUE`                              |
 
 ## B. Catalog
 
 | ID     | Quy tắc                                                                                             | Cơ chế                     |
 | ------ | ---------------------------------------------------------------------------------------------------- | ---------------------------- |
-| BR-010 | Product thuộc đúng một Seller                                                                    | FK                           |
-| BR-011 | Product phải có tên và trạng thái hợp lệ                                                     | NOT NULL + CHECK             |
+| BR-010 | Product thuộc đúng một Category; catalog product không có seller FK                                                                    | FK                           |
+| BR-011 | Product phải có tên và trạng thái thuộc ENUM hợp lệ                                                     | NOT NULL + ENUM             |
 | BR-012 | SKU là duy nhất toàn hệ thống                                                                   | UNIQUE                       |
-| BR-013 | Giá niêm yết và giá bán không âm; giá bán không vượt giá niêm yết nếu dùng cả hai | CHECK                        |
-| BR-014 | Variant thuộc đúng một Product                                                                   | FK                           |
-| BR-015 | Variant phải có SKU; combination màu/size của cùng Product không được trùng                | UNIQUE(Product, color, size) |
+| BR-013 | Giá variant không âm; compare-at price nếu có phải lớn hơn hoặc bằng giá bán | CHECK                        |
+| BR-014 | Variant thuộc đúng một Product và một supplier Warehouse                                                                   | FK                           |
+| BR-015 | Variant phải có SKU; combination warehouse/product/màu/size không được trùng                | UNIQUE(Warehouse, Product, color, size) |
 | BR-016 | Category có tối đa một parent trực tiếp                                                        | FK tự tham chiếu           |
 | BR-017 | Category không được tạo chu trình                                                              | trigger/procedure            |
 | BR-018 | Product chỉ được gán category đang active                                                      | FK + trigger                 |
@@ -28,19 +28,19 @@
 | ID     | Quy tắc                                                       |
 | ------ | -------------------------------------------------------------- |
 | BR-020 | Customer có tối đa một cart ACTIVE tại một thời điểm. |
-| BR-021 | CartItem chỉ chứa variant đang bán được.                |
+| BR-021 | CartItem chỉ chứa cặp seller/variant đang bán được và có dòng inventory tương ứng.                |
 | BR-022 | Quantity của CartItem phải > 0.                              |
-| BR-023 | Một cart không có hai dòng cho cùng variant.              |
+| BR-023 | Một cart không có hai dòng cho cùng seller/variant.              |
 
 ## D. Inventory
 
 | ID     | Quy tắc                                                                                        |
 | ------ | ----------------------------------------------------------------------------------------------- |
-| BR-030 | Inventory được xác định bởi (Warehouse, Variant).                                        |
+| BR-030 | Inventory được xác định bởi (Seller, Variant); variant đã xác định supplier Warehouse riêng.                                        |
 | BR-031 | Quantity on hand và reserved quantity không âm.                                              |
 | BR-032 | Reserved quantity không vượt quantity on hand.                                               |
 | BR-033 | Khi đặt hàng thành công, hệ thống không được làm tồn kho khả dụng âm.           |
-| BR-034 | Một variant có thể tồn tại ở nhiều warehouse.                                            |
+| BR-034 | Cùng một product variant color/size ở warehouse khác được biểu diễn bằng variant_id khác.                                            |
 | BR-035 | Mọi thay đổi tồn kho do order phải nằm trong transaction và có kiểm soát concurrency. |
 
 ## E. Order
@@ -94,7 +94,7 @@
 
 | ID     | Quy tắc                                                                                                                                |
 | ------ | --------------------------------------------------------------------------------------------------------------------------------------- |
-| BR-090 | Đặt hàng là một đơn vị nguyên tử: tạo order + items + promotion + payment/shipment liên quan + inventory phải nhất quán. |
+| BR-090 | Checkout là một đơn vị nguyên tử: tạo order + items + promotion + payment + inventory phải nhất quán; shipment thuộc bước fulfillment riêng. |
 | BR-091 | Nếu bất kỳ bước lõi nào thất bại thì rollback toàn bộ phần transaction đó.                                               |
 | BR-092 | Hai session cùng mua số lượng cuối không được tạo oversell.                                                                   |
 | BR-093 | Cập nhật inventory phải khóa đúng dòng hoặc dùng atomic update có điều kiện.                                               |

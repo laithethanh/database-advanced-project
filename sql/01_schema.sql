@@ -50,32 +50,62 @@ CREATE TABLE category (
 
 CREATE TABLE product (
   product_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  seller_id BIGINT UNSIGNED NOT NULL,
   category_id BIGINT UNSIGNED NOT NULL,
   name VARCHAR(255) NOT NULL,
-  slug VARCHAR(180) NOT NULL,
+  slug VARCHAR(180) NOT NULL UNIQUE,
   description TEXT,
   brand VARCHAR(120),
   status ENUM('DRAFT','ACTIVE','INACTIVE','ARCHIVED') NOT NULL DEFAULT 'DRAFT',
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  UNIQUE KEY uq_product_seller_slug (seller_id, slug),
   KEY idx_product_category_status (category_id, status),
-  FOREIGN KEY (seller_id) REFERENCES seller(account_id),
   FOREIGN KEY (category_id) REFERENCES category(category_id)
 ) ENGINE=InnoDB;
 
+CREATE TABLE warehouse (
+  warehouse_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  code VARCHAR(40) NOT NULL UNIQUE,
+  name VARCHAR(150) NOT NULL,
+  address_text VARCHAR(500),
+  status ENUM('ACTIVE','INACTIVE') NOT NULL DEFAULT 'ACTIVE'
+) ENGINE=InnoDB;
+
+INSERT INTO warehouse (code, name, address_text) VALUES
+  ('WH-HN', 'Kho nhà cung cấp Hà Nội', 'Hà Nội'),
+  ('WH-DN', 'Kho nhà cung cấp Đà Nẵng', 'Đà Nẵng'),
+  ('WH-HCM', 'Kho nhà cung cấp TP.HCM', 'TP. Hồ Chí Minh');
+
+-- A variant is specific to a supplier warehouse. Shops sourcing the same
+-- variant from the same warehouse share this variant_id. The same product
+-- variant in another warehouse gets a different variant_id.
 CREATE TABLE product_variant (
   variant_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  warehouse_id BIGINT UNSIGNED NOT NULL,
   product_id BIGINT UNSIGNED NOT NULL,
   sku VARCHAR(80) NOT NULL UNIQUE,
   color VARCHAR(60) NOT NULL DEFAULT '', size VARCHAR(60) NOT NULL DEFAULT '',
   price DECIMAL(15,2) NOT NULL,
   compare_at_price DECIMAL(15,2),
+  warehouse_quantity INT UNSIGNED NOT NULL DEFAULT 0,
   status ENUM('ACTIVE','INACTIVE','ARCHIVED') NOT NULL DEFAULT 'ACTIVE',
-  UNIQUE KEY uq_variant_combination (product_id, color, size),
+  UNIQUE KEY uq_variant_warehouse_combination (warehouse_id, product_id, color, size),
   KEY idx_variant_product_status (product_id, status),
+  KEY idx_variant_warehouse_product (warehouse_id, product_id),
+  FOREIGN KEY (warehouse_id) REFERENCES warehouse(warehouse_id),
   FOREIGN KEY (product_id) REFERENCES product(product_id)
+) ENGINE=InnoDB;
+
+CREATE TABLE inventory (
+  seller_id BIGINT UNSIGNED NOT NULL,
+  variant_id BIGINT UNSIGNED NOT NULL,
+  quantity_on_hand INT UNSIGNED NOT NULL DEFAULT 0,
+  reserved_quantity INT UNSIGNED NOT NULL DEFAULT 0,
+  reorder_level INT UNSIGNED NOT NULL DEFAULT 0,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (seller_id, variant_id),
+  KEY idx_inventory_variant (variant_id),
+  FOREIGN KEY (seller_id) REFERENCES seller(account_id),
+  FOREIGN KEY (variant_id) REFERENCES product_variant(variant_id)
 ) ENGINE=InnoDB;
 
 CREATE TABLE cart (
@@ -90,33 +120,14 @@ CREATE TABLE cart (
 
 CREATE TABLE cart_item (
   cart_id BIGINT UNSIGNED NOT NULL,
+  seller_id BIGINT UNSIGNED NOT NULL,
   variant_id BIGINT UNSIGNED NOT NULL,
   quantity INT UNSIGNED NOT NULL,
   added_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (cart_id, variant_id),
+  PRIMARY KEY (cart_id, seller_id, variant_id),
   FOREIGN KEY (cart_id) REFERENCES cart(cart_id) ON DELETE CASCADE,
-  FOREIGN KEY (variant_id) REFERENCES product_variant(variant_id)
-) ENGINE=InnoDB;
-
-CREATE TABLE warehouse (
-  warehouse_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  code VARCHAR(40) NOT NULL UNIQUE,
-  name VARCHAR(150) NOT NULL,
-  address_text VARCHAR(500),
-  status ENUM('ACTIVE','INACTIVE') NOT NULL DEFAULT 'ACTIVE'
-) ENGINE=InnoDB;
-
-CREATE TABLE inventory (
-  warehouse_id BIGINT UNSIGNED NOT NULL,
-  variant_id BIGINT UNSIGNED NOT NULL,
-  quantity_on_hand INT UNSIGNED NOT NULL DEFAULT 0,
-  reserved_quantity INT UNSIGNED NOT NULL DEFAULT 0,
-  reorder_level INT UNSIGNED NOT NULL DEFAULT 0,
-  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (warehouse_id, variant_id),
-  KEY idx_inventory_variant (variant_id),
-  FOREIGN KEY (warehouse_id) REFERENCES warehouse(warehouse_id),
-  FOREIGN KEY (variant_id) REFERENCES product_variant(variant_id)
+  FOREIGN KEY (seller_id, variant_id) REFERENCES inventory(seller_id, variant_id),
+  KEY idx_cart_item_variant (variant_id)
 ) ENGINE=InnoDB;
 
 CREATE TABLE promotion (
@@ -130,7 +141,9 @@ CREATE TABLE promotion (
   start_at DATETIME NOT NULL,
   end_at DATETIME NOT NULL,
   status ENUM('DRAFT','ACTIVE','INACTIVE','EXPIRED') NOT NULL DEFAULT 'DRAFT',
-  usage_limit INT UNSIGNED
+  usage_limit INT UNSIGNED,
+  used_count INT UNSIGNED NOT NULL DEFAULT 0,
+  CHECK (usage_limit IS NULL OR used_count <= usage_limit)
 ) ENGINE=InnoDB;
 
 CREATE TABLE promotion_product (
@@ -172,6 +185,7 @@ CREATE TABLE orders (
 CREATE TABLE order_item (
   order_item_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   order_id BIGINT UNSIGNED NOT NULL,
+  seller_id BIGINT UNSIGNED NOT NULL,
   variant_id BIGINT UNSIGNED NOT NULL,
   product_name_snapshot VARCHAR(255) NOT NULL,
   sku_snapshot VARCHAR(80) NOT NULL,
@@ -179,10 +193,11 @@ CREATE TABLE order_item (
   quantity INT UNSIGNED NOT NULL,
   line_discount DECIMAL(15,2) NOT NULL DEFAULT 0,
   line_total DECIMAL(15,2) NOT NULL,
-  UNIQUE KEY uq_order_variant (order_id, variant_id),
+  UNIQUE KEY uq_order_seller_variant (order_id, seller_id, variant_id),
   KEY idx_order_item_variant (variant_id),
+  KEY idx_order_item_seller_order (seller_id, order_id),
   FOREIGN KEY (order_id) REFERENCES orders(order_id) ON DELETE RESTRICT,
-  FOREIGN KEY (variant_id) REFERENCES product_variant(variant_id)
+  FOREIGN KEY (seller_id, variant_id) REFERENCES inventory(seller_id, variant_id)
 ) ENGINE=InnoDB;
 
 CREATE TABLE order_promotion (
