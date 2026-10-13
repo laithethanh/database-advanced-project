@@ -23,15 +23,15 @@ Admin, Payment Gateway và Carrier được coi là actor ngoài hệ thống ho
 
 ### 3.1 Catalog
 
-Seller tạo product → tạo một hoặc nhiều variant → gán category → khai báo SKU, giá và thuộc tính màu/size → tồn kho được quản lý theo variant tại warehouse.
+Platform/Seller quản lý product catalog → tạo các variant theo warehouse cung cấp → gán category → khai báo SKU, giá và thuộc tính màu/size. Seller nhận nguồn hàng bằng các dòng `inventory(seller_id, variant_id)`; `warehouse_quantity` là tồn tại kho cung cấp.
 
 ### 3.2 Giỏ hàng
 
-Customer có tối đa một cart đang hoạt động. CartItem tham chiếu một variant. Cùng một variant trong một cart được biểu diễn bằng một dòng và cập nhật quantity.
+Customer có tối đa một cart đang hoạt động. CartItem chọn một cặp seller/variant tồn tại trong `inventory`; cùng một seller/variant trong một cart được biểu diễn bằng một dòng và cập nhật quantity.
 
 ### 3.3 Đặt hàng
 
-Customer chọn địa chỉ và các dòng cart. Hệ thống kiểm tra giá/trạng thái/tồn kho/khuyến mãi, tạo order và order items, giữ/trừ tồn, tính subtotal/discount/shipping/grand total, tạo payment và shipment theo chính sách. Toàn bộ thao tác dữ liệu lõi phải nằm trong một transaction.
+Customer chọn địa chỉ và các dòng cart. Hệ thống kiểm tra giá/trạng thái/tồn kho/khuyến mãi, tạo order và order items, trừ tồn của seller được chọn, tính subtotal/discount/shipping/grand total và tạo payment. Shipment được tạo ở bước fulfillment riêng; thao tác checkout lõi nằm trong một transaction.
 
 ### 3.4 Đánh giá
 

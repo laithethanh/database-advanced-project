@@ -44,7 +44,7 @@
 
 - CR-SEL-01: quản lý shop.
 - CR-SEL-02: CRUD Product/Variant.
-- CR-SEL-03: theo dõi Inventory theo warehouse.
+- CR-SEL-03: theo dõi Inventory theo seller/variant; đối chiếu với warehouse-specific ProductVariant.
 - CR-SEL-04: xem order liên quan và doanh thu.
 
 ### Platform

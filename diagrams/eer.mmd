@@ -1,47 +1,213 @@
-classDiagram
+﻿classDiagram
 direction LR
-class Account { +account_id PK +email UQ +status }
-class Customer { +account_id PK/FK +customer_code UQ }
-class Seller { +account_id PK/FK +seller_code UQ +shop_name UQ }
-class Address { +address_id PK +customer_id FK }
-class Category { +category_id PK +parent_category_id FK }
-class Product { +product_id PK +seller_id FK +category_id FK }
-class ProductVariant { +variant_id PK +product_id FK +sku UQ }
-class Cart { +cart_id PK +customer_id FK }
-class CartItem { +cart_id PK/FK +variant_id PK/FK +quantity }
-class Warehouse { +warehouse_id PK }
-class Inventory { +warehouse_id PK/FK +variant_id PK/FK +quantity_on_hand +reserved_quantity }
-class Promotion { +promotion_id PK +code UQ +start_at +end_at }
-class PromotionProduct { +promotion_id PK/FK +product_id PK/FK }
-class PromotionCategory { +promotion_id PK/FK +category_id PK/FK }
-class Order { +order_id PK +order_number UQ +status +grand_total }
-class OrderItem { +order_item_id PK +order_id FK +variant_id FK +unit_price +quantity }
-class OrderPromotion { +order_id PK/FK +promotion_id PK/FK +discount_amount }
-class Payment { +payment_id PK +order_id FK +status }
-class Shipment { +shipment_id PK +order_id FK +status }
-class Review { +review_id PK +product_id FK +customer_id FK +rating }
+class Account {
+  +account_id BIGINT PK
+  +email VARCHAR UQ
+  +password_hash VARCHAR
+  +full_name VARCHAR
+  +phone VARCHAR
+  +status ENUM
+  +created_at DATETIME
+  +updated_at DATETIME
+}
+class Customer {
+  +account_id BIGINT PK/FK
+  +customer_code VARCHAR UQ
+}
+class Seller {
+  +account_id BIGINT PK/FK
+  +seller_code VARCHAR UQ
+  +shop_name VARCHAR UQ
+  +shop_status ENUM
+  +created_at DATETIME
+}
+class Address {
+  +address_id BIGINT PK
+  +customer_id BIGINT FK
+  +recipient_name VARCHAR
+  +phone VARCHAR
+  +line1 VARCHAR
+  +ward VARCHAR
+  +district VARCHAR
+  +city VARCHAR
+  +province VARCHAR
+  +postal_code VARCHAR
+  +is_default BOOLEAN
+}
+class Category {
+  +category_id BIGINT PK
+  +parent_category_id BIGINT FK
+  +name VARCHAR
+  +slug VARCHAR UQ
+  +status ENUM
+  +created_at DATETIME
+}
+class Product {
+  +product_id BIGINT PK
+  +category_id BIGINT FK
+  +name VARCHAR
+  +slug VARCHAR UQ
+  +description TEXT
+  +brand VARCHAR
+  +status ENUM
+  +created_at DATETIME
+  +updated_at DATETIME
+}
+class Warehouse {
+  +warehouse_id BIGINT PK
+  +code VARCHAR UQ
+  +name VARCHAR
+  +address_text VARCHAR
+  +status ENUM
+}
+class ProductVariant {
+  +variant_id BIGINT PK
+  +warehouse_id BIGINT FK
+  +product_id BIGINT FK
+  +sku VARCHAR UQ
+  +color VARCHAR
+  +size VARCHAR
+  +price DECIMAL
+  +compare_at_price DECIMAL
+  +warehouse_quantity INT
+  +status ENUM
+}
+class Inventory {
+  +seller_id BIGINT PK/FK
+  +variant_id BIGINT PK/FK
+  +quantity_on_hand INT
+  +reserved_quantity INT
+  +reorder_level INT
+  +updated_at DATETIME
+}
+class Cart {
+  +cart_id BIGINT PK
+  +customer_id BIGINT FK
+  +status ENUM
+  +created_at DATETIME
+  +updated_at DATETIME
+}
+class CartItem {
+  +cart_id BIGINT PK/FK
+  +seller_id BIGINT PK/FK
+  +variant_id BIGINT PK/FK
+  +quantity INT
+  +added_at DATETIME
+}
+class Promotion {
+  +promotion_id BIGINT PK
+  +code VARCHAR UQ
+  +name VARCHAR
+  +promotion_type ENUM
+  +discount_value DECIMAL
+  +min_order_amount DECIMAL
+  +max_discount DECIMAL
+  +start_at DATETIME
+  +end_at DATETIME
+  +status ENUM
+  +usage_limit INT
+  +used_count INT
+}
+class PromotionProduct {
+  +promotion_id BIGINT PK/FK
+  +product_id BIGINT PK/FK
+}
+class PromotionCategory {
+  +promotion_id BIGINT PK/FK
+  +category_id BIGINT PK/FK
+}
+class Order {
+  +order_id BIGINT PK
+  +order_number VARCHAR UQ
+  +customer_id BIGINT FK
+  +status ENUM
+  +recipient_name VARCHAR
+  +recipient_phone VARCHAR
+  +shipping_address VARCHAR
+  +subtotal DECIMAL
+  +discount_total DECIMAL
+  +shipping_fee DECIMAL
+  +grand_total DECIMAL
+  +placed_at DATETIME
+  +created_at DATETIME
+  +updated_at DATETIME
+}
+class OrderItem {
+  +order_item_id BIGINT PK
+  +order_id BIGINT FK
+  +seller_id BIGINT FK*
+  +variant_id BIGINT FK*
+  +product_name_snapshot VARCHAR
+  +sku_snapshot VARCHAR
+  +unit_price DECIMAL
+  +quantity INT
+  +line_discount DECIMAL
+  +line_total DECIMAL
+}
+class OrderPromotion {
+  +order_id BIGINT PK/FK
+  +promotion_id BIGINT PK/FK
+  +discount_amount DECIMAL
+  +promotion_code_snapshot VARCHAR
+}
+class Payment {
+  +payment_id BIGINT PK
+  +order_id BIGINT FK
+  +provider VARCHAR
+  +transaction_ref VARCHAR UQ
+  +amount DECIMAL
+  +status ENUM
+  +paid_at DATETIME
+  +created_at DATETIME
+}
+class Shipment {
+  +shipment_id BIGINT PK
+  +order_id BIGINT FK
+  +carrier VARCHAR
+  +tracking_number VARCHAR UQ
+  +status ENUM
+  +shipped_at DATETIME
+  +delivered_at DATETIME
+}
+class Review {
+  +review_id BIGINT PK
+  +product_id BIGINT FK
+  +customer_id BIGINT FK
+  +order_item_id BIGINT FK
+  +rating TINYINT
+  +title VARCHAR
+  +body TEXT
+  +status ENUM
+  +created_at DATETIME
+  +updated_at DATETIME
+}
 Account <|-- Customer
 Account <|-- Seller
 Customer "1" -- "0..*" Address
-Seller "1" -- "0..*" Product
 Category "0..1" <-- "0..*" Category : parent
 Category "1" -- "0..*" Product
-Product "1" -- "1..*" ProductVariant
-Customer "1" -- "0..1" Cart
-Cart "1" -- "0..*" CartItem
-ProductVariant "1" -- "0..*" CartItem
-Warehouse "1" -- "0..*" Inventory
+Warehouse "1" -- "0..*" ProductVariant
+Product "1" -- "0..*" ProductVariant
+Seller "1" -- "0..*" Inventory
 ProductVariant "1" -- "0..*" Inventory
+Customer "1" -- "0..*" Cart
+Cart "1" -- "0..*" CartItem
+Inventory "1" -- "0..*" CartItem : composite seller_id + variant_id FK
 Promotion "1" -- "0..*" PromotionProduct
 Product "1" -- "0..*" PromotionProduct
 Promotion "1" -- "0..*" PromotionCategory
 Category "1" -- "0..*" PromotionCategory
 Customer "1" -- "0..*" Order
-Order "1" -- "1..*" OrderItem
-ProductVariant "1" -- "0..*" OrderItem
+Order "1" -- "0..*" OrderItem
+Inventory "1" -- "0..*" OrderItem : composite seller_id + variant_id FK
 Order "1" -- "0..*" OrderPromotion
 Promotion "1" -- "0..*" OrderPromotion
 Order "1" -- "0..*" Payment
 Order "1" -- "0..*" Shipment
 Product "1" -- "0..*" Review
 Customer "1" -- "0..*" Review
+OrderItem "1" -- "0..*" Review
+note for ProductVariant "UNIQUE (warehouse_id, product_id, color, size)"
+note for CartItem "Composite PK: cart_id, seller_id, variant_id"
+note for OrderItem "UNIQUE (order_id, seller_id, variant_id)"
+note for Review "UNIQUE (customer_id, product_id)"

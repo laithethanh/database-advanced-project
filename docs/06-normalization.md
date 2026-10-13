@@ -14,19 +14,19 @@ Thiết kế tách các nhóm thuộc tính có phụ thuộc chức năng khác
 
 ### PRODUCT_VARIANT
 
-`variant_id → product_id, sku, color, size, price, compare_at_price, status`
+`variant_id → warehouse_id, product_id, sku, color, size, price, compare_at_price, warehouse_quantity, status`
 
-`sku → variant_id, product_id, color, size, price, compare_at_price, status`.
+`sku → variant_id, warehouse_id, product_id, color, size, price, compare_at_price, warehouse_quantity, status` vì SKU UNIQUE toàn hệ thống.
 
 ### INVENTORY
 
-`(warehouse_id, variant_id) → quantity_on_hand, reserved_quantity, reorder_level, updated_at`.
+`(seller_id, variant_id) → quantity_on_hand, reserved_quantity, reorder_level, updated_at`.
 
 ### ORDER_ITEM
 
-`order_item_id → order_id, variant_id, product_name_snapshot, sku_snapshot, unit_price, quantity, line_discount, line_total`.
+`order_item_id → order_id, seller_id, variant_id, product_name_snapshot, sku_snapshot, unit_price, quantity, line_discount, line_total`.
 
-`(order_id, variant_id) → order_item_id, ...` theo chính sách hiện tại một SKU chỉ xuất hiện một lần trong một order.
+`(order_id, seller_id, variant_id) → order_item_id, ...` theo chính sách mỗi shop/variant chỉ có một dòng trong một order.
 
 ## 3. Candidate keys
 
@@ -35,8 +35,8 @@ Thiết kế tách các nhóm thuộc tính có phụ thuộc chức năng khác
 | Account | `account_id`, `email` |
 | Seller | `account_id`, `seller_code`, `shop_name` |
 | ProductVariant | `variant_id`, `sku` |
-| Inventory | `(warehouse_id, variant_id)` |
-| CartItem | `(cart_id, variant_id)` |
+| Inventory | `(seller_id, variant_id)` |
+| CartItem | `(cart_id, seller_id, variant_id)` |
 | PromotionProduct | `(promotion_id, product_id)` |
 | PromotionCategory | `(promotion_id, category_id)` |
 | Order | `order_id`, `order_number` |

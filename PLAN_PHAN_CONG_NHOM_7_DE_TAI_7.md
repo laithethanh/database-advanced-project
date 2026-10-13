@@ -43,9 +43,9 @@
 
 ## 2. Kiến trúc dữ liệu đề xuất
 
-Các thực thể lõi: `Customer`, `Seller`, `Product`, `ProductVariant`, `Category`, `Cart`, `CartItem`, `Order`, `OrderItem`, `Promotion`, `PromotionRule/PromotionProduct`, `Review`, `Warehouse`, `Inventory`.
+Các thực thể lõi: `Customer`, `Seller`, `Product`, `ProductVariant`, `Category`, `Cart`, `CartItem`, `Order`, `OrderItem`, `Promotion`, `PromotionProduct`, `PromotionCategory`, `Review`, `Warehouse`, `Inventory`.
 
-Các quan hệ cần làm rõ: seller–product, product–variant, category tự liên kết cha/con, customer–cart, customer–order, order–order_item, product–review, warehouse–inventory, promotion–product/order.
+Các quan hệ cần làm rõ: seller–inventory, warehouse–product_variant, product–variant, category tự liên kết cha/con, customer–cart, customer–order, order–order_item, product–review, promotion–product/order.
 
 Quy tắc quan trọng nên cài đặt:
 - SKU/biến thể là duy nhất.

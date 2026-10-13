@@ -3,10 +3,10 @@
 ## Kịch bản T01: checkout thành công
 
 1. `START TRANSACTION`.
-2. Lock/atomic update inventory cho các variant cần mua.
+2. Lock/atomic update inventory cho các cặp seller/variant cần mua.
 3. Tạo order và order items với snapshot giá.
 4. Tính promotion/discount.
-5. Tạo payment pending và shipment pending theo policy.
+5. Tạo payment `SUCCESS` cho checkout demo; shipment được tạo ở bước fulfillment riêng.
 6. Cập nhật cart.
 7. `COMMIT`.
 
@@ -32,4 +32,4 @@ Expected: bị từ chối.
 
 ## Isolation và deadlock
 
-Ưu tiên lock inventory theo thứ tự `variant_id` tăng dần để giảm deadlock khi một order chứa nhiều SKU. Ghi nhận isolation level và execution evidence trong báo cáo.
+Ưu tiên lock inventory theo thứ tự `(seller_id, variant_id)` tăng dần để giảm deadlock khi một order chứa nhiều dòng. Checkout chỉ lock và trừ tồn của seller được chọn; ghi nhận isolation level và execution evidence trong báo cáo.
