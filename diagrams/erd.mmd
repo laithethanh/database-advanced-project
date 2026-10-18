@@ -66,8 +66,9 @@ PRODUCT_VARIANT {
   VARCHAR color
   VARCHAR size
   VARCHAR status
-  -- NOTE: variant is product-level entity; stock is tracked in INVENTORY per (seller, warehouse, variant)
+  
 }
+%%NOTE: variant is product-level entity; stock is tracked in INVENTORY per (seller, warehouse, variant)
 CART {
   BIGINT cart_id PK
   BIGINT customer_id FK
@@ -90,9 +91,9 @@ INVENTORY {
   BIGINT variant_id FK
   INT quantity_on_hand
   INT reserved_quantity
-  -- UNIQUE(seller_id, warehouse_id, variant_id) enforced in migration/schema
-  -- CHECKs: quantity_on_hand >= 0; reserved_quantity >= 0; reserved_quantity <= quantity_on_hand
 }
+%%UNIQUE(seller_id, warehouse_id, variant_id) enforced in migration/schema
+ %%CHECKs: quantity_on_hand >= 0; reserved_quantity >= 0; reserved_quantity <= quantity_on_hand
 PROMOTION {
   BIGINT promotion_id PK
   VARCHAR code UK
@@ -117,8 +118,9 @@ PROMOTION_USAGE {
   DECIMAL discount_amount
   VARCHAR coupon_code_snapshot
   DATETIME used_at
-  -- Use this table to track usages and avoid race conditions on PROMOTION.used_count
+
 }
+ %%Use this table to track usages and avoid race conditions on PROMOTION.used_count
 ORDERS {
   BIGINT order_id PK
   VARCHAR order_number UK
@@ -165,7 +167,7 @@ REVIEW {
   BIGINT customer_id FK
   BIGINT order_item_id FK
   TINYINT rating
-  TEXT body
-  -- Enforce: rating BETWEEN 1 AND 5; ensure customer has DELIVERED order_item before insert via application/trigger
-  -- Optionally UNIQUE(customer_id, product_id) if policy requires one review per customer-product
+  TEXT body   
 }
+
+
