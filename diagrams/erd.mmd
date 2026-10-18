@@ -62,6 +62,11 @@ PRODUCT_VARIANT {
   BIGINT product_id FK
   VARCHAR sku UK
   DECIMAL price
+  DECIMAL compare_at_price
+  VARCHAR color
+  VARCHAR size
+  VARCHAR status
+  -- NOTE: variant is product-level entity; stock is tracked in INVENTORY per (seller, warehouse, variant)
 }
 CART {
   BIGINT cart_id PK
@@ -79,10 +84,14 @@ WAREHOUSE {
   VARCHAR name
 }
 INVENTORY {
-  BIGINT warehouse_id PK,FK
-  BIGINT variant_id PK,FK
+  BIGINT inventory_id PK
+  BIGINT seller_id FK
+  BIGINT warehouse_id FK
+  BIGINT variant_id FK
   INT quantity_on_hand
   INT reserved_quantity
+  -- UNIQUE(seller_id, warehouse_id, variant_id) enforced in migration/schema
+  -- CHECKs: quantity_on_hand >= 0; reserved_quantity >= 0; reserved_quantity <= quantity_on_hand
 }
 PROMOTION {
   BIGINT promotion_id PK
@@ -100,11 +109,25 @@ PROMOTION_CATEGORY {
   BIGINT promotion_id PK,FK
   BIGINT category_id PK,FK
 }
+PROMOTION_USAGE {
+  BIGINT promotion_usage_id PK
+  BIGINT promotion_id FK
+  BIGINT order_id FK
+  BIGINT customer_id FK
+  DECIMAL discount_amount
+  VARCHAR coupon_code_snapshot
+  DATETIME used_at
+  -- Use this table to track usages and avoid race conditions on PROMOTION.used_count
+}
 ORDERS {
   BIGINT order_id PK
   VARCHAR order_number UK
   BIGINT customer_id FK
   VARCHAR status
+  BIGINT address_id FK
+  VARCHAR recipient_name
+  VARCHAR recipient_phone
+  VARCHAR shipping_address
   DECIMAL subtotal
   DECIMAL discount_total
   DECIMAL shipping_fee
@@ -122,6 +145,7 @@ ORDER_PROMOTION {
   BIGINT order_id PK,FK
   BIGINT promotion_id PK,FK
   DECIMAL discount_amount
+  VARCHAR promotion_code_snapshot
 }
 PAYMENT {
   BIGINT payment_id PK
@@ -141,4 +165,7 @@ REVIEW {
   BIGINT customer_id FK
   BIGINT order_item_id FK
   TINYINT rating
+  TEXT body
+  -- Enforce: rating BETWEEN 1 AND 5; ensure customer has DELIVERED order_item before insert via application/trigger
+  -- Optionally UNIQUE(customer_id, product_id) if policy requires one review per customer-product
 }
