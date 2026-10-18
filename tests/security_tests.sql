@@ -1,1 +1,5 @@
--- Test dynamic SQL with invalid sort/field and representative SQL injection payloads.
+-- Security checks are executed from Python because parameter binding is a client concern.
+-- python -c "from app.dynamic_search import build_search_sql; print(build_search_sql(keyword=\"' OR 1=1 --\"))"
+-- Expected: payload is a parameter; generated SQL retains %s placeholders.
+-- python -c "from app.dynamic_search import build_search_sql; build_search_sql(sort='name; DROP TABLE product')"
+-- Expected: ValueError. Also test direction='desc;--', min_price=-1, min_rating=6 and limit=101.

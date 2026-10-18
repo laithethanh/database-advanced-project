@@ -14,6 +14,9 @@
 - [Transaction/concurrency](docs/09-transaction-concurrency.md)
 - [Benchmark](docs/10-benchmark.md)
 - [Reproducibility](docs/11-reproducibility.md)
+- [Query evidence template](docs/12-query-execution-notes.md)
+- [DB execution runbook](docs/13-experiment-runbook.md)
+- [Normalization proof](docs/14-normalization-proof.md)
 Đồ án CSDL thương mại điện tử và lập trình SQL nâng cao - thiết kế EER, chuẩn hóa dữ liệu, SQL nâng cao, transaction, trigger, procedure/function, dynamic SQL, recursive SQL và thực nghiệm trên 100.000+ đơn hàng.
 # Đồ án CSDL Nâng cao — Đề tài 7
 

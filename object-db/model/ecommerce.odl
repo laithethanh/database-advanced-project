@@ -1,0 +1,8 @@
+// ODMG-style logical model; OID is system-managed for each extent object.
+interface Account { attribute string email; attribute string fullName; };
+interface Customer : Account { relationship set<Order> orders inverse Order::customer; };
+interface Seller : Account { attribute string shopName; relationship set<ProductVariant> inventory; };
+interface Product { attribute string name; attribute string brand; relationship set<ProductVariant> variants inverse ProductVariant::product; };
+interface ProductVariant { attribute string sku; attribute decimal price; relationship Product product inverse Product::variants; relationship set<Seller> sellers; };
+struct OrderLine { string sku; long quantity; decimal unitPrice; decimal lineTotal; };
+interface Order { attribute string orderNumber; attribute string status; attribute decimal grandTotal; relationship Customer customer inverse Customer::orders; attribute list<OrderLine> items; decimal total(); };

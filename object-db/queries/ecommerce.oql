@@ -1,0 +1,10 @@
+// OQ01: delivered orders of a customer
+SELECT o FROM Order o WHERE o.customer.email = $email AND o.status = 'DELIVERED';
+// OQ02: products whose variant exceeds a price
+SELECT DISTINCT v.product FROM ProductVariant v WHERE v.price > $price;
+// OQ03: sellers offering a requested SKU
+SELECT s FROM Seller s WHERE EXISTS v IN s.inventory: v.sku = $sku;
+// OQ04: customer lifetime value
+SELECT STRUCT(email:c.email, ltv:SUM(SELECT o.grandTotal FROM o IN c.orders WHERE o.status IN {'PAID','PROCESSING','SHIPPED','DELIVERED'})) FROM Customer c;
+// OQ05: top-level order objects with nested line collection
+SELECT STRUCT(number:o.orderNumber, total:o.total(), lines:o.items) FROM Order o WHERE o.status='PAID';

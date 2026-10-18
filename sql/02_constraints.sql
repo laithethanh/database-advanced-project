@@ -1,5 +1,18 @@
 USE ecommerce_advanced;
 
+-- Non-empty business text. NOT NULL alone still permits an empty string.
+ALTER TABLE account
+  ADD CONSTRAINT chk_account_email_not_blank CHECK (CHAR_LENGTH(TRIM(email)) > 0);
+
+ALTER TABLE seller
+  ADD CONSTRAINT chk_seller_shop_name_not_blank CHECK (CHAR_LENGTH(TRIM(shop_name)) > 0);
+
+ALTER TABLE category
+  ADD CONSTRAINT chk_category_name_not_blank CHECK (CHAR_LENGTH(TRIM(name)) > 0);
+
+ALTER TABLE product
+  ADD CONSTRAINT chk_product_name_not_blank CHECK (CHAR_LENGTH(TRIM(name)) > 0);
+
 ALTER TABLE product_variant
   ADD CONSTRAINT chk_variant_price_nonnegative CHECK (price >= 0),
   ADD CONSTRAINT chk_variant_compare_price CHECK (compare_at_price IS NULL OR compare_at_price >= price);
@@ -11,6 +24,12 @@ ALTER TABLE cart
   ADD COLUMN active_customer_key BIGINT UNSIGNED
     GENERATED ALWAYS AS (CASE WHEN status = 'ACTIVE' THEN customer_id ELSE NULL END) STORED,
   ADD UNIQUE KEY uq_cart_one_active_per_customer (active_customer_key);
+
+-- MySQL UNIQUE permits multiple NULL values, giving one default address per customer.
+ALTER TABLE address
+  ADD COLUMN default_customer_key BIGINT UNSIGNED
+    GENERATED ALWAYS AS (CASE WHEN is_default THEN customer_id ELSE NULL END) STORED,
+  ADD UNIQUE KEY uq_address_one_default_per_customer (default_customer_key);
 
 ALTER TABLE inventory
   ADD CONSTRAINT chk_inventory_values CHECK (quantity_on_hand >= reserved_quantity);
@@ -25,12 +44,14 @@ ALTER TABLE promotion
 ALTER TABLE order_item
   ADD CONSTRAINT chk_order_item_values CHECK (
     quantity > 0 AND unit_price >= 0 AND line_discount >= 0 AND line_total >= 0
+    AND line_discount <= quantity * unit_price
   );
 
 ALTER TABLE orders
   ADD CONSTRAINT chk_order_totals_nonnegative CHECK (
     subtotal >= 0 AND discount_total >= 0 AND shipping_fee >= 0 AND grand_total >= 0
-  );
+  ),
+  ADD CONSTRAINT chk_order_discount_not_over_subtotal CHECK (discount_total <= subtotal);
 
 ALTER TABLE payment
   ADD CONSTRAINT chk_payment_amount CHECK (amount >= 0);
