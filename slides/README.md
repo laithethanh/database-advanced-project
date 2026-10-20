@@ -1,3 +1,3 @@
-# Slides
+# Slide thuyết trình
 
-Slide source and exported presentation belong here.
+Lưu tệp nguồn slide và bản thuyết trình đã xuất tại thư mục này.

@@ -1,14 +1,14 @@
-# Final report outline (20–30 pages, appendices excluded)
+# Đề cương báo cáo cuối kỳ (20–30 trang, không tính phụ lục)
 
-1. Introduction: problem, scope, research questions and contribution.
-2. Requirements and business analysis: actors, lifecycle and BR-001…BR-094.
-3. Design: EER/ERD, mapping, data dictionary and immutable physical schema.
-4. Normalization: FDs, keys, minimal cover, 3NF/BCNF/4NF and lossless/dependency-preserving argument.
-5. Implementation: constraints, triggers, checkout, promotion/ranking, dynamic and embedded SQL.
-6. Advanced queries: Q01–Q25, results and selected execution plans.
-7. Object model: ODL/OQL, OID/collection/inheritance and JPQL mapping.
-8. Transaction/concurrency: ACID, locking protocol, T01–T05 evidence and limits.
-9. Benchmark: environment, dataset cardinality, baseline/optimized medians, plans, write/storage trade-off.
-10. Conclusion, limitations and future work.
+1. Giới thiệu: vấn đề, phạm vi, câu hỏi nghiên cứu và đóng góp.
+2. Yêu cầu và phân tích nghiệp vụ: tác nhân, vòng đời và BR-001…BR-094.
+3. Thiết kế: EER/ERD, ánh xạ, từ điển dữ liệu và lược đồ vật lý bất biến.
+4. Chuẩn hóa: FD, khóa, phủ tối thiểu, 3NF/BCNF/4NF và lập luận nối không mất mát/bảo toàn phụ thuộc.
+5. Triển khai: ràng buộc, trigger, đặt hàng, khuyến mãi/xếp hạng, SQL động và SQL nhúng.
+6. Truy vấn nâng cao: Q01–Q25, kết quả và các kế hoạch thực thi tiêu biểu.
+7. Mô hình hướng đối tượng: ODL/OQL, OID/tập hợp/kế thừa và ánh xạ JPQL.
+8. Transaction/đồng thời: ACID, cơ chế khóa, bằng chứng T01–T05 và giới hạn.
+9. Đo hiệu năng: môi trường, quy mô dữ liệu, trung vị trước/sau tối ưu, kế hoạch và đánh đổi ghi dữ liệu/dung lượng.
+10. Kết luận, hạn chế và hướng phát triển.
 
-Appendices: full SQL source, test output, raw plans, benchmark manifest, ObjectDB evidence and team contribution log.
+Phụ lục: mã SQL đầy đủ, kết quả kiểm thử, kế hoạch thực thi thô, thông tin đo hiệu năng, bằng chứng ObjectDB và nhật ký đóng góp của nhóm.

@@ -1,3 +1,3 @@
-# Seed data
+# Dữ liệu khởi tạo
 
-Small deterministic seed files belong here when they are split from the SQL scripts.
+Lưu các tệp dữ liệu mẫu nhỏ, có thể tái lập, tại đây khi chúng được tách riêng khỏi các script SQL.

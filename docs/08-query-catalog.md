@@ -26,6 +26,6 @@
 | Q22 | customer có tỷ lệ return cao | conditional aggregation |
 | Q23 | hiệu quả promotion | JOIN/GROUP BY |
 | Q24 | product nhiều variant nhưng stock thấp | GROUP BY/HAVING |
-| Q25 | phát hiện invariant violation | anti-query |
+| Q25 | phát hiện vi phạm bất biến dữ liệu | truy vấn phát hiện bản ghi vi phạm |
 
 Mỗi query khi triển khai phải có: mục tiêu nghiệp vụ, SQL, dữ liệu kiểm thử, expected result, actual result và execution plan nếu thuộc nhóm benchmark.

@@ -1,5 +1,5 @@
--- Security checks are executed from Python because parameter binding is a client concern.
+-- Các kiểm tra bảo mật được thực thi từ Python vì việc liên kết tham số thuộc phía ứng dụng khách.
 -- python -c "from app.dynamic_search import build_search_sql; print(build_search_sql(keyword=\"' OR 1=1 --\"))"
--- Expected: payload is a parameter; generated SQL retains %s placeholders.
+-- Kỳ vọng: dữ liệu thử tấn công được truyền dưới dạng tham số; SQL sinh ra vẫn giữ placeholder %s.
 -- python -c "from app.dynamic_search import build_search_sql; build_search_sql(sort='name; DROP TABLE product')"
--- Expected: ValueError. Also test direction='desc;--', min_price=-1, min_rating=6 and limit=101.
+-- Kỳ vọng: ValueError. Đồng thời thử direction='desc;--', min_price=-1, min_rating=6 và limit=101.

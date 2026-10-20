@@ -1,3 +1,3 @@
-# Report chapters
+# Các chương báo cáo
 
-Draft report chapters according to the 12-week plan and the outline in the root README.
+Soạn từng chương báo cáo theo kế hoạch 12 tuần và đề cương trong README ở thư mục gốc.

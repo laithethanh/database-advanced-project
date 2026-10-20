@@ -1,7 +1,7 @@
 # Ví dụ benchmark truy vấn Q01
 
 Ví dụ này dùng để đo truy vấn top sản phẩm theo doanh thu. Kết quả phải được
-chạy trên cùng một database, cùng một bộ dữ liệu và cùng một cấu hình MySQL.
+chạy trên cùng một cơ sở dữ liệu, cùng một bộ dữ liệu và cùng một cấu hình MySQL.
 
 ## Truy vấn
 
@@ -28,12 +28,12 @@ LIMIT 10;
 1. Nạp dữ liệu mẫu hoặc dữ liệu lớn.
 2. Chạy câu lệnh trên tối thiểu 3 lần.
 3. Bỏ qua lần chạy đầu nếu cần loại ảnh hưởng của cache.
-4. Ghi lại `actual time`, số dòng đọc và kế hoạch truy vấn từ kết quả
+4. Ghi lại `thời gian thực tế`, số dòng đọc và kế hoạch truy vấn từ kết quả
    `EXPLAIN ANALYZE`.
 
 ## Bảng ghi kết quả
 
-| Phiên bản | Lần chạy | Thời gian | Rows examined | Index sử dụng | Ghi chú |
+| Phiên bản | Lần chạy | Thời gian | Số dòng đã đọc | Chỉ mục sử dụng | Ghi chú |
 |---|---:|---:|---:|---|---|
 | Trước tối ưu | 1 | TBD | TBD | TBD | Chưa đo |
 | Trước tối ưu | 2 | TBD | TBD | TBD | Chưa đo |
@@ -44,7 +44,7 @@ LIMIT 10;
 
 ## So sánh trước và sau tối ưu
 
-Nếu cần thử nghiệm index, tạo index trong môi trường benchmark riêng, sau đó
+Nếu cần thử nghiệm chỉ mục, tạo chỉ mục trong môi trường benchmark riêng, sau đó
 chạy lại cùng câu truy vấn:
 
 ```sql
@@ -68,4 +68,4 @@ LIMIT 10;
 
 Lưu ý: index trên `orders` có thể không làm truy vấn nhanh hơn đáng kể vì
 truy vấn vẫn phải nối và tổng hợp nhiều dòng `order_item`. Kết luận phải dựa
-trên execution plan và số đo thực tế.
+trên kế hoạch thực thi và số đo thực tế.

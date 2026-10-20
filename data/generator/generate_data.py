@@ -1,8 +1,8 @@
-"""Deterministic MySQL benchmark-data generator (default: 100,000 orders).
+"""Trình sinh dữ liệu đo hiệu năng MySQL có tính tái lập (mặc định: 100.000 đơn hàng).
 
-Run against an empty database after scripts 01, 02 and 05. It deliberately
-does not invoke checkout: bulk history is seeded directly while preserving the
-same FK, total and lifecycle invariants enforced by triggers.
+Chạy trên cơ sở dữ liệu trống sau các script 01, 02 và 05. Chương trình chủ ý
+không gọi thủ tục đặt hàng: dữ liệu lịch sử số lượng lớn được nạp trực tiếp nhưng vẫn bảo toàn
+các bất biến về FK, tổng tiền và vòng đời mà trigger thực thi.
 """
 from __future__ import annotations
 import argparse, os, random
@@ -29,29 +29,29 @@ def main():
     p=argparse.ArgumentParser(); p.add_argument('--orders',type=int,default=100_000); p.add_argument('--customers',type=int,default=10_000)
     p.add_argument('--sellers',type=int,default=100); p.add_argument('--products',type=int,default=1_000); p.add_argument('--seed',type=int,default=20261003)
     p.add_argument('--chunk-size',type=int,default=1_000); args=p.parse_args()
-    if min(args.orders,args.customers,args.sellers,args.products,args.chunk_size) <= 0: p.error('all sizes must be positive')
+    if min(args.orders,args.customers,args.sellers,args.products,args.chunk_size) <= 0: p.error('mọi số lượng phải lớn hơn 0')
     rng=random.Random(args.seed); fake=Faker('en_US'); Faker.seed(args.seed)
     db=connect()
     try:
       with db.cursor() as cur:
-        if scalar(cur,'SELECT COUNT(*) FROM orders') != 0: raise RuntimeError('target database already contains orders; use a fresh benchmark database')
+        if scalar(cur,'SELECT COUNT(*) FROM orders') != 0: raise RuntimeError('cơ sở dữ liệu đích đã có đơn hàng; hãy dùng cơ sở dữ liệu đo hiệu năng mới')
         warehouses=[]; cur.execute("SELECT warehouse_id FROM warehouse WHERE status='ACTIVE' ORDER BY warehouse_id"); warehouses=[r[0] for r in cur.fetchall()]
-        if not warehouses: raise RuntimeError('schema warehouse seed is missing')
-        # accounts and their customer/seller subtypes
+        if not warehouses: raise RuntimeError('thiếu dữ liệu khởi tạo kho trong lược đồ')
+        # tài khoản cùng các kiểu con khách hàng/người bán
         accounts=[]
         for i in range(args.customers): accounts.append((f'bench.customer.{i:06d}@example.test','benchmark-hash',fake.name(),f'09{i:08d}'[-10:]))
-        for i in range(args.sellers): accounts.append((f'bench.seller.{i:05d}@example.test','benchmark-hash',f'Bench Seller {i:04d}',f'08{i:08d}'[-10:]))
+        for i in range(args.sellers): accounts.append((f'bench.seller.{i:05d}@example.test','benchmark-hash',f'Người bán đo hiệu năng {i:04d}',f'08{i:08d}'[-10:]))
         cur.executemany('INSERT INTO account(email,password_hash,full_name,phone) VALUES(%s,%s,%s,%s)',accounts)
         cur.execute("SELECT account_id,email FROM account WHERE email LIKE 'bench.customer.%' ORDER BY account_id"); customers=[r[0] for r in cur.fetchall()]
         cur.execute("SELECT account_id,email FROM account WHERE email LIKE 'bench.seller.%' ORDER BY account_id"); sellers=[r[0] for r in cur.fetchall()]
         cur.executemany('INSERT INTO customer(account_id,customer_code) VALUES(%s,%s)',[(x,f'BC{x:08d}') for x in customers])
-        cur.executemany("INSERT INTO seller(account_id,seller_code,shop_name,shop_status) VALUES(%s,%s,%s,'ACTIVE')",[(x,f'BS{x:08d}',f'Benchmark shop {x}') for x in sellers])
-        # Three-level category tree, created before products because product trigger requires ACTIVE category.
-        cur.executemany("INSERT INTO category(name,slug,status) VALUES(%s,%s,'ACTIVE')",[(f'Benchmark root {i}',f'bench-root-{i}') for i in range(10)])
+        cur.executemany("INSERT INTO seller(account_id,seller_code,shop_name,shop_status) VALUES(%s,%s,%s,'ACTIVE')",[(x,f'BS{x:08d}',f'Cửa hàng đo hiệu năng {x}') for x in sellers])
+        # Tạo cây danh mục ba cấp trước sản phẩm vì trigger sản phẩm yêu cầu danh mục ở trạng thái ACTIVE.
+        cur.executemany("INSERT INTO category(name,slug,status) VALUES(%s,%s,'ACTIVE')",[(f'Danh mục gốc đo hiệu năng {i}',f'bench-root-{i}') for i in range(10)])
         cur.execute("SELECT category_id FROM category WHERE slug LIKE 'bench-root-%' ORDER BY category_id"); roots=[r[0] for r in cur.fetchall()]
-        cur.executemany("INSERT INTO category(parent_category_id,name,slug,status) VALUES(%s,%s,%s,'ACTIVE')",[(roots[i%len(roots)],f'Benchmark leaf {i}',f'bench-leaf-{i}') for i in range(100)])
+        cur.executemany("INSERT INTO category(parent_category_id,name,slug,status) VALUES(%s,%s,%s,'ACTIVE')",[(roots[i%len(roots)],f'Danh mục nhánh đo hiệu năng {i}',f'bench-leaf-{i}') for i in range(100)])
         cur.execute("SELECT category_id FROM category WHERE slug LIKE 'bench-leaf-%' ORDER BY category_id"); categories=[r[0] for r in cur.fetchall()]
-        products=[(categories[i%len(categories)],f'Benchmark product {i:05d}',f'bench-product-{i:05d}','Generated reproducible benchmark product',f'Brand {i%20}','ACTIVE') for i in range(args.products)]
+        products=[(categories[i%len(categories)],f'Sản phẩm đo hiệu năng {i:05d}',f'bench-product-{i:05d}','Sản phẩm đo hiệu năng được sinh có thể tái lập',f'Thương hiệu {i%20}','ACTIVE') for i in range(args.products)]
         cur.executemany('INSERT INTO product(category_id,name,slug,description,brand,status) VALUES(%s,%s,%s,%s,%s,%s)',products)
         cur.execute("SELECT product_id,name FROM product WHERE slug LIKE 'bench-product-%' ORDER BY product_id"); product_rows=cur.fetchall()
         variants=[]
@@ -59,7 +59,7 @@ def main():
           for color,size in [('Black','M'),('Blue','L')]: variants.append((warehouses[i%len(warehouses)],product_id,f'BSKU-{i:05d}-{color[0]}',color,size,Decimal(rng.randrange(10000,500000)),'ACTIVE'))
         cur.executemany('INSERT INTO product_variant(warehouse_id,product_id,sku,color,size,price,warehouse_quantity,status) VALUES(%s,%s,%s,%s,%s,%s,100000,%s)',variants)
         cur.execute("SELECT variant_id,product_id,sku,price FROM product_variant WHERE sku LIKE 'BSKU-%' ORDER BY variant_id"); variant_rows=cur.fetchall()
-        # Each variant has several shops; sufficient stock makes the generated completed history valid.
+        # Mỗi biến thể được bán bởi nhiều cửa hàng; lượng tồn đủ để lịch sử đơn hàng được sinh ra hợp lệ.
         inv=[(seller_id,variant_id,100000,0,100) for variant_id,_,_,_ in variant_rows for seller_id in rng.sample(sellers,min(3,len(sellers)))]
         cur.executemany('INSERT INTO inventory(seller_id,variant_id,quantity_on_hand,reserved_quantity,reorder_level) VALUES(%s,%s,%s,%s,%s)',inv)
         db.commit()
@@ -70,7 +70,7 @@ def main():
           count=min(args.chunk_size,args.orders-start); orders=[]
           for n in range(start,start+count):
             customer_id=rng.choice(customers); created=base+timedelta(minutes=rng.randrange(0,525600))
-            orders.append((f'BORD-{args.seed}-{n:09d}',customer_id,'PENDING_PAYMENT',f'Recipient {customer_id}','0900000000','Benchmark address',Decimal('15000'),created,created))
+            orders.append((f'BORD-{args.seed}-{n:09d}',customer_id,'PENDING_PAYMENT',f'Người nhận {customer_id}','0900000000','Địa chỉ đo hiệu năng',Decimal('15000'),created,created))
           cur.executemany("INSERT INTO orders(order_number,customer_id,status,recipient_name,recipient_phone,shipping_address,subtotal,discount_total,shipping_fee,grand_total,placed_at,created_at) VALUES(%s,%s,%s,%s,%s,%s,0,0,%s,%s,%s,%s)",[(a,b,c,d,e,f,g,g,h,i) for a,b,c,d,e,f,g,h,i in orders])
           first_id=cur.lastrowid; item_rows=[]
           for offset in range(count):

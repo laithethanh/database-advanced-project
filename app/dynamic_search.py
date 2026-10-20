@@ -1,7 +1,7 @@
-"""Safe optional-filter product search for MySQL/PyMySQL.
+"""Tìm kiếm sản phẩm với bộ lọc tùy chọn an toàn cho MySQL/PyMySQL.
 
-Identifiers cannot be parameter-bound, so sort choices are a closed whitelist.
-Every user value is bound through PyMySQL placeholders; never interpolate it.
+Không thể truyền định danh SQL dưới dạng tham số, vì vậy lựa chọn sắp xếp phải thuộc danh sách cho phép cố định.
+Mọi giá trị người dùng đều được truyền qua placeholder của PyMySQL; không nội suy trực tiếp vào SQL.
 """
 from __future__ import annotations
 
@@ -21,15 +21,15 @@ def build_search_sql(*, keyword: str | None = None, category_id: int | None = No
                      brand: str | None = None, min_rating: Decimal | None = None,
                      sort: str = "name", direction: str = "asc", limit: int = 50) -> tuple[str, list[Any]]:
     if sort not in ALLOWED_SORTS or direction not in ALLOWED_DIRECTIONS:
-        raise ValueError("invalid sort option")
+        raise ValueError("Tùy chọn sắp xếp không hợp lệ")
     if not 1 <= limit <= 100:
-        raise ValueError("limit must be from 1 to 100")
+        raise ValueError("limit phải nằm trong khoảng từ 1 đến 100")
     if (min_price is not None and min_price < 0) or (max_price is not None and max_price < 0):
-        raise ValueError("price cannot be negative")
+        raise ValueError("Giá không được âm")
     if min_price is not None and max_price is not None and min_price > max_price:
-        raise ValueError("min_price cannot exceed max_price")
+        raise ValueError("min_price không được lớn hơn max_price")
     if min_rating is not None and not Decimal("1") <= min_rating <= Decimal("5"):
-        raise ValueError("min_rating must be from 1 to 5")
+        raise ValueError("min_rating phải nằm trong khoảng từ 1 đến 5")
 
     conditions = ["p.status = 'ACTIVE'", "v.status = 'ACTIVE'", "w.status = 'ACTIVE'"]
     params: list[Any] = []
@@ -82,7 +82,7 @@ def search_products(**filters: Any) -> list[dict[str, Any]]:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Safe product search")
+    parser = argparse.ArgumentParser(description="Tìm kiếm sản phẩm an toàn")
     parser.add_argument("--keyword"); parser.add_argument("--category-id", type=int); parser.add_argument("--min-price", type=Decimal)
     parser.add_argument("--max-price", type=Decimal); parser.add_argument("--brand"); parser.add_argument("--min-rating", type=Decimal)
     parser.add_argument("--sort", default="name", choices=ALLOWED_SORTS); parser.add_argument("--direction", default="asc", choices=ALLOWED_DIRECTIONS)

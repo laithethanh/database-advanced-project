@@ -1,3 +1,3 @@
-# Report appendix
+# Phụ lục báo cáo
 
-Store SQL listings, test evidence, execution plans and reproducibility logs here.
+Lưu mã SQL, bằng chứng kiểm thử, kế hoạch thực thi và nhật ký tái lập tại đây.

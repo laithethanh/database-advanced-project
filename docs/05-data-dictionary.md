@@ -1,37 +1,37 @@
-# Data dictionary
+# Từ điển dữ liệu
 
-This dictionary follows `sql/01_schema.sql`. All identifier columns are `BIGINT UNSIGNED`; money values use `DECIMAL(15,2)`.
+Từ điển này tuân theo `sql/01_schema.sql`. Tất cả cột định danh dùng `BIGINT UNSIGNED`; giá trị tiền tệ dùng `DECIMAL(15,2)`.
 
-| Table | Key columns and purpose |
+| Bảng | Các cột khóa và mục đích |
 |---|---|
-| `account` | `account_id` PK; unique `email`; password hash, full name, phone, account status and timestamps. |
+| `account` | `account_id` PK; `email` duy nhất; mật khẩu đã băm, họ tên, số điện thoại, trạng thái tài khoản và dấu thời gian. |
 | `customer` | `account_id` PK/FK to account; unique `customer_code`. |
-| `seller` | `account_id` PK/FK to account; unique `seller_code` and `shop_name`; `shop_status`. |
-| `address` | `address_id` PK; `customer_id` FK; recipient and Vietnamese address fields; default flag. |
+| `seller` | `account_id` PK/FK tới account; `seller_code` và `shop_name` duy nhất; `shop_status`. |
+| `address` | `address_id` PK; `customer_id` FK; thông tin người nhận và địa chỉ tại Việt Nam; cờ địa chỉ mặc định. |
 | `category` | `category_id` PK; nullable self-FK `parent_category_id`; unique slug; active status. |
-| `product` | `product_id` PK; `category_id` FK; globally unique slug; name, description, brand, status and timestamps. It has no seller FK. |
-| `warehouse` | `warehouse_id` PK; unique code; name, address text and status. The schema seeds WH-HN, WH-DN and WH-HCM. |
-| `product_variant` | `variant_id` PK; `warehouse_id` and `product_id` FKs; unique SKU; color, size, price, compare-at price, supplier `warehouse_quantity`, status. Unique `(warehouse_id, product_id, color, size)`. |
-| `inventory` | Composite PK `(seller_id, variant_id)`; seller FK and variant FK; seller `quantity_on_hand`, `reserved_quantity`, `reorder_level`, updated timestamp. |
-| `cart` | `cart_id` PK; customer FK; status and timestamps. `sql/02_constraints.sql` adds a generated unique key to prevent more than one ACTIVE cart per customer. |
-| `cart_item` | Composite PK `(cart_id, seller_id, variant_id)`; cart FK and composite `(seller_id, variant_id)` FK to inventory; quantity and added timestamp. Each line explicitly selects a shop. |
-| `promotion` | `promotion_id` PK; optional unique code; type/value, minimum order, maximum discount, validity window, status, usage limit and `used_count`. |
+| `product` | `product_id` PK; `category_id` FK; slug duy nhất trên toàn hệ thống; tên, mô tả, thương hiệu, trạng thái và dấu thời gian. Bảng không có khóa ngoại tới người bán. |
+| `warehouse` | `warehouse_id` PK; mã duy nhất; tên, địa chỉ dạng văn bản và trạng thái. Lược đồ tạo sẵn WH-HN, WH-DN và WH-HCM. |
+| `product_variant` | `variant_id` PK; khóa ngoại `warehouse_id` và `product_id`; SKU duy nhất; màu sắc, kích cỡ, giá, giá niêm yết để so sánh, `warehouse_quantity` tại kho nhà cung cấp và trạng thái. Duy nhất `(warehouse_id, product_id, color, size)`. |
+| `inventory` | Khóa chính ghép `(seller_id, variant_id)`; khóa ngoại người bán và biến thể; số lượng thực có `quantity_on_hand`, `reserved_quantity`, `reorder_level` và thời điểm cập nhật. |
+| `cart` | `cart_id` PK; khóa ngoại khách hàng; trạng thái và dấu thời gian. `sql/02_constraints.sql` bổ sung khóa duy nhất được sinh tự động để ngăn một khách hàng có nhiều giỏ hàng ACTIVE. |
+| `cart_item` | Khóa chính ghép `(cart_id, seller_id, variant_id)`; khóa ngoại giỏ hàng và khóa ngoại ghép `(seller_id, variant_id)` tới inventory; số lượng và thời điểm thêm. Mỗi dòng chỉ rõ cửa hàng được chọn. |
+| `promotion` | `promotion_id` PK; mã tùy chọn và duy nhất; loại/giá trị, giá trị đơn hàng tối thiểu, mức giảm tối đa, thời gian hiệu lực, trạng thái, giới hạn sử dụng và `used_count`. |
 | `promotion_product` | Composite PK `(promotion_id, product_id)`; promotion/product mapping. |
 | `promotion_category` | Composite PK `(promotion_id, category_id)`; promotion/category mapping. |
-| `orders` | `order_id` PK; unique order number; customer FK; lifecycle status; recipient/address snapshots; subtotal, discount, shipping, grand total and timestamps. |
-| `order_item` | `order_item_id` PK; order FK; `seller_id` and `variant_id` composite FK to inventory; product/SKU snapshots, unit price, quantity, discount and total; unique `(order_id, seller_id, variant_id)`. |
-| `order_promotion` | Composite PK `(order_id, promotion_id)`; applied discount and promotion-code snapshot. |
-| `payment` | `payment_id` PK; order FK; provider, optional unique transaction reference, amount, status and payment timestamps. |
-| `shipment` | `shipment_id` PK; order FK; carrier, optional unique tracking number, status and shipping/delivery timestamps. |
-| `review` | `review_id` PK; product/customer/order-item FKs; rating, title, body, moderation status and timestamps; unique `(customer_id, product_id)`. |
+| `orders` | `order_id` PK; mã đơn hàng duy nhất; khóa ngoại khách hàng; trạng thái vòng đời; bản chụp người nhận/địa chỉ; tiền hàng, giảm giá, phí vận chuyển, tổng tiền và dấu thời gian. |
+| `order_item` | `order_item_id` PK; khóa ngoại đơn hàng; khóa ngoại ghép `seller_id` và `variant_id` tới inventory; bản chụp sản phẩm/SKU, đơn giá, số lượng, mức giảm và thành tiền; duy nhất `(order_id, seller_id, variant_id)`. |
+| `order_promotion` | Khóa chính ghép `(order_id, promotion_id)`; mỗi dòng là một mã đã áp dụng, gồm mức giảm thực tế và bản chụp mã khuyến mãi. Tổng `discount_amount` của một đơn bằng `orders.discount_total`. |
+| `payment` | `payment_id` PK; khóa ngoại đơn hàng; nhà cung cấp thanh toán, mã giao dịch có thể để trống nhưng nếu có phải duy nhất, số tiền, trạng thái và dấu thời gian thanh toán. |
+| `shipment` | `shipment_id` PK; khóa ngoại đơn hàng; đơn vị vận chuyển, mã theo dõi có thể để trống nhưng nếu có phải duy nhất, trạng thái và dấu thời gian gửi/giao hàng. |
+| `review` | `review_id` PK; khóa ngoại sản phẩm/khách hàng/chi tiết đơn hàng; điểm đánh giá, tiêu đề, nội dung, trạng thái kiểm duyệt và dấu thời gian; duy nhất `(customer_id, product_id)`. |
 
-## Stock concepts
+## Các khái niệm về tồn kho
 
-- `product_variant.warehouse_quantity`: quantity recorded at the supplier warehouse for that warehouse-specific variant.
-- `inventory.quantity_on_hand`: quantity assigned to a seller/shop for that variant.
-- `inventory.reserved_quantity`: part of seller stock reserved for fulfillment; it must not exceed `quantity_on_hand`.
-- `quantity_on_hand - reserved_quantity`: currently available seller stock.
+- `product_variant.warehouse_quantity`: số lượng của biến thể tương ứng được ghi nhận tại kho nhà cung cấp.
+- `inventory.quantity_on_hand`: số lượng biến thể đó được phân bổ cho người bán/cửa hàng.
+- `inventory.reserved_quantity`: phần tồn kho của người bán đã được giữ chỗ để xử lý đơn; giá trị này không được vượt `quantity_on_hand`.
+- `quantity_on_hand - reserved_quantity`: số lượng hàng hiện còn có thể bán của người bán.
 
-## Checkout stock ownership
+## Quy tắc xác định chủ sở hữu tồn kho
 
-Both `cart_item` and `order_item` store `seller_id`, constrained with `variant_id` to an existing `inventory` row. Checkout deducts stock only from that selected seller; `product_variant.warehouse_quantity` remains the supplier-warehouse quantity.
+Cả `cart_item` và `order_item` đều lưu `seller_id`, kết hợp với `variant_id` để tham chiếu một dòng `inventory` tồn tại. Khi đặt hàng, hệ thống chỉ trừ tồn kho của người bán đã chọn; `product_variant.warehouse_quantity` vẫn là số lượng tại kho nhà cung cấp.

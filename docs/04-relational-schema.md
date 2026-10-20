@@ -1,6 +1,6 @@
-# Relational schema (đồng bộ với `sql/01_schema.sql`)
+# Lược đồ quan hệ (đồng bộ với `sql/01_schema.sql`)
 
-`sql/01_schema.sql` là nguồn chuẩn của cấu trúc vật lý. MySQL 8.0+, database `ecommerce_advanced`.
+`sql/01_schema.sql` là nguồn chuẩn của cấu trúc vật lý. Yêu cầu MySQL 8.0 trở lên, cơ sở dữ liệu `ecommerce_advanced`.
 
 ```text
 ACCOUNT(account_id PK, email UQ, password_hash, full_name, phone, status, created_at, updated_at)
@@ -25,19 +25,19 @@ SHIPMENT(shipment_id PK, order_id FK→ORDERS, carrier, tracking_number UQ, stat
 REVIEW(review_id PK, product_id FK→PRODUCT, customer_id FK→CUSTOMER, order_item_id FK→ORDER_ITEM, rating, title, body, status, created_at, updated_at, UQ(customer_id,product_id))
 ```
 
-## Indexes defined by schema
+## Các chỉ mục được khai báo trong lược đồ
 
 - `product(category_id, status)`
-- `product_variant(product_id, status)` and `product_variant(warehouse_id, product_id)`
+- `product_variant(product_id, status)` và `product_variant(warehouse_id, product_id)`
 - `inventory(variant_id)`
-- `cart(customer_id, status)`; `sql/02_constraints.sql` adds a generated key and unique constraint for one active cart per customer
-- `orders(customer_id, created_at)` and `orders(status, created_at)`
+- `cart(customer_id, status)`; `sql/02_constraints.sql` bổ sung khóa sinh tự động và ràng buộc duy nhất để mỗi khách hàng chỉ có một giỏ hàng đang hoạt động
+- `orders(customer_id, created_at)` và `orders(status, created_at)`
 - `order_item(variant_id)`, `payment(order_id, status)`
 
 ## Important modeling implications
 
-- `product` is a shared catalog entry and has no `seller_id` column.
-- `product_variant` belongs to both a catalog product and a supplier warehouse. `warehouse_quantity` records supplier stock.
-- `inventory` records each seller's stock for a variant, keyed by `(seller_id, variant_id)`.
-- `cart_item` carries `seller_id`; its composite FK `(seller_id, variant_id)` references `inventory`, so a cart line can only select a variant actually stocked by that shop. `order_item` snapshots the same seller identity and references the same inventory key, preserving attribution for fulfillment and seller reporting. Checkout deducts stock only from the selected seller rather than silently splitting a line across shops.
-- `product.slug` and `product_variant`'s warehouse/product/color/size combination are globally constrained as shown in the DDL; do not assume seller-scoped slugs or variant combinations.
+- `product` là mục danh mục dùng chung và không có cột `seller_id`.
+- `product_variant` thuộc về một sản phẩm trong danh mục và một kho của nhà cung cấp. `warehouse_quantity` lưu số lượng tồn tại kho nhà cung cấp.
+- `inventory` lưu tồn kho của từng người bán cho mỗi biến thể, với khóa `(seller_id, variant_id)`.
+- `cart_item` lưu `seller_id`; khóa ngoại ghép `(seller_id, variant_id)` tham chiếu `inventory`, vì vậy một dòng giỏ hàng chỉ có thể chọn biến thể thực sự có trong kho của cửa hàng đó. `order_item` lưu lại mã người bán tại thời điểm đặt hàng và tham chiếu cùng khóa tồn kho, giúp xác định đúng người bán khi xử lý đơn và lập báo cáo. Khi thanh toán, hệ thống chỉ trừ tồn kho của người bán đã chọn, không tự chia một dòng hàng cho nhiều cửa hàng.
+- `product.slug` và tổ hợp kho/sản phẩm/màu/kích cỡ của `product_variant` chịu ràng buộc duy nhất trên toàn hệ thống như khai báo trong DDL; không được mặc định slug hoặc tổ hợp biến thể là duy nhất theo từng người bán.

@@ -70,6 +70,9 @@
 | BR-064 | Coupon code, nếu có, là duy nhất.                                                                        |
 | BR-065 | Không cho tổng discount làm grand total âm.                                                              |
 | BR-066 | OrderPromotion lưu snapshot discount đã áp dụng để lịch sử không phụ thuộc cách tính sau này. |
+| BR-067 | Một đơn được áp dụng tối đa 5 mã giảm giá, mỗi mã chỉ một lần.                                     |
+| BR-068 | Mỗi mã tính trên base đủ điều kiện riêng; tổng giảm bị cap tại subtotal và phân bổ tuần tự theo promotion_id. |
+| BR-069 | Tổng `order_promotion.discount_amount` phải bằng `orders.discount_total`; các dòng này bất biến sau khi đơn rời PENDING_PAYMENT. |
 
 ## G. Payment và shipment
 

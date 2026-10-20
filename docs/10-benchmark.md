@@ -1,17 +1,17 @@
-# Benchmark plan
+# Kế hoạch đo hiệu năng
 
-## Dataset
+## Bộ dữ liệu
 
-- Tối thiểu 100.000 orders.
-- Hàng trăm/nghìn products, variants, customers và nhiều category levels.
-- Dữ liệu generator có seed cố định.
+- Tối thiểu 100.000 đơn hàng.
+- Hàng trăm hoặc hàng nghìn sản phẩm, biến thể, khách hàng và nhiều cấp danh mục.
+- Dữ liệu do trình sinh tạo ra phải dùng seed cố định.
 
-## Protocol
+## Quy trình
 
-1. Chạy warm-up nếu phù hợp.
-2. Chạy mỗi query nhiều lần.
-3. Ghi median và phân tán cần thiết.
-4. Chạy `EXPLAIN ANALYZE` cho baseline và optimized.
-5. Ghi index/schema thay đổi giữa hai phiên.
+1. Chạy làm nóng trước nếu phù hợp.
+2. Chạy mỗi truy vấn nhiều lần.
+3. Ghi trung vị và các chỉ số phân tán cần thiết.
+4. Chạy `EXPLAIN ANALYZE` cho phiên bản cơ sở và phiên bản đã tối ưu.
+5. Ghi lại các thay đổi về chỉ mục/lược đồ giữa hai phiên bản.
 
-Không suy luận hiệu năng từ thời gian của một lần chạy. Kết quả báo cáo phải ghi môi trường, kích thước dữ liệu và điều kiện chạy.
+Không kết luận hiệu năng chỉ từ một lần chạy. Báo cáo phải ghi rõ môi trường, kích thước dữ liệu và điều kiện thực nghiệm.

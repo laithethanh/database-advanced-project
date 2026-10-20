@@ -1,10 +1,10 @@
-# Reproducibility runbook
+# Hướng dẫn tái lập thực nghiệm
 
 ## Mục tiêu
 
-Một thành viên mới phải có thể tạo database từ đầu, seed dữ liệu nhỏ, chạy test, tạo dataset lớn và chạy benchmark chỉ bằng tài liệu trong repository.
+Thành viên mới có thể tạo cơ sở dữ liệu từ đầu, nạp dữ liệu mẫu nhỏ, chạy kiểm thử, tạo bộ dữ liệu lớn và đo hiệu năng chỉ bằng tài liệu trong repository.
 
-## Thứ tự
+## Thứ tự thực hiện
 
 ```text
 1. tạo database/schema
@@ -12,15 +12,15 @@ Một thành viên mới phải có thể tạo database từ đầu, seed dữ 
 3. chạy sql/02_constraints.sql
 4. chạy sql/03_seed_small.sql
 5. chạy tests/constraint_tests.sql và order_tests.sql
-6. chạy generator với seed cố định
-7. chạy sql/06_queries.sql + sql/07_recursive.sql
-8. chạy benchmark
-9. chạy transaction/concurrency trên 2 session
+6. chạy trình sinh dữ liệu với seed cố định
+7. chạy sql/06_queries.sql và sql/07_recursive.sql
+8. đo hiệu năng
+9. chạy thử nghiệm transaction/concurrency trên 2 phiên kết nối
 ```
 
 ## Nguyên tắc tái lập
 
-- Không commit secret.
-- Lưu `.env.example`, không lưu `.env` thật.
-- Generator phải nhận seed và số lượng bản ghi.
-- Ghi MySQL version, OS, CPU/RAM và dataset cardinality trong benchmark log.
+- Không đưa thông tin bí mật vào Git.
+- Chỉ lưu `.env.example`, không lưu tệp `.env` thật.
+- Trình sinh dữ liệu phải nhận seed và số lượng bản ghi qua tham số.
+- Ghi phiên bản MySQL, hệ điều hành, CPU/RAM và quy mô bộ dữ liệu vào nhật ký đo hiệu năng.

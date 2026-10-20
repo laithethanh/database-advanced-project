@@ -3,20 +3,20 @@
 ## Tài liệu thiết kế v1
 
 - [Cấu trúc dự án](docs/00-project-structure.md)
-- [Khảo sát nghiệp vụ và actor](docs/01-business-analysis.md)
-- [Business rules](docs/02-business-rules.md)
+- [Khảo sát nghiệp vụ và tác nhân](docs/01-business-analysis.md)
+- [Quy tắc nghiệp vụ](docs/02-business-rules.md)
 - [EER/ERD và mapping](docs/03-eer-erd.md)
-- [Relational schema](docs/04-relational-schema.md)
-- [Data dictionary](docs/05-data-dictionary.md)
-- [Normalization baseline](docs/06-normalization.md)
-- [Requirements và backlog](docs/07-requirements-backlog.md)
-- [Catalog 25 query](docs/08-query-catalog.md)
-- [Transaction/concurrency](docs/09-transaction-concurrency.md)
-- [Benchmark](docs/10-benchmark.md)
-- [Reproducibility](docs/11-reproducibility.md)
-- [Query evidence template](docs/12-query-execution-notes.md)
-- [DB execution runbook](docs/13-experiment-runbook.md)
-- [Normalization proof](docs/14-normalization-proof.md)
+- [Lược đồ quan hệ](docs/04-relational-schema.md)
+- [Từ điển dữ liệu](docs/05-data-dictionary.md)
+- [Cơ sở chuẩn hóa](docs/06-normalization.md)
+- [Yêu cầu và danh sách công việc](docs/07-requirements-backlog.md)
+- [Danh mục 25 truy vấn](docs/08-query-catalog.md)
+- [Giao dịch và xử lý đồng thời](docs/09-transaction-concurrency.md)
+- [Đo hiệu năng](docs/10-benchmark.md)
+- [Tái lập thực nghiệm](docs/11-reproducibility.md)
+- [Mẫu ghi bằng chứng truy vấn](docs/12-query-execution-notes.md)
+- [Hướng dẫn chạy cơ sở dữ liệu](docs/13-experiment-runbook.md)
+- [Chứng minh chuẩn hóa](docs/14-normalization-proof.md)
 Đồ án CSDL thương mại điện tử và lập trình SQL nâng cao - thiết kế EER, chuẩn hóa dữ liệu, SQL nâng cao, transaction, trigger, procedure/function, dynamic SQL, recursive SQL và thực nghiệm trên 100.000+ đơn hàng.
 # Đồ án CSDL Nâng cao — Đề tài 7
 
@@ -54,7 +54,7 @@ Xây dựng CSDL cho sàn thương mại điện tử với các nghiệp vụ k
 - Giỏ hàng và chi tiết giỏ hàng.
 - Đơn hàng và chi tiết đơn hàng.
 - Kho và tồn kho.
-- Khuyến mãi và điều kiện áp dụng.
+- Khuyến mãi và điều kiện áp dụng (một đơn áp dụng được nhiều mã, tối đa 5).
 - Đánh giá sản phẩm.
 
 ## 🛠️ Công nghệ

@@ -1,10 +1,10 @@
-// OQ01: delivered orders of a customer
+// OQ01: Lấy các đơn hàng đã giao của một khách hàng.
 SELECT o FROM Order o WHERE o.customer.email = $email AND o.status = 'DELIVERED';
-// OQ02: products whose variant exceeds a price
+// OQ02: Lấy các sản phẩm có biến thể với giá cao hơn mức giá được chỉ định.
 SELECT DISTINCT v.product FROM ProductVariant v WHERE v.price > $price;
-// OQ03: sellers offering a requested SKU
+// OQ03: Lấy các người bán đang cung cấp SKU được yêu cầu.
 SELECT s FROM Seller s WHERE EXISTS v IN s.inventory: v.sku = $sku;
-// OQ04: customer lifetime value
+// OQ04: Tính tổng giá trị đơn hàng của mỗi khách hàng đối với các đơn đã thanh toán, đang xử lý, đang vận chuyển hoặc đã giao.
 SELECT STRUCT(email:c.email, ltv:SUM(SELECT o.grandTotal FROM o IN c.orders WHERE o.status IN {'PAID','PROCESSING','SHIPPED','DELIVERED'})) FROM Customer c;
-// OQ05: top-level order objects with nested line collection
+// OQ05: Lấy các đơn hàng đã thanh toán, kèm mã đơn, tổng tiền và danh sách dòng hàng.
 SELECT STRUCT(number:o.orderNumber, total:o.total(), lines:o.items) FROM Order o WHERE o.status='PAID';

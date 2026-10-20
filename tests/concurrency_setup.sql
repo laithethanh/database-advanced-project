@@ -1,4 +1,4 @@
--- Prepare T03 last-stock contention on a fresh sample database.
+-- Chuẩn bị tình huống T03 tranh mua lượng hàng cuối cùng trên cơ sở dữ liệu mẫu mới.
 USE ecommerce_advanced;
 INSERT INTO account(email,password_hash,full_name,phone) VALUES
  ('concurrent01@example.test','demo-hash','Concurrent One','0900000101'),

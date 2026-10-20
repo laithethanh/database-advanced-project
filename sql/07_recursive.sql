@@ -1,7 +1,7 @@
--- Q18-Q20: recursive category analyses. MySQL 8.0+.
+-- Q18–Q20: phân tích danh mục đệ quy. Yêu cầu MySQL 8.0 trở lên.
 USE ecommerce_advanced;
 
--- Q18. Traverse the complete category forest; path is stable and human-readable.
+-- Q18. Duyệt toàn bộ rừng danh mục; đường dẫn ổn định và dễ đọc.
 WITH RECURSIVE category_tree AS (
  SELECT category_id,parent_category_id,name,0 AS depth,CAST(LPAD(category_id,20,'0') AS CHAR(2000)) AS sort_path,
         CAST(name AS CHAR(2000)) AS display_path
@@ -12,7 +12,7 @@ WITH RECURSIVE category_tree AS (
  FROM category c JOIN category_tree ct ON c.parent_category_id=ct.category_id
 ) SELECT category_id,parent_category_id,name,depth,display_path FROM category_tree ORDER BY sort_path;
 
--- Q19. Revenue of every category subtree. It reports 0 for branches with no paid-or-later sales.
+-- Q19. Doanh thu của cây con thuộc từng danh mục. Nhánh chưa có đơn đã thanh toán trở đi sẽ có doanh thu bằng 0.
 WITH RECURSIVE closure_tree AS (
  SELECT category_id AS root_category_id,category_id AS descendant_category_id FROM category
  UNION ALL
@@ -26,7 +26,7 @@ WITH RECURSIVE closure_tree AS (
 ) SELECT c.category_id,c.name,sr.recognized_revenue FROM category c JOIN subtree_revenue sr ON sr.root_category_id=c.category_id
 ORDER BY sr.recognized_revenue DESC,c.category_id;
 
--- Q20. Ancestor path/depth for one category, useful for breadcrumb navigation.
+-- Q20. Đường dẫn/độ sâu từ một danh mục lên các danh mục tổ tiên, hữu ích cho điều hướng breadcrumb.
 SET @leaf_category_id := 1;
 WITH RECURSIVE ancestors AS (
  SELECT category_id,parent_category_id,name,0 AS distance_from_leaf,CAST(name AS CHAR(2000)) AS path_from_leaf
@@ -36,7 +36,7 @@ WITH RECURSIVE ancestors AS (
  FROM category c JOIN ancestors a ON a.parent_category_id=c.category_id
 ) SELECT category_id,name,distance_from_leaf,path_from_leaf FROM ancestors ORDER BY distance_from_leaf DESC;
 
--- Safety audit: category-cycle trigger should guarantee this returns no rows.
+-- Kiểm tra an toàn: trigger chống chu trình danh mục phải bảo đảm truy vấn này không trả về dòng nào.
 WITH RECURSIVE walk AS (
  SELECT category_id,parent_category_id,CAST(CONCAT(',',category_id,',') AS CHAR(2000)) AS visited,0 AS has_cycle FROM category
  UNION ALL

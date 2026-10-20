@@ -1,15 +1,15 @@
-# Regression manifest
+# Danh mục kiểm thử hồi quy
 
-Execute on a newly built sample DB in this order: `constraint_tests.sql`, `order_tests.sql`, `09_transaction_tests.sql`, then `concurrency_setup.sql` in a fresh rebuild for T03. Pass criteria:
+Chạy trên cơ sở dữ liệu mẫu vừa dựng theo thứ tự: `constraint_tests.sql`, `order_tests.sql`, `09_transaction_tests.sql`, sau đó dựng lại cơ sở dữ liệu sạch và chạy `concurrency_setup.sql` cho T03. Tiêu chí đạt:
 
-| ID | Expected outcome |
+| ID | Kết quả mong đợi |
 |---|---|
-| R01 | Negative price, duplicate SKU, FK violation and over-reservation are rejected. |
-| R02 | Q25 and positive audit queries return zero rows/zero counts. |
-| R03 | Valid checkout commits one PAID order whose totals equal its lines. |
-| R04 | Invalid coupon and insufficient stock roll back every checkout change. |
-| R05 | Invalid order/shipment transitions are rejected; cancelling restores seller stock once. |
-| R06 | T03 permits exactly one of two last-stock checkouts. |
-| R07 | Dynamic-search payload remains bound data; invalid whitelist values fail before SQL execution. |
+| R01 | Giá âm, SKU trùng, vi phạm FK và giữ chỗ vượt tồn kho đều bị từ chối. |
+| R02 | Q25 và các truy vấn kiểm tra bất biến phải trả về 0 dòng/0 số lượng vi phạm. |
+| R03 | Đặt hàng hợp lệ commit một đơn PAID có tổng tiền bằng tổng các dòng hàng. |
+| R04 | Mã giảm giá không hợp lệ và tồn kho không đủ khiến toàn bộ thay đổi khi thanh toán bị rollback. |
+| R05 | Chuyển trạng thái đơn hàng/giao hàng không hợp lệ bị từ chối; hủy đơn chỉ hoàn tồn kho người bán một lần. |
+| R06 | T03 chỉ cho phép một trong hai giao dịch mua lượng hàng cuối cùng thành công. |
+| R07 | Dữ liệu đầu vào tìm kiếm động vẫn được truyền dưới dạng tham số; giá trị ngoài whitelist bị từ chối trước khi chạy SQL. |
 
-Create `tests/regression/<run-date>.md` with MySQL version, script revision, pass/fail, exact error text and terminal screenshot links. Do not commit credentials or large raw datasets.
+Tạo `tests/regression/<run-date>.md`, ghi phiên bản MySQL, phiên bản script, đạt/trượt, nguyên văn lỗi và liên kết ảnh chụp terminal. Không commit thông tin xác thực hoặc bộ dữ liệu thô dung lượng lớn.

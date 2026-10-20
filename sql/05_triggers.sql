@@ -28,6 +28,11 @@ DROP TRIGGER IF EXISTS trg_order_item_immutable_update$$
 DROP TRIGGER IF EXISTS trg_order_item_immutable_delete$$
 DROP TRIGGER IF EXISTS trg_payment_validate_amount_insert$$
 DROP TRIGGER IF EXISTS trg_payment_validate_amount_update$$
+DROP TRIGGER IF EXISTS trg_order_promotion_validate_insert$$
+DROP TRIGGER IF EXISTS trg_order_promotion_validate_update$$
+DROP TRIGGER IF EXISTS trg_order_promotion_immutable_delete$$
+DROP TRIGGER IF EXISTS trg_order_promotion_sum_insert$$
+DROP TRIGGER IF EXISTS trg_order_promotion_sum_update$$
 
 CREATE TRIGGER trg_product_validate_category BEFORE INSERT ON product FOR EACH ROW
 BEGIN
@@ -98,6 +103,7 @@ BEGIN
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='financial totals are immutable after payment';
   END IF;
   IF NEW.status<>'PENDING_PAYMENT' AND NEW.subtotal<>(SELECT COALESCE(SUM(line_total),0) FROM order_item WHERE order_id=NEW.order_id) THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='order subtotal does not match order items'; END IF;
+  IF NEW.status<>'PENDING_PAYMENT' AND NEW.discount_total<>(SELECT COALESCE(SUM(discount_amount),0) FROM order_promotion WHERE order_id=NEW.order_id) THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='order discount_total does not match order_promotion'; END IF;
   IF NOT (NEW.status=OLD.status OR (OLD.status='PENDING_PAYMENT' AND NEW.status IN ('PAID','CANCELLED')) OR (OLD.status='PAID' AND NEW.status IN ('PROCESSING','CANCELLED')) OR (OLD.status='PROCESSING' AND NEW.status IN ('SHIPPED','CANCELLED')) OR (OLD.status='SHIPPED' AND NEW.status IN ('DELIVERED','RETURN_REQUESTED')) OR (OLD.status='DELIVERED' AND NEW.status='RETURN_REQUESTED') OR (OLD.status='RETURN_REQUESTED' AND NEW.status='RETURNED')) THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='invalid order status transition'; END IF;
   IF NEW.status IN ('PROCESSING','SHIPPED','DELIVERED','RETURN_REQUESTED','RETURNED') AND NOT EXISTS (SELECT 1 FROM order_item WHERE order_id=NEW.order_id) THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='order must contain at least one item'; END IF;
   IF NEW.status='PAID' AND NOT EXISTS (SELECT 1 FROM payment WHERE order_id=NEW.order_id AND status='SUCCESS') THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='order cannot become PAID without successful payment'; END IF;
@@ -136,7 +142,7 @@ BEGIN
 END$$
 CREATE TRIGGER trg_order_restore_stock_on_cancel AFTER UPDATE ON orders FOR EACH ROW
 BEGIN
-  -- Checkout deducts seller stock immediately; a permitted cancellation restores it exactly once.
+  -- Thanh toán trừ tồn kho của người bán ngay lập tức; khi hủy đơn hợp lệ, tồn kho chỉ được hoàn lại đúng một lần.
   IF OLD.status<>'CANCELLED' AND NEW.status='CANCELLED' THEN
     UPDATE inventory i JOIN order_item oi ON oi.seller_id=i.seller_id AND oi.variant_id=i.variant_id
     SET i.quantity_on_hand=i.quantity_on_hand+oi.quantity WHERE oi.order_id=NEW.order_id;
@@ -166,6 +172,37 @@ CREATE TRIGGER trg_payment_validate_amount_update BEFORE UPDATE ON payment FOR E
 BEGIN
   IF NEW.status='SUCCESS' AND NOT EXISTS (SELECT 1 FROM orders WHERE order_id=NEW.order_id AND grand_total=NEW.amount) THEN
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='successful payment amount must equal order grand_total';
+  END IF;
+END$$
+-- order_promotion chỉ được ghi trong lúc đơn còn PENDING_PAYMENT và tổng giảm không vượt subtotal.
+CREATE TRIGGER trg_order_promotion_validate_insert BEFORE INSERT ON order_promotion FOR EACH ROW
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM orders WHERE order_id=NEW.order_id AND status='PENDING_PAYMENT') THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='promotions can only be added while order is PENDING_PAYMENT';
+  END IF;
+END$$
+CREATE TRIGGER trg_order_promotion_validate_update BEFORE UPDATE ON order_promotion FOR EACH ROW
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM orders WHERE order_id=OLD.order_id AND status='PENDING_PAYMENT') THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='applied promotions are immutable after PENDING_PAYMENT';
+  END IF;
+END$$
+CREATE TRIGGER trg_order_promotion_immutable_delete BEFORE DELETE ON order_promotion FOR EACH ROW
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM orders WHERE order_id=OLD.order_id AND status='PENDING_PAYMENT') THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='applied promotions are immutable after PENDING_PAYMENT';
+  END IF;
+END$$
+CREATE TRIGGER trg_order_promotion_sum_insert AFTER INSERT ON order_promotion FOR EACH ROW
+BEGIN
+  IF (SELECT COALESCE(SUM(discount_amount),0) FROM order_promotion WHERE order_id=NEW.order_id)>(SELECT subtotal FROM orders WHERE order_id=NEW.order_id) THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='order discount exceeds subtotal';
+  END IF;
+END$$
+CREATE TRIGGER trg_order_promotion_sum_update AFTER UPDATE ON order_promotion FOR EACH ROW
+BEGIN
+  IF (SELECT COALESCE(SUM(discount_amount),0) FROM order_promotion WHERE order_id=NEW.order_id)>(SELECT subtotal FROM orders WHERE order_id=NEW.order_id) THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='order discount exceeds subtotal';
   END IF;
 END$$
 DELIMITER ;
