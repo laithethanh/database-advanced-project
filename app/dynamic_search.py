@@ -1,94 +1,149 @@
-"""Tìm kiếm sản phẩm với bộ lọc tùy chọn an toàn cho MySQL/PyMySQL.
+"""Tìm kiếm sản phẩm bằng SQL động + demo SQL Injection — phiên bản của Phạm Thành Danh.
 
-Không thể truyền định danh SQL dưới dạng tham số, vì vậy lựa chọn sắp xếp phải thuộc danh sách cho phép cố định.
-Mọi giá trị người dùng đều được truyền qua placeholder của PyMySQL; không nội suy trực tiếp vào SQL.
+Cách chạy (từ thư mục gốc project):
+    python app/dynamic_search.py
+
+File gồm 2 cách viết tìm kiếm để so sánh:
+1. tim_kiem_khong_an_toan(): ghép chuỗi người dùng nhập thẳng vào câu SQL  -> BỊ TẤN CÔNG ĐƯỢC.
+2. tao_cau_tim_kiem():      giá trị đi qua tham số %s, tên cột lấy từ whitelist -> AN TOÀN.
+
+Chỉ chạy trên database thử nghiệm ở máy mình (ecommerce_advanced).
 """
-from __future__ import annotations
 
-import argparse
-import os
-from decimal import Decimal
-from typing import Any
+import getpass
 
-ALLOWED_SORTS = {"name": "p.name", "price": "v.price", "created_at": "p.created_at", "rating": "average_rating"}
-ALLOWED_DIRECTIONS = {"asc": "ASC", "desc": "DESC"}
+import pymysql
 
 
-def build_search_sql(*, keyword: str | None = None, category_id: int | None = None,
-                     min_price: Decimal | None = None, max_price: Decimal | None = None,
-                     brand: str | None = None, min_rating: Decimal | None = None,
-                     sort: str = "name", direction: str = "asc", limit: int = 50) -> tuple[str, list[Any]]:
-    if sort not in ALLOWED_SORTS or direction not in ALLOWED_DIRECTIONS:
-        raise ValueError("Tùy chọn sắp xếp không hợp lệ")
-    if not 1 <= limit <= 100:
-        raise ValueError("limit phải nằm trong khoảng từ 1 đến 100")
-    if (min_price is not None and min_price < 0) or (max_price is not None and max_price < 0):
-        raise ValueError("Giá không được âm")
-    if min_price is not None and max_price is not None and min_price > max_price:
-        raise ValueError("min_price không được lớn hơn max_price")
-    if min_rating is not None and not Decimal("1") <= min_rating <= Decimal("5"):
-        raise ValueError("min_rating phải nằm trong khoảng từ 1 đến 5")
-
-    conditions = ["p.status = 'ACTIVE'", "v.status = 'ACTIVE'", "w.status = 'ACTIVE'"]
-    params: list[Any] = []
-    if keyword:
-        conditions.append("(p.name LIKE %s OR p.description LIKE %s)")
-        params.extend([f"%{keyword}%", f"%{keyword}%"])
-    if category_id is not None:
-        conditions.append("p.category_id = %s")
-        params.append(category_id)
-    if min_price is not None:
-        conditions.append("v.price >= %s")
-        params.append(min_price)
-    if max_price is not None:
-        conditions.append("v.price <= %s")
-        params.append(max_price)
-    if brand:
-        conditions.append("p.brand = %s")
-        params.append(brand)
-    if min_rating is not None:
-        conditions.append("COALESCE(r.average_rating, 0) >= %s")
-        params.append(min_rating)
-
-    sql = f"""
-SELECT p.product_id,p.name,p.slug,p.brand,v.variant_id,v.sku,v.color,v.size,v.price,
-       w.name AS warehouse_name,COALESCE(r.average_rating,0) AS average_rating
-FROM product p
-JOIN product_variant v ON v.product_id=p.product_id
-JOIN warehouse w ON w.warehouse_id=v.warehouse_id
-LEFT JOIN (
-  SELECT product_id,AVG(rating) AS average_rating FROM review WHERE status='PUBLISHED' GROUP BY product_id
-) r ON r.product_id=p.product_id
-WHERE {' AND '.join(conditions)}
-ORDER BY {ALLOWED_SORTS[sort]} {ALLOWED_DIRECTIONS[direction]}, p.product_id, v.variant_id
-LIMIT %s"""
-    params.append(limit)
-    return sql, params
+def connect():
+    return pymysql.connect(
+        host="127.0.0.1", port=3306, user="root",
+        password=getpass.getpass("Mat khau MySQL: "),
+        database="ecommerce_advanced", charset="utf8mb4",
+        cursorclass=pymysql.cursors.DictCursor,     # mỗi dòng kết quả là một dict {tên cột: giá trị}
+    )
 
 
-def search_products(**filters: Any) -> list[dict[str, Any]]:
-    import pymysql
+# ---------------------------------------------------------------------------
+# 1. CÁCH SAI: ghép chuỗi
+# ---------------------------------------------------------------------------
 
-    sql, params = build_search_sql(**filters)
-    connection = pymysql.connect(host=os.environ["DB_HOST"], port=int(os.getenv("DB_PORT", "3306")),
-        user=os.environ["DB_USER"], password=os.environ["DB_PASSWORD"], database=os.getenv("DB_NAME", "ecommerce_advanced"),
-        charset="utf8mb4", cursorclass=pymysql.cursors.DictCursor)
+def tim_kiem_khong_an_toan(cur, tu_khoa):
+    """KHÔNG BAO GIỜ viết thế này trong thực tế. Chỉ để minh họa lỗ hổng."""
+    sql = (
+        "SELECT p.name AS ten, v.price AS gia "
+        "FROM product p JOIN product_variant v ON v.product_id = p.product_id "
+        "WHERE p.name LIKE '%" + tu_khoa + "%' LIMIT 20"      # <-- chữ người dùng nhập bị dán thẳng vào SQL
+    )
+    cur.execute(sql)
+    return sql, cur.fetchall()
+
+
+# ---------------------------------------------------------------------------
+# 2. CÁCH ĐÚNG: SQL động an toàn
+# ---------------------------------------------------------------------------
+
+# Whitelist: người dùng chỉ được CHỌN tên, không được tự gõ tên cột/chiều sắp xếp.
+COT_SAP_XEP = {"ten": "p.name", "gia": "v.price", "moi_nhat": "p.created_at"}
+CHIEU_SAP_XEP = {"tang": "ASC", "giam": "DESC"}
+
+
+def tao_cau_tim_kiem(tu_khoa=None, danh_muc_id=None, gia_tu=None, gia_den=None,
+                     sap_xep="ten", chieu="tang", gioi_han=20):
+    """Ghép câu SQL theo bộ lọc người dùng chọn. Trả về (câu SQL, danh sách tham số).
+
+    - Phần ĐIỀU KIỆN thay đổi tùy bộ lọc (đó là "SQL động"),
+      nhưng GIÁ TRỊ luôn nằm trong danh sách tham số, chỗ của nó trong SQL chỉ là %s.
+    - Tên cột sắp xếp và ASC/DESC không truyền bằng tham số được, nên lấy từ whitelist.
+    """
+    if sap_xep not in COT_SAP_XEP:
+        raise ValueError(f"Khong cho phep sap xep theo: {sap_xep!r}")
+    if chieu not in CHIEU_SAP_XEP:
+        raise ValueError(f"Chieu sap xep khong hop le: {chieu!r}")
+    if not 1 <= int(gioi_han) <= 100:
+        raise ValueError("gioi_han phai tu 1 den 100")
+    if gia_tu is not None and gia_den is not None and gia_tu > gia_den:
+        raise ValueError("gia_tu khong duoc lon hon gia_den")
+
+    dieu_kien = ["p.status = 'ACTIVE'", "v.status = 'ACTIVE'"]
+    tham_so = []
+
+    if tu_khoa:
+        dieu_kien.append("p.name LIKE %s")
+        tham_so.append(f"%{tu_khoa}%")
+    if danh_muc_id is not None:
+        dieu_kien.append("p.category_id = %s")
+        tham_so.append(danh_muc_id)
+    if gia_tu is not None:
+        dieu_kien.append("v.price >= %s")
+        tham_so.append(gia_tu)
+    if gia_den is not None:
+        dieu_kien.append("v.price <= %s")
+        tham_so.append(gia_den)
+
+    sql = (
+        "SELECT p.product_id, p.name AS ten, v.sku, v.price AS gia "
+        "FROM product p JOIN product_variant v ON v.product_id = p.product_id "
+        "WHERE " + " AND ".join(dieu_kien) + " "
+        "ORDER BY " + COT_SAP_XEP[sap_xep] + " " + CHIEU_SAP_XEP[chieu] + " "
+        "LIMIT %s"
+    )
+    tham_so.append(int(gioi_han))
+    return sql, tham_so
+
+
+def tim_kiem_an_toan(cur, **bo_loc):
+    sql, tham_so = tao_cau_tim_kiem(**bo_loc)
+    cur.execute(sql, tham_so)        # PyMySQL tự escape từng tham số, không ghép chuỗi
+    return sql, tham_so, cur.fetchall()
+
+
+# ---------------------------------------------------------------------------
+# Demo
+# ---------------------------------------------------------------------------
+
+def in_ket_qua(rows, so_dong=3):
+    print(f"   -> {len(rows)} dong")
+    for r in rows[:so_dong]:
+        print(f"      {r}")
+
+
+def main():
+    conn = connect()
     try:
-        with connection.cursor() as cursor:
-            cursor.execute(sql, params)
-            return cursor.fetchall()
+        with conn.cursor() as cur:
+            print("\n===== A. Tim kiem binh thuong voi tu khoa 'Áo' =====")
+            sql, rows = tim_kiem_khong_an_toan(cur, "Áo")
+            print("[Khong an toan]"); in_ket_qua(rows)
+            sql, ts, rows = tim_kiem_an_toan(cur, tu_khoa="Áo", gia_den=500000, sap_xep="gia")
+            print("[An toan, loc gia <= 500.000, sap theo gia]"); in_ket_qua(rows)
+
+            tan_cong_1 = "' OR '1'='1' -- "
+            print(f"\n===== B. Tan cong 1: lay TOAN BO san pham. Nhap: {tan_cong_1!r} =====")
+            sql, rows = tim_kiem_khong_an_toan(cur, tan_cong_1)
+            print(f"[Khong an toan] Cau SQL thuc te:\n   {sql}"); in_ket_qua(rows)
+            sql, ts, rows = tim_kiem_an_toan(cur, tu_khoa=tan_cong_1)
+            print(f"[An toan] Tham so gui di: {ts}"); in_ket_qua(rows)
+
+            tan_cong_2 = "khongco' UNION SELECT email, password_hash FROM account -- "
+            print(f"\n===== C. Tan cong 2: an cap email tai khoan. Nhap: {tan_cong_2!r} =====")
+            sql, rows = tim_kiem_khong_an_toan(cur, tan_cong_2)
+            print(f"[Khong an toan] Cau SQL thuc te:\n   {sql}"); in_ket_qua(rows)
+            sql, ts, rows = tim_kiem_an_toan(cur, tu_khoa=tan_cong_2)
+            print(f"[An toan] Tham so gui di: {ts}"); in_ket_qua(rows)
+
+            print("\n===== D. Tan cong qua o sap xep (khong dung tham so duoc) -> whitelist chan =====")
+            for gia_tri_xau in ["gia; DROP TABLE product", "(SELECT password_hash FROM account LIMIT 1)"]:
+                try:
+                    tao_cau_tim_kiem(sap_xep=gia_tri_xau)
+                except ValueError as loi:
+                    print(f"   Bi chan: {loi}")
+
+            cur.execute("SELECT COUNT(*) AS so_san_pham FROM product")
+            print(f"\nBang product van con nguyen: {cur.fetchone()['so_san_pham']} san pham")
     finally:
-        connection.close()
+        conn.close()
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description="Tìm kiếm sản phẩm an toàn")
-    parser.add_argument("--keyword"); parser.add_argument("--category-id", type=int); parser.add_argument("--min-price", type=Decimal)
-    parser.add_argument("--max-price", type=Decimal); parser.add_argument("--brand"); parser.add_argument("--min-rating", type=Decimal)
-    parser.add_argument("--sort", default="name", choices=ALLOWED_SORTS); parser.add_argument("--direction", default="asc", choices=ALLOWED_DIRECTIONS)
-    parser.add_argument("--limit", type=int, default=50)
-    args = vars(parser.parse_args())
-    for row in search_products(**args): print(row)
-
-
-if __name__ == "__main__": main()
+if __name__ == "__main__":
+    main()

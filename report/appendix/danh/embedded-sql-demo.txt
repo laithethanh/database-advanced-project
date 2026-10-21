@@ -1,0 +1,58 @@
+BẰNG CHỨNG DEMO SQL NHÚNG (PyMySQL + cursor + gọi procedure) — Phạm Thành Danh
+=================================================================================
+Thời điểm chạy : 22/10/2026, khoảng 02:53 (giờ Việt Nam)
+Máy            : Laptop Windows 11, MySQL 8.4.11, Python 3.15.0, PyMySQL 1.2.3
+Database       : ecommerce_advanced, bộ dữ liệu 100.000 đơn (seed 20261003)
+Lệnh           : python app\embedded_sql.py   (khách mặc định DCUS000001)
+Ảnh chụp       : embedded-sql-demo.png
+
+KỊCH BẢN VÀ KẾT QUẢ
+-------------------
+| Bước | Việc                                          | Kết quả                                                    |
+|------|-----------------------------------------------|------------------------------------------------------------|
+| 1    | Lấy khách, mở giỏ ACTIVE                      | Tạo giỏ mới cart_id = 2                                    |
+| 2    | Thêm 2 món còn hàng (INSERT ... ON DUPLICATE) | 2 món vào giỏ                                              |
+| 3    | Duyệt giỏ bằng cursor (for row in cur)        | Tổng tiền hàng 1.224.000đ                                  |
+| 4    | Đặt 1.020 cái khi kho còn 20                  | Lỗi 1644 'insufficient inventory'; trước = sau             |
+|      |                                               | (100.000 đơn, kho 20) -> rollback đúng                     |
+| 5    | Sửa thành 2 cái, CALL sp_checkout             | Thành công, order_id = 100002                              |
+| 6    | Kiểm tra đơn, giỏ, tồn kho                    | PAID, 1.324.000 + 30.000 = 1.354.000đ; giỏ CHECKED_OUT;    |
+|      |                                               | tồn kho 20 -> 18                                           |
+
+NHẬN XÉT
+--------
+- Cursor đọc kết quả từng dòng (for row in cur), không cần tải toàn bộ kết quả một lần.
+- autocommit=False: chương trình tự commit/rollback; lần đặt hàng lỗi không để lại đơn mồ côi
+  hay tồn kho bị trừ dở (số đơn và tồn kho trước/sau bằng nhau).
+- Tham số OUT của sp_checkout được đọc qua biến phiên: CALL sp_checkout(..., @order_id); SELECT @order_id.
+- order_id thành công là 100002 chứ không phải 100001: lần checkout thất bại ở bước 4 đã cấp phát
+  giá trị AUTO_INCREMENT 100001 trước khi rollback. InnoDB không thu hồi giá trị AUTO_INCREMENT khi
+  rollback, nên khóa tự tăng có thể có khoảng trống — đây là hành vi bình thường, không phải lỗi dữ liệu.
+
+OUTPUT NGUYÊN VĂN
+-----------------
+[1] Khach hang: Duyên Nguyễn (id 3)
+    Gio hang ACTIVE: cart_id = 2 (vua tao moi)
+
+[2] Them 2 mon con hang vao gio:
+      + San pham Demo (SKU-DEMO-001), gia 100.000đ, kho con 20
+      + Áo thun Viet Tien 00001 (DSKU-000001-1), gia 1.124.000đ, kho con 170
+
+[3] Duyet gio hang bang cursor:
+      - Áo thun Viet Tien 00001 (DSKU-000001-1) x1 = 1.124.000đ
+      - San pham Demo (SKU-DEMO-001) x1 = 100.000đ
+      Tong tien hang: 1.224.000đ
+
+[4] Thu dat 1020 cai 'San pham Demo' trong khi kho chi con 20:
+      Bi tu choi: loi 1644 - insufficient inventory
+      Truoc: 100000 don, kho 20  |  Sau: 100000 don, kho 20  -> KHONG THAY DOI (rollback dung)
+
+[5] Sua lai thanh 2 cai roi dat hang:
+      - Áo thun Viet Tien 00001 (DSKU-000001-1) x1 = 1.124.000đ
+      - San pham Demo (SKU-DEMO-001) x2 = 200.000đ
+      Tong tien hang: 1.324.000đ
+      Dat hang thanh cong! order_id = 100002
+
+[6] Don ORD-20261021194722-3b9b9790cd88: trang thai PAID, tien hang 1.324.000đ + ship 30.000đ = 1.354.000đ
+    Gio hang sau khi dat: CHECKED_OUT
+    Ton kho 'San pham Demo': 20 -> 18 (da tru 2)
