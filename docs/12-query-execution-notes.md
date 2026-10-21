@@ -27,3 +27,11 @@
 2. Với Q01, Q06, Q14, Q15, Q17, Q19 và Q21, chạy `EXPLAIN ANALYZE <query>` trên bộ dữ liệu đo hiệu năng. Lưu nguyên văn kế hoạch thực thi.
 3. Với Q21, xác nhận Q21A và Q21B trả về cùng dữ liệu trước khi so sánh thời gian.
 4. Không tự tạo kết quả hoặc thời gian chạy. Các tệp hiện chỉ nêu kết quả kỳ vọng cho đến khi nhóm thực sự chạy MySQL.
+
+## Trạng thái chạy thật (2026-10-21)
+
+- Toàn bộ Q01–Q25 và Q18–Q20 (recursive) đã chạy **không lỗi** trên MySQL 8.4.11 với dữ liệu mẫu nhỏ
+  (`report/appendix/tests/06-queries-sample.txt`, `07-recursive-sample.txt`).
+- Trên dữ liệu 100.000 đơn, Q25 trả về **0 dòng vi phạm** (`report/appendix/benchmark/q25-invariant-check.sql`).
+- Kế hoạch thực thi của ba truy vấn đo hiệu năng nằm trong `report/appendix/benchmark/`.
+- Cần chạy lại Q01–Q25 trên bộ dữ liệu 100.000 đơn và lưu đầy đủ kết quả từng truy vấn trước khi nộp báo cáo.

@@ -56,7 +56,7 @@
 | BR-046 | Grand total = subtotal − discount + shipping fee + các khoản được mô hình hóa. Không được âm.              |
 | BR-047 | Order number là duy nhất.                                                                                              |
 | BR-048 | Chỉ transition theo state machine hợp lệ.                                                                             |
-| BR-049 | Hủy đơn phải hoàn phần tồn đã reserve theo đúng transaction.                                                  |
+| BR-049 | Hủy đơn đã thanh toán/xử lý phải hoàn phần tồn đã trừ đúng một lần; đơn chưa thanh toán không hoàn tồn. |
 | BR-050 | Không xóa cứng order đã phát sinh giao dịch; dùng status/soft lifecycle.                                         |
 
 ## F. Promotion
@@ -110,3 +110,19 @@
 - Thời gian dùng `DATETIME` và lưu UTC ở tầng ứng dụng/database theo thống nhất của nhóm.
 - Xóa dữ liệu master phải cân nhắc lịch sử; order và order item giữ lại để audit.
 - Dữ liệu đầu vào dynamic SQL phải bind parameter; tên cột/sort direction phải qua whitelist.
+
+## K. ASSERTION lý thuyết và cách mô phỏng
+
+Chuẩn SQL có `CREATE ASSERTION` để kiểm tra invariant liên bảng trên mọi thay đổi. MySQL không hỗ trợ câu lệnh này, vì vậy nhóm mô tả assertion ở mức lý thuyết và cài đặt tương đương bằng trigger/thủ tục:
+
+| Assertion lý thuyết | Cài đặt trong MySQL |
+|---|---|
+| Mọi `order_item` của đơn đã thanh toán phải có tổng khớp `orders.subtotal` | Trigger cập nhật tổng + kiểm tra khi chuyển trạng thái + Q25 |
+| `orders.grand_total = subtotal - discount_total + shipping_fee` | `CHECK` + trigger + Q25 |
+| Không được oversell tồn kho khả dụng | `FOR UPDATE`, cập nhật có điều kiện, rollback trong `sp_checkout` |
+| Không thể chuyển trạng thái đơn/shipment tùy ý | Trigger state machine |
+| Review chỉ hợp lệ với đơn `DELIVERED` đúng khách/sản phẩm | Trigger `review` + Q25 |
+| Category không tạo chu trình | Trigger đệ quy có giới hạn bước |
+| Tổng `order_promotion` không vượt subtotal và bằng `discount_total` | Trigger tổng + kiểm tra khi chuyển trạng thái |
+
+Các assertion này được kiểm chứng lại bằng Q25 sau giao dịch; Q25 phải trả về 0 dòng vi phạm.

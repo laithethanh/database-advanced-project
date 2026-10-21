@@ -10,9 +10,7 @@ import os
 from decimal import Decimal
 from typing import Any
 
-import pymysql
-
-ALLOWED_SORTS = {"name": "p.name", "price": "min_price", "created_at": "p.created_at", "rating": "average_rating"}
+ALLOWED_SORTS = {"name": "p.name", "price": "v.price", "created_at": "p.created_at", "rating": "average_rating"}
 ALLOWED_DIRECTIONS = {"asc": "ASC", "desc": "DESC"}
 
 
@@ -69,6 +67,8 @@ LIMIT %s"""
 
 
 def search_products(**filters: Any) -> list[dict[str, Any]]:
+    import pymysql
+
     sql, params = build_search_sql(**filters)
     connection = pymysql.connect(host=os.environ["DB_HOST"], port=int(os.getenv("DB_PORT", "3306")),
         user=os.environ["DB_USER"], password=os.environ["DB_PASSWORD"], database=os.getenv("DB_NAME", "ecommerce_advanced"),

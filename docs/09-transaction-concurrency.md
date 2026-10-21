@@ -14,9 +14,9 @@ Kết quả mong đợi: không có đơn hàng dở dang; tồn kho và đơn h
 
 ## T02: lỗi giữa chừng
 
-Sau khi tạo order nhưng trước bước cuối, cố tình phát sinh lỗi. `ROLLBACK` phải loại bỏ toàn bộ thay đổi của transaction.
+Sau khi đã tạo order và trừ tồn kho, dùng một mã khuyến mãi đã hết lượt để phát sinh lỗi ở bước promotion. `EXIT HANDLER` phải `ROLLBACK` toàn bộ transaction.
 
-Kết quả mong đợi: không còn đơn hàng mồ côi và tồn kho không bị trừ một phần.
+Kết quả mong đợi: số đơn hàng, tồn kho, `used_count` và trạng thái giỏ hàng đều không thay đổi. Kịch bản này được cài trong `tests/order_tests.sql` với mã `LIMIT0`.
 
 ## T03: hai phiên kết nối cùng mua SKU cuối
 

@@ -1,5 +1,8 @@
--- Các kiểm tra bảo mật được thực thi từ Python vì việc liên kết tham số thuộc phía ứng dụng khách.
--- python -c "from app.dynamic_search import build_search_sql; print(build_search_sql(keyword=\"' OR 1=1 --\"))"
--- Kỳ vọng: dữ liệu thử tấn công được truyền dưới dạng tham số; SQL sinh ra vẫn giữ placeholder %s.
--- python -c "from app.dynamic_search import build_search_sql; build_search_sql(sort='name; DROP TABLE product')"
--- Kỳ vọng: ValueError. Đồng thời thử direction='desc;--', min_price=-1, min_rating=6 và limit=101.
+-- Kiểm thử bảo mật SQL động chạy bằng Python (không cần kết nối MySQL):
+-- python -m unittest tests.test_dynamic_search -v
+--
+-- Bộ test kiểm tra:
+-- 1. Chuỗi tấn công trong keyword vẫn nằm trong params, không nội suy vào SQL.
+-- 2. sort/direction ngoài whitelist bị từ chối trước khi tạo SQL.
+-- 3. min_price âm, min_price > max_price, min_rating ngoài [1,5], limit ngoài [1,100] bị từ chối.
+-- 4. sort=price dùng đúng biểu thức v.price đã có trong SELECT.

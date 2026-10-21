@@ -5,6 +5,7 @@ DROP TRIGGER IF EXISTS trg_product_validate_category_update$$
 DROP TRIGGER IF EXISTS trg_product_validate_seller_category$$
 DROP TRIGGER IF EXISTS trg_product_validate_seller_category_update$$
 DROP TRIGGER IF EXISTS trg_product_variant_validate_product$$
+DROP TRIGGER IF EXISTS trg_product_variant_validate_product_update$$
 DROP TRIGGER IF EXISTS trg_cart_item_validate_variant$$
 DROP TRIGGER IF EXISTS trg_cart_item_validate_variant_update$$
 DROP TRIGGER IF EXISTS trg_inventory_no_negative_reserved$$
@@ -46,6 +47,13 @@ CREATE TRIGGER trg_product_variant_validate_product BEFORE INSERT ON product_var
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM product p WHERE p.product_id=NEW.product_id AND p.status='ACTIVE') THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='variant product must be ACTIVE'; END IF;
   IF NOT EXISTS (SELECT 1 FROM warehouse w WHERE w.warehouse_id=NEW.warehouse_id AND w.status='ACTIVE') THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='variant warehouse must be ACTIVE'; END IF;
+END$$
+CREATE TRIGGER trg_product_variant_validate_product_update BEFORE UPDATE ON product_variant FOR EACH ROW
+BEGIN
+  IF NEW.product_id<>OLD.product_id OR NEW.warehouse_id<>OLD.warehouse_id THEN
+    IF NOT EXISTS (SELECT 1 FROM product p WHERE p.product_id=NEW.product_id AND p.status='ACTIVE') THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='variant product must be ACTIVE'; END IF;
+    IF NOT EXISTS (SELECT 1 FROM warehouse w WHERE w.warehouse_id=NEW.warehouse_id AND w.status='ACTIVE') THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='variant warehouse must be ACTIVE'; END IF;
+  END IF;
 END$$
 CREATE TRIGGER trg_cart_item_validate_variant BEFORE INSERT ON cart_item FOR EACH ROW
 BEGIN
@@ -142,8 +150,8 @@ BEGIN
 END$$
 CREATE TRIGGER trg_order_restore_stock_on_cancel AFTER UPDATE ON orders FOR EACH ROW
 BEGIN
-  -- Thanh toán trừ tồn kho của người bán ngay lập tức; khi hủy đơn hợp lệ, tồn kho chỉ được hoàn lại đúng một lần.
-  IF OLD.status<>'CANCELLED' AND NEW.status='CANCELLED' THEN
+  -- Tồn kho chỉ bị trừ khi đơn đã thanh toán; đơn PENDING_PAYMENT chưa từng bị trừ nên không hoàn.
+  IF OLD.status IN ('PAID','PROCESSING') AND NEW.status='CANCELLED' THEN
     UPDATE inventory i JOIN order_item oi ON oi.seller_id=i.seller_id AND oi.variant_id=i.variant_id
     SET i.quantity_on_hand=i.quantity_on_hand+oi.quantity WHERE oi.order_id=NEW.order_id;
   END IF;

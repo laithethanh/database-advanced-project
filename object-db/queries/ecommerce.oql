@@ -1,10 +1,21 @@
 // OQ01: Lấy các đơn hàng đã giao của một khách hàng.
+// Kết quả: set<Order>; mỗi phần tử có orderNumber, status='DELIVERED', customer.email=$email.
 SELECT o FROM Order o WHERE o.customer.email = $email AND o.status = 'DELIVERED';
+
 // OQ02: Lấy các sản phẩm có biến thể với giá cao hơn mức giá được chỉ định.
+// Kết quả: set<Product> không trùng; sản phẩm có ít nhất một variant.price > $price.
 SELECT DISTINCT v.product FROM ProductVariant v WHERE v.price > $price;
+
 // OQ03: Lấy các người bán đang cung cấp SKU được yêu cầu.
-SELECT s FROM Seller s WHERE EXISTS v IN s.inventory: v.sku = $sku;
-// OQ04: Tính tổng giá trị đơn hàng của mỗi khách hàng đối với các đơn đã thanh toán, đang xử lý, đang vận chuyển hoặc đã giao.
-SELECT STRUCT(email:c.email, ltv:SUM(SELECT o.grandTotal FROM o IN c.orders WHERE o.status IN {'PAID','PROCESSING','SHIPPED','DELIVERED'})) FROM Customer c;
+// Kết quả: set<Seller>; seller.shopStatus='ACTIVE' và tồn tại variant.sku=$sku trong inventory.
+SELECT s FROM Seller s WHERE s.shopStatus = 'ACTIVE' AND EXISTS v IN s.inventory: v.sku = $sku;
+
+// OQ04: Tổng giá trị đơn hàng đã ghi nhận của mỗi khách hàng.
+// lifetimeValue() = SUM(grandTotal) của các đơn PAID/PROCESSING/SHIPPED/DELIVERED;
+// khách hàng không có đơn trả về 0.
+// Kết quả: set<STRUCT(email:string, ltv:decimal)>.
+SELECT STRUCT(email: c.email, ltv: c.lifetimeValue()) FROM Customer c;
+
 // OQ05: Lấy các đơn hàng đã thanh toán, kèm mã đơn, tổng tiền và danh sách dòng hàng.
-SELECT STRUCT(number:o.orderNumber, total:o.total(), lines:o.items) FROM Order o WHERE o.status='PAID';
+// Kết quả: set<STRUCT(number:string, total:decimal, lines:list<OrderLine>)>.
+SELECT STRUCT(number: o.orderNumber, total: o.total(), lines: o.items) FROM Order o WHERE o.status = 'PAID';

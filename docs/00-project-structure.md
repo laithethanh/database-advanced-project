@@ -14,7 +14,10 @@ database-advanced-project/
 │   ├── 08-query-catalog.md
 │   ├── 09-transaction-concurrency.md
 │   ├── 10-benchmark.md
-│   └── 11-reproducibility.md
+│   ├── 11-reproducibility.md
+│   ├── 12-query-execution-notes.md
+│   ├── 13-experiment-runbook.md
+│   └── 14-normalization-proof.md
 ├── diagrams/
 │   ├── eer.mmd
 │   ├── erd.mmd
@@ -43,16 +46,26 @@ database-advanced-project/
 │   ├── model/
 │   └── queries/
 ├── tests/
+│   ├── concurrency_setup.sql
+│   ├── concurrency_session_a.sql
+│   ├── concurrency_session_b.sql
 │   ├── constraint_tests.sql
 │   ├── order_tests.sql
+│   ├── promotion_tests.sql
 │   ├── security_tests.sql
+│   ├── test_dynamic_search.py
 │   └── regression/
 ├── report/
 │   ├── chapters/
+│   │   ├── report-outline.md
+│   │   └── report-draft.md
 │   └── appendix/
 ├── slides/
+│   ├── slide-outline.md
+│   └── slides-draft.md
 ├── .env.example
 ├── .gitignore
+├── requirements.txt
 ├── README.md
 └── PLAN_PHAN_CONG_NHOM_7_DE_TAI_7.md
 ```

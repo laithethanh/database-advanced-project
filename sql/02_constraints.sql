@@ -64,6 +64,64 @@ ALTER TABLE payment
 ALTER TABLE review
   ADD CONSTRAINT chk_review_rating CHECK (rating BETWEEN 1 AND 5);
 
+ALTER TABLE account
+  ADD CONSTRAINT chk_account_full_name_not_blank CHECK (CHAR_LENGTH(TRIM(full_name)) > 0),
+  ADD CONSTRAINT chk_account_password_not_blank CHECK (CHAR_LENGTH(TRIM(password_hash)) > 0);
+
+ALTER TABLE customer
+  ADD CONSTRAINT chk_customer_code_not_blank CHECK (CHAR_LENGTH(TRIM(customer_code)) > 0);
+
+ALTER TABLE seller
+  ADD CONSTRAINT chk_seller_code_not_blank CHECK (CHAR_LENGTH(TRIM(seller_code)) > 0);
+
+ALTER TABLE category
+  ADD CONSTRAINT chk_category_slug_not_blank CHECK (CHAR_LENGTH(TRIM(slug)) > 0);
+
+ALTER TABLE product
+  ADD CONSTRAINT chk_product_slug_not_blank CHECK (CHAR_LENGTH(TRIM(slug)) > 0);
+
+ALTER TABLE product_variant
+  ADD CONSTRAINT chk_variant_sku_not_blank CHECK (CHAR_LENGTH(TRIM(sku)) > 0);
+
+ALTER TABLE warehouse
+  ADD CONSTRAINT chk_warehouse_code_not_blank CHECK (CHAR_LENGTH(TRIM(code)) > 0),
+  ADD CONSTRAINT chk_warehouse_name_not_blank CHECK (CHAR_LENGTH(TRIM(name)) > 0);
+
+ALTER TABLE address
+  ADD CONSTRAINT chk_address_recipient_not_blank CHECK (CHAR_LENGTH(TRIM(recipient_name)) > 0),
+  ADD CONSTRAINT chk_address_phone_not_blank CHECK (CHAR_LENGTH(TRIM(phone)) > 0),
+  ADD CONSTRAINT chk_address_line1_not_blank CHECK (CHAR_LENGTH(TRIM(line1)) > 0),
+  ADD CONSTRAINT chk_address_city_not_blank CHECK (CHAR_LENGTH(TRIM(city)) > 0),
+  ADD CONSTRAINT chk_address_province_not_blank CHECK (CHAR_LENGTH(TRIM(province)) > 0);
+
+ALTER TABLE promotion
+  ADD CONSTRAINT chk_promotion_name_not_blank CHECK (CHAR_LENGTH(TRIM(name)) > 0),
+  ADD CONSTRAINT chk_promotion_code_not_blank CHECK (code IS NULL OR CHAR_LENGTH(TRIM(code)) > 0);
+
+ALTER TABLE order_item
+  ADD CONSTRAINT chk_order_item_line_total_formula CHECK (
+    line_total = quantity * unit_price - line_discount
+  ),
+  ADD CONSTRAINT chk_order_item_snapshot_not_blank CHECK (
+    CHAR_LENGTH(TRIM(product_name_snapshot)) > 0 AND CHAR_LENGTH(TRIM(sku_snapshot)) > 0
+  );
+
+ALTER TABLE orders
+  ADD CONSTRAINT chk_order_grand_total_formula CHECK (
+    grand_total = subtotal - discount_total + shipping_fee
+  ),
+  ADD CONSTRAINT chk_order_recipient_not_blank CHECK (
+    CHAR_LENGTH(TRIM(recipient_name)) > 0
+    AND CHAR_LENGTH(TRIM(recipient_phone)) > 0
+    AND CHAR_LENGTH(TRIM(shipping_address)) > 0
+  );
+
+ALTER TABLE payment
+  ADD CONSTRAINT chk_payment_provider_not_blank CHECK (CHAR_LENGTH(TRIM(provider)) > 0);
+
+ALTER TABLE shipment
+  ADD CONSTRAINT chk_shipment_carrier_not_blank CHECK (CHAR_LENGTH(TRIM(carrier)) > 0);
+
 -- Các bất biến liên quan nhiều dòng phải được kiểm tra bằng trigger/thủ tục:
 -- 1) Mỗi khách hàng chỉ có tối đa một giỏ hàng ACTIVE.
 -- 2) Tổng đơn hàng = tiền hàng - tiền giảm giá + phí vận chuyển.

@@ -12,9 +12,9 @@ SELECT @order_id AS created_order_id,@before_stock AS stock_before,
        (SELECT grand_total FROM orders WHERE order_id=@order_id) AS grand_total,
        (SELECT SUM(line_total) FROM order_item WHERE order_id=@order_id) AS item_sum;
 
--- T02: bằng chứng hoàn tác. Trên cơ sở dữ liệu mẫu MỚI, gọi thanh toán với mã giảm giá không hợp lệ.
--- Số lượng trước và sau phải bằng nhau. CALL dự kiến phát sinh lỗi và dừng ứng dụng khách;
--- chạy câu SELECT kiểm tra sau đó trong câu lệnh/ứng dụng khách mới.
+-- T02: bằng chứng hoàn tác sau khi đã tạo order/trừ kho nằm trong tests/order_tests.sql
+-- với mã LIMIT0 đã hết lượt. Kịch bản dưới đây chỉ kiểm tra lỗi sớm trước transaction
+-- (mã không tồn tại), nên không đủ chứng minh rollback tồn kho.
 -- SELECT COUNT(*) AS orders_before FROM orders;
 -- CALL sp_checkout((SELECT account_id FROM customer WHERE customer_code='CUS0001'),'Nguyen Van A','0900000001','HCM',30000,'NO-SUCH-COUPON',@ignored);
 -- SELECT COUNT(*) AS orders_after FROM orders;

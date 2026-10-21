@@ -12,7 +12,8 @@ WITH product_sales AS (
 FROM product_sales ORDER BY revenue DESC,product_id LIMIT 10;
 
 -- Q02. Doanh thu và số lượng đơn hàng của từng người bán.
-SELECT s.account_id AS seller_id,s.shop_name,COUNT(DISTINCT o.order_id) AS order_count,
+SELECT s.account_id AS seller_id,s.shop_name,
+ COUNT(DISTINCT CASE WHEN o.status IN ('PAID','PROCESSING','SHIPPED','DELIVERED') THEN o.order_id END) AS order_count,
  COALESCE(SUM(CASE WHEN o.status IN ('PAID','PROCESSING','SHIPPED','DELIVERED') THEN oi.line_total END),0) AS revenue
 FROM seller s LEFT JOIN order_item oi ON oi.seller_id=s.account_id LEFT JOIN orders o ON o.order_id=oi.order_id
 GROUP BY s.account_id,s.shop_name ORDER BY revenue DESC;
@@ -43,9 +44,10 @@ HAVING COUNT(DISTINCT oi.variant_id)>=@min_skus ORDER BY distinct_skus DESC;
 
 -- Q08. SKU có giá cao hơn mức trung bình của danh mục (truy vấn con tương quan).
 SELECT p.name,v.sku,v.price,c.name AS category_name FROM product p JOIN product_variant v ON v.product_id=p.product_id
-JOIN category c ON c.category_id=p.category_id WHERE v.status='ACTIVE' AND v.price > (
+JOIN category c ON c.category_id=p.category_id
+WHERE p.status='ACTIVE' AND v.status='ACTIVE' AND v.price > (
  SELECT AVG(v2.price) FROM product p2 JOIN product_variant v2 ON v2.product_id=p2.product_id
- WHERE p2.category_id=p.category_id AND v2.status='ACTIVE') ORDER BY c.name,v.price DESC;
+ WHERE p2.category_id=p.category_id AND p2.status='ACTIVE' AND v2.status='ACTIVE') ORDER BY c.name,v.price DESC;
 
 -- Q09. Khách hàng vừa mua vừa đánh giá sản phẩm (EXISTS).
 SELECT DISTINCT c.customer_code,a.full_name,p.product_id,p.name FROM customer c JOIN account a ON a.account_id=c.account_id
@@ -54,7 +56,7 @@ WHERE EXISTS (SELECT 1 FROM orders o JOIN order_item oi ON oi.order_id=o.order_i
  WHERE o.customer_id=c.account_id AND v.product_id=p.product_id AND o.status='DELIVERED');
 
 -- Q10. Người bán không bán SKU nào thuộc cây con danh mục được yêu cầu.
-SET @category_root := 1;
+SET @category_root := (SELECT category_id FROM category WHERE parent_category_id IS NULL ORDER BY category_id LIMIT 1);
 WITH RECURSIVE category_scope AS (
  SELECT category_id FROM category WHERE category_id=@category_root UNION ALL
  SELECT c.category_id FROM category c JOIN category_scope cs ON c.parent_category_id=cs.category_id
@@ -104,7 +106,9 @@ WITH monthly_sales AS (
 WITH daily_sales AS (
  SELECT DATE(o.created_at) AS sales_day,SUM(oi.line_total) AS revenue FROM orders o JOIN order_item oi ON oi.order_id=o.order_id
  WHERE o.status IN ('PAID','PROCESSING','SHIPPED','DELIVERED') GROUP BY DATE(o.created_at)
-) SELECT sales_day,revenue,SUM(revenue) OVER (ORDER BY sales_day ROWS BETWEEN 29 PRECEDING AND CURRENT ROW) AS rolling_30_day_revenue FROM daily_sales;
+) SELECT sales_day,revenue,SUM(revenue) OVER (
+  ORDER BY sales_day RANGE BETWEEN INTERVAL 29 DAY PRECEDING AND CURRENT ROW
+) AS rolling_30_day_revenue FROM daily_sales;
 
 -- Q18–Q20 là các truy vấn phân tích đệ quy có thể chạy trong sql/07_recursive.sql.
 
@@ -124,8 +128,12 @@ FROM customer c JOIN orders o ON o.customer_id=c.account_id WHERE o.status IN ('
 GROUP BY c.account_id,c.customer_code HAVING AVG(o.status='RETURNED')>@return_rate ORDER BY return_rate DESC;
 
 -- Q23. Hiệu quả khuyến mãi.
-SELECT pr.promotion_id,pr.code,pr.name,COUNT(op.order_id) AS orders_using_promotion,COALESCE(SUM(op.discount_amount),0) AS discount_given,COALESCE(SUM(o.grand_total),0) AS gross_revenue
-FROM promotion pr LEFT JOIN order_promotion op ON op.promotion_id=pr.promotion_id LEFT JOIN orders o ON o.order_id=op.order_id
+SELECT pr.promotion_id,pr.code,pr.name,COUNT(DISTINCT o.order_id) AS orders_using_promotion,
+ COALESCE(SUM(CASE WHEN o.order_id IS NOT NULL THEN op.discount_amount END),0) AS discount_given,
+ COALESCE(SUM(o.grand_total),0) AS gross_revenue
+FROM promotion pr
+LEFT JOIN order_promotion op ON op.promotion_id=pr.promotion_id
+LEFT JOIN orders o ON o.order_id=op.order_id AND o.status IN ('PAID','PROCESSING','SHIPPED','DELIVERED')
 GROUP BY pr.promotion_id,pr.code,pr.name ORDER BY discount_given DESC;
 
 -- Q24. Sản phẩm có nhiều biến thể nhưng tổng tồn kho khả dụng tại người bán thấp.
@@ -137,7 +145,15 @@ GROUP BY p.product_id,p.name HAVING COUNT(DISTINCT v.variant_id)>1 AND COALESCE(
 -- Q25. Truy vấn phát hiện vi phạm: kết quả phải không có dòng nào nếu các bất biến liên bảng được bảo đảm.
 SELECT 'ORDER_TOTAL_MISMATCH' AS violation,CAST(o.order_id AS CHAR) AS entity_id FROM orders o
 WHERE o.subtotal<>(SELECT COALESCE(SUM(oi.line_total),0) FROM order_item oi WHERE oi.order_id=o.order_id)
+UNION ALL SELECT 'ORDER_GRAND_TOTAL_MISMATCH',CAST(o.order_id AS CHAR) FROM orders o
+WHERE o.grand_total<>o.subtotal-o.discount_total+o.shipping_fee
+UNION ALL SELECT 'ORDER_DISCOUNT_MISMATCH',CAST(o.order_id AS CHAR) FROM orders o
+WHERE o.discount_total<>(SELECT COALESCE(SUM(op.discount_amount),0) FROM order_promotion op WHERE op.order_id=o.order_id)
+UNION ALL SELECT 'ORDER_ITEM_TOTAL_MISMATCH',CAST(oi.order_item_id AS CHAR) FROM order_item oi
+WHERE oi.line_total<>oi.quantity*oi.unit_price-oi.line_discount
 UNION ALL SELECT 'NEGATIVE_AVAILABLE',CONCAT(i.seller_id,':',i.variant_id) FROM inventory i WHERE i.reserved_quantity>i.quantity_on_hand
+UNION ALL SELECT 'PAYMENT_AMOUNT_MISMATCH',CAST(p.payment_id AS CHAR) FROM payment p JOIN orders o ON o.order_id=p.order_id
+WHERE p.status='SUCCESS' AND p.amount<>o.grand_total
 UNION ALL SELECT 'REVIEW_NOT_DELIVERED',CAST(r.review_id AS CHAR) FROM review r WHERE NOT EXISTS (
  SELECT 1 FROM order_item oi JOIN orders o ON o.order_id=oi.order_id JOIN product_variant v ON v.variant_id=oi.variant_id
  WHERE oi.order_item_id=r.order_item_id AND o.customer_id=r.customer_id AND v.product_id=r.product_id AND o.status='DELIVERED');

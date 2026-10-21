@@ -1,9 +1,9 @@
 // Mô hình logic theo phong cách ODMG; OID của mỗi đối tượng trong extent do hệ thống quản lý.
-interface Account { attribute string email; attribute string fullName; };
-interface Customer : Account { relationship set<Order> orders inverse Order::customer; };
-interface Seller : Account { attribute string shopName; relationship set<ProductVariant> inventory; };
-interface Product { attribute string name; attribute string brand; relationship set<ProductVariant> variants inverse ProductVariant::product; };
-interface ProductVariant { attribute string sku; attribute decimal price; relationship Product product inverse Product::variants; relationship set<Seller> sellers; };
+interface Account { attribute string email; attribute string fullName; attribute string status; boolean isActive(); };
+interface Customer : Account { relationship set<Order> orders inverse Order::customer; decimal lifetimeValue(); };
+interface Seller : Account { attribute string shopName; attribute string shopStatus; relationship set<ProductVariant> inventory inverse ProductVariant::sellers; decimal revenue(); };
+interface Product { attribute string name; attribute string brand; attribute string status; relationship set<ProductVariant> variants inverse ProductVariant::product; set<ProductVariant> activeVariants(); };
+interface ProductVariant { attribute string sku; attribute decimal price; attribute string status; relationship Product product inverse Product::variants; relationship set<Seller> sellers inverse Seller::inventory; boolean isAvailable(); };
 // Một dòng hàng trong đơn, gồm mã SKU, số lượng, đơn giá và thành tiền.
 struct OrderLine { string sku; long quantity; decimal unitPrice; decimal lineTotal; };
-interface Order { attribute string orderNumber; attribute string status; attribute decimal grandTotal; relationship Customer customer inverse Customer::orders; attribute list<OrderLine> items; decimal total(); };
+interface Order { attribute string orderNumber; attribute string status; attribute decimal grandTotal; relationship Customer customer inverse Customer::orders; attribute list<OrderLine> items; decimal total(); boolean canTransitionTo(string nextStatus); };

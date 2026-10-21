@@ -25,8 +25,11 @@ def change_cart_quantity(cart_id: int, seller_id: int, variant_id: int, quantity
     with connection() as db:
         try:
             with db.cursor() as cursor:
-                cursor.execute("UPDATE cart_item SET quantity=%s WHERE cart_id=%s AND seller_id=%s AND variant_id=%s", (quantity,cart_id,seller_id,variant_id))
-                if cursor.rowcount != 1: raise LookupError("Không tìm thấy dòng sản phẩm trong giỏ hàng")
+                cursor.execute("SELECT 1 FROM cart_item WHERE cart_id=%s AND seller_id=%s AND variant_id=%s FOR UPDATE",
+                               (cart_id,seller_id,variant_id))
+                if cursor.fetchone() is None: raise LookupError("Không tìm thấy dòng sản phẩm trong giỏ hàng")
+                cursor.execute("UPDATE cart_item SET quantity=%s WHERE cart_id=%s AND seller_id=%s AND variant_id=%s",
+                               (quantity,cart_id,seller_id,variant_id))
             db.commit()
         except Exception:
             db.rollback()

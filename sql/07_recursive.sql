@@ -13,6 +13,8 @@ WITH RECURSIVE category_tree AS (
 ) SELECT category_id,parent_category_id,name,depth,display_path FROM category_tree ORDER BY sort_path;
 
 -- Q19. Doanh thu của cây con thuộc từng danh mục. Nhánh chưa có đơn đã thanh toán trở đi sẽ có doanh thu bằng 0.
+-- Chi phí: closure (root × descendant) nhân với số dòng order_item, nên trên dữ liệu 100.000 đơn
+-- truy vấn này khá nặng; dùng để minh họa kỹ thuật, không dùng làm truy vấn dashboard.
 WITH RECURSIVE closure_tree AS (
  SELECT category_id AS root_category_id,category_id AS descendant_category_id FROM category
  UNION ALL
@@ -27,7 +29,7 @@ WITH RECURSIVE closure_tree AS (
 ORDER BY sr.recognized_revenue DESC,c.category_id;
 
 -- Q20. Đường dẫn/độ sâu từ một danh mục lên các danh mục tổ tiên, hữu ích cho điều hướng breadcrumb.
-SET @leaf_category_id := 1;
+SET @leaf_category_id := (SELECT category_id FROM category WHERE slug='dien-tu' LIMIT 1);
 WITH RECURSIVE ancestors AS (
  SELECT category_id,parent_category_id,name,0 AS distance_from_leaf,CAST(name AS CHAR(2000)) AS path_from_leaf
  FROM category WHERE category_id=@leaf_category_id

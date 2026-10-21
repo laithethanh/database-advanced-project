@@ -57,25 +57,33 @@ BEGIN
   DECLARE v_usage_limit INT UNSIGNED;
   DECLARE v_usage_count INT DEFAULT 0;
   DECLARE v_scope_count INT DEFAULT 0;
-  DECLARE v_available INT DEFAULT 0;
-  DECLARE v_take INT DEFAULT 0;
-  DECLARE v_stock_seller_id BIGINT UNSIGNED;
-  DECLARE v_remaining INT UNSIGNED;
+  DECLARE v_available BIGINT DEFAULT NULL;
   DECLARE v_item_count INT DEFAULT 0;
   DECLARE v_invalid_items INT DEFAULT 0;
   DECLARE v_code VARCHAR(50);
   DECLARE v_rest VARCHAR(255);
   DECLARE v_code_count INT DEFAULT 0;
 
+  -- Khóa các dòng hàng theo thứ tự (seller_id, variant_id) để giảm deadlock.
   DECLARE cur_items CURSOR FOR
     SELECT ci.variant_id,ci.seller_id,ci.quantity,v.price,p.product_id,p.name,v.sku
     FROM cart_item ci JOIN product_variant v ON v.variant_id=ci.variant_id JOIN product p ON p.product_id=v.product_id
-    WHERE ci.cart_id=v_cart_id ORDER BY ci.variant_id;
+    WHERE ci.cart_id=v_cart_id ORDER BY ci.seller_id,ci.variant_id;
   DECLARE CONTINUE HANDLER FOR NOT FOUND SET v_done=1;
   DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN ROLLBACK; RESIGNAL; END;
 
+  IF p_customer_id IS NULL OR NOT EXISTS (SELECT 1 FROM customer WHERE account_id=p_customer_id) THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='customer does not exist';
+  END IF;
   IF p_shipping_fee IS NULL OR p_shipping_fee<0 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='invalid shipping fee'; END IF;
-  IF p_recipient_name IS NULL OR p_recipient_phone IS NULL OR p_shipping_address IS NULL THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='recipient and shipping address are required'; END IF;
+  IF p_recipient_name IS NULL OR CHAR_LENGTH(TRIM(p_recipient_name))=0
+     OR p_recipient_phone IS NULL OR CHAR_LENGTH(TRIM(p_recipient_phone))=0
+     OR p_shipping_address IS NULL OR CHAR_LENGTH(TRIM(p_shipping_address))=0 THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='recipient and shipping address are required';
+  END IF;
+  IF p_promotion_codes IS NOT NULL AND CHAR_LENGTH(p_promotion_codes)>255 THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='promotion code list is too long';
+  END IF;
 
   -- Chuẩn hóa danh sách mã trước khi mở transaction.
   IF p_promotion_codes IS NOT NULL AND TRIM(p_promotion_codes)<>'' THEN
@@ -119,7 +127,7 @@ BEGIN
     AND NOT (v.status='ACTIVE' AND p.status='ACTIVE' AND w.status='ACTIVE' AND s.shop_status='ACTIVE');
   IF v_invalid_items>0 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='cart contains a variant that is no longer sellable'; END IF;
 
-  SET v_order_number=CONCAT('ORD-',DATE_FORMAT(UTC_TIMESTAMP(),'%Y%m%d%H%i%s'),'-',LPAD(FLOOR(RAND()*1000000),6,'0'));
+  SET v_order_number=CONCAT('ORD-',DATE_FORMAT(UTC_TIMESTAMP(),'%Y%m%d%H%i%s'),'-',SUBSTRING(REPLACE(UUID(),'-',''),1,12));
   INSERT INTO orders(order_number,customer_id,status,recipient_name,recipient_phone,shipping_address,subtotal,discount_total,shipping_fee,grand_total,placed_at)
   VALUES(v_order_number,p_customer_id,'PENDING_PAYMENT',p_recipient_name,p_recipient_phone,p_shipping_address,0,0,p_shipping_fee,p_shipping_fee,UTC_TIMESTAMP());
   SET p_order_id=LAST_INSERT_ID();
@@ -129,27 +137,17 @@ BEGIN
   item_loop: LOOP
     FETCH cur_items INTO v_variant_id,v_seller_id,v_qty,v_price,v_product_id,v_product_name,v_sku;
     IF v_done=1 THEN LEAVE item_loop; END IF;
-    SET v_remaining=v_qty;
-    BEGIN
-      DECLARE v_stock_done INT DEFAULT 0;
-      DECLARE cur_stock CURSOR FOR
-        SELECT seller_id,quantity_on_hand-reserved_quantity
-        FROM inventory WHERE variant_id=v_variant_id AND seller_id=v_seller_id
-          AND quantity_on_hand>reserved_quantity FOR UPDATE;
-      DECLARE CONTINUE HANDLER FOR NOT FOUND SET v_stock_done=1;
-      OPEN cur_stock;
-      stock_loop: LOOP
-        FETCH cur_stock INTO v_stock_seller_id,v_available;
-        IF v_stock_done=1 OR v_remaining=0 THEN LEAVE stock_loop; END IF;
-        SET v_take=LEAST(v_remaining,v_available);
-        UPDATE inventory SET quantity_on_hand=quantity_on_hand-v_take
-        WHERE seller_id=v_stock_seller_id AND variant_id=v_variant_id AND quantity_on_hand-reserved_quantity>=v_take;
-        IF ROW_COUNT()<>1 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='inventory changed concurrently; checkout aborted'; END IF;
-        SET v_remaining=v_remaining-v_take;
-      END LOOP;
-      CLOSE cur_stock;
-    END;
-    IF v_remaining>0 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='insufficient inventory'; END IF;
+    SET v_available=NULL;
+    SELECT quantity_on_hand-reserved_quantity INTO v_available
+    FROM inventory
+    WHERE seller_id=v_seller_id AND variant_id=v_variant_id
+    FOR UPDATE;
+    IF v_available IS NULL OR v_available<v_qty THEN
+      SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='insufficient inventory';
+    END IF;
+    UPDATE inventory SET quantity_on_hand=quantity_on_hand-v_qty
+    WHERE seller_id=v_seller_id AND variant_id=v_variant_id AND quantity_on_hand-reserved_quantity>=v_qty;
+    IF ROW_COUNT()<>1 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='inventory changed concurrently; checkout aborted'; END IF;
     INSERT INTO order_item(order_id,seller_id,variant_id,product_name_snapshot,sku_snapshot,unit_price,quantity,line_discount,line_total)
     VALUES(p_order_id,v_seller_id,v_variant_id,v_product_name,v_sku,v_price,v_qty,0,v_qty*v_price);
     SET v_subtotal=v_subtotal+v_qty*v_price;

@@ -1,0 +1,4 @@
+created_order_id	stock_before	subtotal	grand_total	item_sum
+4	18	100000.00	130000.00	100000.00
+phone_after_savepoint_rollback
+0900000001
