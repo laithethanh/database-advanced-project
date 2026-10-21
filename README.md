@@ -1,25 +1,26 @@
-# database-advanced-project
-
-## Tài liệu thiết kế v1
-
-- [Cấu trúc dự án](docs/00-project-structure.md)
-- [Khảo sát nghiệp vụ và actor](docs/01-business-analysis.md)
-- [Business rules](docs/02-business-rules.md)
-- [EER/ERD và mapping](docs/03-eer-erd.md)
-- [Relational schema](docs/04-relational-schema.md)
-- [Data dictionary](docs/05-data-dictionary.md)
-- [Normalization baseline](docs/06-normalization.md)
-- [Requirements và backlog](docs/07-requirements-backlog.md)
-- [Catalog 25 query](docs/08-query-catalog.md)
-- [Transaction/concurrency](docs/09-transaction-concurrency.md)
-- [Benchmark](docs/10-benchmark.md)
-- [Reproducibility](docs/11-reproducibility.md)
-Đồ án CSDL thương mại điện tử và lập trình SQL nâng cao - thiết kế EER, chuẩn hóa dữ liệu, SQL nâng cao, transaction, trigger, procedure/function, dynamic SQL, recursive SQL và thực nghiệm trên 100.000+ đơn hàng.
 # Đồ án CSDL Nâng cao — Đề tài 7
 
 ## CSDL thương mại điện tử và lập trình SQL nâng cao
 
 Đồ án môn **Cơ sở dữ liệu nâng cao** của **Nhóm 7**, tập trung vào thiết kế và triển khai CSDL cho hệ thống thương mại điện tử; đồng thời nghiên cứu SQL nâng cao, CSDL hướng đối tượng, transaction, concurrency và đánh giá hiệu năng.
+
+## Tài liệu thiết kế
+
+- [Cấu trúc dự án](docs/00-project-structure.md)
+- [Khảo sát nghiệp vụ và tác nhân](docs/01-business-analysis.md)
+- [Quy tắc nghiệp vụ](docs/02-business-rules.md)
+- [EER/ERD và mapping](docs/03-eer-erd.md)
+- [Lược đồ quan hệ](docs/04-relational-schema.md)
+- [Từ điển dữ liệu](docs/05-data-dictionary.md)
+- [Cơ sở chuẩn hóa](docs/06-normalization.md)
+- [Yêu cầu và danh sách công việc](docs/07-requirements-backlog.md)
+- [Danh mục 25 truy vấn](docs/08-query-catalog.md)
+- [Giao dịch và xử lý đồng thời](docs/09-transaction-concurrency.md)
+- [Đo hiệu năng](docs/10-benchmark.md)
+- [Tái lập thực nghiệm](docs/11-reproducibility.md)
+- [Mẫu ghi bằng chứng truy vấn](docs/12-query-execution-notes.md)
+- [Hướng dẫn chạy cơ sở dữ liệu](docs/13-experiment-runbook.md)
+- [Chứng minh chuẩn hóa](docs/14-normalization-proof.md)
 
 ## 👥 Thành viên
 
@@ -31,7 +32,7 @@
 | 4   | **Nguyễn Mậu Công Khoa** | Ràng buộc & transaction; DDL, CHECK/FK, trigger, function/procedure, transaction, concurrency                               |
 | 5   | **Phạm Thành Danh**       | Dữ liệu, SQL nhúng & thực nghiệm; generator ≥100.000 đơn, PyMySQL/dynamic SQL, benchmark và tái lập                |
 
-**Thời lượng:** 12 tuần**DBMS:** MySQL 8.0+**Kho mã:** GitHub
+**Thời lượng:** 12 tuần · **DBMS:** MySQL 8.0.18+ · **Kho mã:** GitHub
 
 > Phân công chi tiết theo từng tuần và ma trận trách nhiệm được quản lý trong [`PLAN_PHAN_CONG_NHOM_7_DE_TAI_7.md`](PLAN_PHAN_CONG_NHOM_7_DE_TAI_7.md).
 
@@ -51,7 +52,7 @@ Xây dựng CSDL cho sàn thương mại điện tử với các nghiệp vụ k
 - Giỏ hàng và chi tiết giỏ hàng.
 - Đơn hàng và chi tiết đơn hàng.
 - Kho và tồn kho.
-- Khuyến mãi và điều kiện áp dụng.
+- Khuyến mãi và điều kiện áp dụng (một đơn áp dụng được nhiều mã, tối đa 5).
 - Đánh giá sản phẩm.
 
 ## 🛠️ Công nghệ
@@ -161,16 +162,33 @@ project/
 │  ├─ 08_benchmark.sql
 │  └─ 09_transaction_tests.sql
 ├─ data/
-│  └─ generator/
+│ ├─ generator/
+│ ├─ seed/
+│ └─ benchmark/
 ├─ app/
-│  ├─ embedded_sql.py
-│  └─ dynamic_search.py
+│ ├─ embedded_sql.py
+│ ├─ dynamic_search.py
+│ └─ requirements.txt
 ├─ object-db/
-│  ├─ model/
-│  └─ queries/
+│ ├─ model/
+│ └─ queries/
 ├─ tests/
+│  ├─ constraint_tests.sql
+│  ├─ order_tests.sql
+│  ├─ promotion_tests.sql
+│  ├─ concurrency_setup.sql
+│  ├─ security_tests.sql
+│  ├─ test_dynamic_search.py
+│  └─ regression/
 ├─ slides/
+│  ├─ slide-outline.md
+│  └─ slides-draft.md
 ├─ report/
+│  ├─ chapters/
+│  │  ├─ report-outline.md
+│  │  └─ report-draft.md
+│  └─ appendix/
+├─ requirements.txt
 └─ README.md
 ```
 
@@ -206,9 +224,11 @@ project/
 
 ### Yêu cầu
 
-- MySQL 8.0+.
-- Python 3.x.
+- MySQL 8.0.18+ (bắt buộc cho `EXPLAIN ANALYZE`). Đã kiểm thử thực tế trên **MySQL 8.4.11** (Windows).
+- Python 3.10+ (đã kiểm thử trên 3.13.2).
 - Git.
+
+> Các số liệu thực nghiệm trong báo cáo được đo trên MySQL 8.4.11 với bộ dữ liệu 100.000 đơn do generator tạo ra; bằng chứng nằm trong `report/appendix/`.
 
 ### Quy trình tổng quát
 
@@ -218,7 +238,29 @@ cd <repository-folder>
 pip install -r requirements.txt
 ```
 
-Sau khi cấu hình kết nối MySQL, chạy các script trong thư mục `sql/` theo đúng thứ tự. Các bước tạo dữ liệu lớn, chạy benchmark, transaction lab và ứng dụng SQL nhúng phải tuân theo runbook tương ứng.
+Dựng database mẫu trên MySQL:
+
+```powershell
+mysql -u <user> -p < sql/01_schema.sql
+mysql -u <user> -p < sql/02_constraints.sql
+mysql -u <user> -p < sql/03_seed_small.sql
+mysql -u <user> -p < sql/04_functions.sql
+mysql -u <user> -p < sql/05_triggers.sql
+mysql -u <user> -p < tests/constraint_tests.sql
+mysql -u <user> -p < tests/promotion_tests.sql
+mysql -u <user> -p < tests/order_tests.sql
+mysql -u <user> -p < sql/06_queries.sql
+mysql -u <user> -p < sql/07_recursive.sql
+```
+
+Với database benchmark sạch, nạp `01`, `02`, `04`, `05`, sau đó chạy generator và benchmark:
+
+```powershell
+python data/generator/generate_data.py --orders 100000 --seed 20261003
+mysql -u <user> -p < sql/08_benchmark.sql
+```
+
+Quy trình chi tiết, cách lưu bằng chứng và kịch bản hai phiên nằm trong `docs/13-experiment-runbook.md`.
 
 > Không commit password, connection string thật hoặc `.env` chứa thông tin nhạy cảm. Dùng `.env.example`.
 
@@ -233,25 +275,36 @@ Sau khi cấu hình kết nối MySQL, chạy các script trong thư mục `sql/
 
 ## ✅ Checklist
 
-- [ ] EER + quy tắc nghiệp vụ hoàn chỉnh.
-- [ ] Relational schema + data dictionary.
-- [ ] FD, candidate key, minimal cover và lập luận 3NF/BCNF; 4NF nếu có.
-- [ ] ≥20 SQL nâng cao; mục tiêu 25.
-- [ ] EXISTS/NOT EXISTS, division, GROUP BY/HAVING, OUTER JOIN, correlated subquery, window function.
-- [ ] ≥100.000 đơn hàng và script tái tạo dữ liệu.
-- [ ] CHECK + FK/UNIQUE + trigger.
-- [ ] Procedure/function: đặt hàng, khuyến mãi, seller ranking.
-- [ ] Dynamic SQL + whitelist + parameter binding + SQL Injection demo.
-- [ ] Embedded SQL + cursor.
-- [ ] Recursive CTE cho category + doanh thu subtree.
-- [ ] 4–6 object classes + ≥5 OQL.
-- [ ] Transaction success/failure/concurrency ≥2 sessions.
-- [ ] EXPLAIN ANALYZE và benchmark trước/sau tối ưu.
-- [ ] Test cases cho valid/invalid.
-- [ ] README có thể chạy lại từ database trắng.
-- [ ] Báo cáo 20–30 trang + phụ lục.
+- [x] EER + quy tắc nghiệp vụ hoàn chỉnh (`docs/01`–`docs/03`).
+- [x] Relational schema + data dictionary (`docs/04`, `docs/05`).
+- [x] FD, candidate key, minimal cover và lập luận 3NF/BCNF/4NF (`docs/06`, `docs/14`).
+- [x] ≥20 SQL nâng cao; mục tiêu 25 (`sql/06_queries.sql`, `sql/07_recursive.sql`).
+- [x] EXISTS/NOT EXISTS, division, GROUP BY/HAVING, OUTER JOIN, correlated subquery, window function.
+- [x] Script sinh ≥100.000 đơn hàng, seed cố định (`data/generator/generate_data.py`).
+- [x] CHECK + FK/UNIQUE + trigger (`sql/02`, `sql/05`).
+- [x] Procedure/function: đặt hàng, khuyến mãi, seller ranking (`sql/04`).
+- [x] Dynamic SQL + whitelist + parameter binding + SQL Injection demo (`app/dynamic_search.py`).
+- [x] Embedded SQL + cursor (`app/embedded_sql.py`).
+- [x] Recursive CTE cho category + doanh thu subtree.
+- [x] 4–6 object classes + ≥5 OQL (`object-db/`).
+- [x] Test cases valid/invalid (`tests/constraint_tests.sql`, `tests/order_tests.sql`, `tests/promotion_tests.sql`, `tests/test_dynamic_search.py`).
+- [x] README có thể chạy lại từ database trắng.
+- [x] Bản nháp báo cáo và slide (`report/chapters/report-draft.md`, `slides/slides-draft.md`).
+- [x] Chạy thật toàn bộ script SQL và test trên MySQL 8.4.11, lưu log bằng chứng (`report/appendix/tests/`).
+- [x] Chạy transaction/concurrency 2 session (bằng chứng khóa dòng ~4,2 s và không oversell).
+- [x] Chạy benchmark `EXPLAIN ANALYZE` trên 100.000 đơn và điền số liệu thật vào báo cáo.
+- [ ] Chạy ObjectDB/OQL và lưu output 5 truy vấn (cần môi trường ObjectDB/JPA).
+- [ ] Bổ sung output đầy đủ Q01–Q25 trên bộ 100.000 đơn (ảnh/CSV từng truy vấn).
+- [ ] Báo cáo 20–30 trang hoàn chỉnh + phụ lục.
 - [ ] Slide + demo + mỗi thành viên nắm rõ phần của mình và phần tích hợp.
 - [ ] GitHub có lịch sử commit/phân công làm việc rõ ràng.
+
+## 📄 Báo cáo và slide
+
+- [Bản nháp báo cáo](report/chapters/report-draft.md) — 11 chương + phụ lục, các vị trí `[CẦN ĐIỀN]` là số liệu thực nghiệm chờ điền.
+- [Đề cương báo cáo](report/chapters/report-outline.md).
+- [Bản nháp slide](slides/slides-draft.md) — 13 slide kèm ghi chú thuyết trình và kịch bản demo.
+- [Đề cương slide](slides/slide-outline.md).
 
 ## 📚 Tài liệu tham khảo
 
@@ -263,6 +316,8 @@ Sau khi cấu hình kết nối MySQL, chạy các script trong thư mục `sql/
 
 ## 📌 Trạng thái
 
-**Đang phát triển — Đồ án môn CSDL Nâng cao, Đề tài 7.**
+**Artifact mã nguồn và tài liệu đã hoàn thiện; còn chờ chạy thực nghiệm thật trên MySQL 8.0 để điền số liệu báo cáo.**
+
+Phần đã sẵn sàng: schema + constraint, trigger/procedure/function, 25 truy vấn nâng cao + recursive SQL, SQL động/nhúng, ODL/OQL, generator 100.000 đơn, bộ test, tài liệu thiết kế và bản nháp báo cáo/slide. Phần còn lại là chạy thật và điền bằng chứng (mục t checklist chưa tick ở trên).
 
 README này mô tả mục tiêu, phạm vi, công nghệ, cấu trúc repository, quy trình chạy và tiêu chí hoàn thành. Phân công chi tiết và kế hoạch theo tuần nằm trong `PLAN_PHAN_CONG_NHOM_7_DE_TAI_7.md`.

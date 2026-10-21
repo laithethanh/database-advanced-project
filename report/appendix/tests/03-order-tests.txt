@@ -1,0 +1,20 @@
+fixture_status
+FIXTURE_OK
+test_name	error_sqlstate	error_message	result
+jump PAID to DELIVERED	45000	invalid order status transition	PASS
+test_name	error_sqlstate	error_message	result
+negative order total	45000	grand_total formula is invalid	PASS
+test_name	error_sqlstate	error_message	result
+successful payment amount mismatch	45000	successful payment amount must equal order grand_total	PASS
+test_name	error_sqlstate	error_message	result
+paid order item is immutable	45000	paid-or-later order items are immutable	PASS
+test_name	error_sqlstate	error_message	result
+negative shipping fee	45000	invalid shipping fee	PASS
+test_name	error_sqlstate	error_message	result
+unknown promotion code	45000	promotion code not found	PASS
+test_name	error_sqlstate	error_message	result
+promotion limit rollback after stock update	45000	promotion usage limit reached	PASS
+orders_before	orders_after	stock_before	stock_after	cart_status	promotion_used_count
+2	2	18	18	ACTIVE	1
+check_name	violations
+ORDER_DATA_OK	0

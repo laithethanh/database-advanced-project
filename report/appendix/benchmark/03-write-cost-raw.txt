@@ -1,0 +1,10 @@
+scenario	inserted_rows	elapsed_ms
+WITHOUT_EXTRA_INDEX	10000	799.5260
+TABLE_NAME	TABLE_ROWS	DATA_LENGTH	INDEX_LENGTH
+order_item_bench	10000	16384	65536
+scenario	inserted_rows	elapsed_ms
+WITH_EXTRA_INDEX	10000	1048.4040
+TABLE_NAME	TABLE_ROWS	DATA_LENGTH	INDEX_LENGTH
+order_item_bench	10001	16384	98304
+bench_leftover_orders
+0

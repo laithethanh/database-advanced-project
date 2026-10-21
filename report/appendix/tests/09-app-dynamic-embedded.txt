@@ -1,0 +1,38 @@
+=== KIEM TRA APP (dynamic SQL + SQL nhung) tren MySQL that ===
+Database: ecommerce_advanced
+
+--- search: khong loc (1 dong) ---
+{'product_id': 1, 'name': 'San pham Demo', 'slug': 'san-pham-demo', 'brand': 'Demo', 'variant_id': 1,
+ 'sku': 'SKU-DEMO-001', 'color': 'Black', 'size': 'M', 'price': Decimal('100000.00'),
+ 'warehouse_name': 'Kho nha cung cap TP.HCM', 'average_rating': Decimal('0.0000')}
+
+--- search: keyword 'Demo' + price 100000-200000 (1 dong) ---
+=> loc theo keyword + khoang gia, dung alias v.price cho sort
+
+--- search: sort=price desc / sort=rating desc (1 dong) ---
+=> ca hai bien sort deu hop le, khong loi cu phap
+
+--- injection keyword: payload "'; DROP TABLE product; --" ---
+=> khong loi, 0 dong (bang 0 mong doi), bang san pham con nguyen ven
+
+--- sort 'price; DROP TABLE product' : bi chan -> Tùy chọn sắp xếp không hợp lệ ---
+--- sort 'name--'                  : bi chan -> Tùy chọn sắp xếp không hợp lệ ---
+--- sort 'unknown'                 : bi chan -> Tùy chọn sắp xếp không hợp lệ ---
+
+--- embedded find_products('Demo') (1 dong) ---
+{'product_id': 1, 'name': 'San pham Demo', 'slug': 'san-pham-demo', 'status': 'ACTIVE'}
+
+--- embedded change_cart_quantity ---
+quantity sau change_cart_quantity = 2
+
+--- embedded checkout (goi sp_checkout qua PyMySQL) ---
+order_id tu embedded checkout = 8
+don vua tao: {'order_id': 8, 'status': 'PAID', 'subtotal': Decimal('200000.00'), 'discount_total': Decimal('0.00'),
+              'shipping_fee': Decimal('30000.00'), 'grand_total': Decimal('230000.00')}
+so payment: 1
+so dong hang: 1
+
+KET LUAN:
+- Moi gia tri nguoi dung duoc gui qua placeholder; payload injection chi tro thanh 0 dong ket qua.
+- Sort/direction ngoai whitelist bi tu choi truoc khi tao cau lenh SQL.
+- SQL nhung voi cursor PyMySQL tao duoc don PAID dung tong tien (2 x 100000 + 30000 = 230000).

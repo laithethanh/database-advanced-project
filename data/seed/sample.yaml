@@ -1,7 +1,7 @@
-﻿# Sample seed data
+# Dữ liệu mẫu khởi tạo
 #
-# This file contains the same demo data represented by
-# sql/03_seed_small.sql, but as plain data rather than SQL statements.
+# Tệp này chứa cùng dữ liệu minh họa được biểu diễn trong
+# sql/03_seed_small.sql, nhưng ở dạng dữ liệu thuần thay vì câu lệnh SQL.
 
 accounts:
   - email: customer01@example.test

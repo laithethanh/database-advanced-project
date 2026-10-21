@@ -1,0 +1,91 @@
+step
+=== SHOW INDEX truoc khi tao ===
+Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_comment	Visible	Expression
+order_item	0	PRIMARY	1	order_item_id	A	183498	NULL	NULL		BTREE			YES	NULL
+order_item	0	uq_order_seller_variant	1	order_id	A	88749	NULL	NULL		BTREE			YES	NULL
+order_item	0	uq_order_seller_variant	2	seller_id	A	171649	NULL	NULL		BTREE			YES	NULL
+order_item	0	uq_order_seller_variant	3	variant_id	A	181653	NULL	NULL		BTREE			YES	NULL
+order_item	1	idx_order_item_variant	1	variant_id	A	1945	NULL	NULL		BTREE			YES	NULL
+order_item	1	idx_order_item_seller_order	1	seller_id	A	101	NULL	NULL		BTREE			YES	NULL
+order_item	1	idx_order_item_seller_order	2	order_id	A	198465	NULL	NULL		BTREE			YES	NULL
+order_item	1	seller_id	1	seller_id	A	101	NULL	NULL		BTREE			YES	NULL
+order_item	1	seller_id	2	variant_id	A	6136	NULL	NULL		BTREE			YES	NULL
+Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_comment	Visible	Expression
+inventory	0	PRIMARY	1	seller_id	A	100	NULL	NULL		BTREE			YES	NULL
+inventory	0	PRIMARY	2	variant_id	A	6000	NULL	NULL		BTREE			YES	NULL
+inventory	1	idx_inventory_variant	1	variant_id	A	2000	NULL	NULL		BTREE			YES	NULL
+Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_comment	Visible	Expression
+product_variant	0	PRIMARY	1	variant_id	A	2000	NULL	NULL		BTREE			YES	NULL
+product_variant	0	sku	1	sku	A	2000	NULL	NULL		BTREE			YES	NULL
+product_variant	0	uq_variant_warehouse_combination	1	warehouse_id	A	3	NULL	NULL		BTREE			YES	NULL
+product_variant	0	uq_variant_warehouse_combination	2	product_id	A	1000	NULL	NULL		BTREE			YES	NULL
+product_variant	0	uq_variant_warehouse_combination	3	color	A	2000	NULL	NULL		BTREE			YES	NULL
+product_variant	0	uq_variant_warehouse_combination	4	size	A	2000	NULL	NULL		BTREE			YES	NULL
+product_variant	1	idx_variant_product_status	1	product_id	A	1000	NULL	NULL		BTREE			YES	NULL
+product_variant	1	idx_variant_product_status	2	status	A	1000	NULL	NULL		BTREE			YES	NULL
+product_variant	1	idx_variant_warehouse_product	1	warehouse_id	A	3	NULL	NULL		BTREE			YES	NULL
+product_variant	1	idx_variant_warehouse_product	2	product_id	A	1000	NULL	NULL		BTREE			YES	NULL
+step
+=== SHOW INDEX sau khi tao ===
+Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_comment	Visible	Expression
+order_item	0	PRIMARY	1	order_item_id	A	183498	NULL	NULL		BTREE			YES	NULL
+order_item	0	uq_order_seller_variant	1	order_id	A	88749	NULL	NULL		BTREE			YES	NULL
+order_item	0	uq_order_seller_variant	2	seller_id	A	171649	NULL	NULL		BTREE			YES	NULL
+order_item	0	uq_order_seller_variant	3	variant_id	A	181653	NULL	NULL		BTREE			YES	NULL
+order_item	1	idx_order_item_variant	1	variant_id	A	1945	NULL	NULL		BTREE			YES	NULL
+order_item	1	idx_order_item_seller_order	1	seller_id	A	101	NULL	NULL		BTREE			YES	NULL
+order_item	1	idx_order_item_seller_order	2	order_id	A	198465	NULL	NULL		BTREE			YES	NULL
+order_item	1	seller_id	1	seller_id	A	101	NULL	NULL		BTREE			YES	NULL
+order_item	1	seller_id	2	variant_id	A	6136	NULL	NULL		BTREE			YES	NULL
+order_item	1	idx_order_item_order_seller_total	1	order_id	A	99382	NULL	NULL		BTREE			YES	NULL
+order_item	1	idx_order_item_order_seller_total	2	seller_id	A	198465	NULL	NULL		BTREE			YES	NULL
+order_item	1	idx_order_item_order_seller_total	3	line_total	A	198465	NULL	NULL		BTREE			YES	NULL
+Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_comment	Visible	Expression
+inventory	0	PRIMARY	1	seller_id	A	100	NULL	NULL		BTREE			YES	NULL
+inventory	0	PRIMARY	2	variant_id	A	6000	NULL	NULL		BTREE			YES	NULL
+inventory	1	idx_inventory_variant	1	variant_id	A	2000	NULL	NULL		BTREE			YES	NULL
+inventory	1	idx_inventory_reorder_lookup	1	seller_id	A	100	NULL	NULL		BTREE			YES	NULL
+inventory	1	idx_inventory_reorder_lookup	2	variant_id	A	6000	NULL	NULL		BTREE			YES	NULL
+inventory	1	idx_inventory_reorder_lookup	3	quantity_on_hand	A	6000	NULL	NULL		BTREE			YES	NULL
+inventory	1	idx_inventory_reorder_lookup	4	reserved_quantity	A	6000	NULL	NULL		BTREE			YES	NULL
+inventory	1	idx_inventory_reorder_lookup	5	reorder_level	A	6000	NULL	NULL		BTREE			YES	NULL
+Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_comment	Visible	Expression
+product_variant	0	PRIMARY	1	variant_id	A	2000	NULL	NULL		BTREE			YES	NULL
+product_variant	0	sku	1	sku	A	2000	NULL	NULL		BTREE			YES	NULL
+product_variant	0	uq_variant_warehouse_combination	1	warehouse_id	A	3	NULL	NULL		BTREE			YES	NULL
+product_variant	0	uq_variant_warehouse_combination	2	product_id	A	1000	NULL	NULL		BTREE			YES	NULL
+product_variant	0	uq_variant_warehouse_combination	3	color	A	2000	NULL	NULL		BTREE			YES	NULL
+product_variant	0	uq_variant_warehouse_combination	4	size	A	2000	NULL	NULL		BTREE			YES	NULL
+product_variant	1	idx_variant_product_status	1	product_id	A	1000	NULL	NULL		BTREE			YES	NULL
+product_variant	1	idx_variant_product_status	2	status	A	1000	NULL	NULL		BTREE			YES	NULL
+product_variant	1	idx_variant_warehouse_product	1	warehouse_id	A	3	NULL	NULL		BTREE			YES	NULL
+product_variant	1	idx_variant_warehouse_product	2	product_id	A	1000	NULL	NULL		BTREE			YES	NULL
+product_variant	1	idx_product_variant_product_price	1	product_id	A	1000	NULL	NULL		BTREE			YES	NULL
+product_variant	1	idx_product_variant_product_price	2	status	A	1000	NULL	NULL		BTREE			YES	NULL
+product_variant	1	idx_product_variant_product_price	3	price	A	2000	NULL	NULL		BTREE			YES	NULL
+step
+=== OPTIMIZED 1: doanh thu theo san pham ===
+EXPLAIN
+-> Limit: 10 row(s)  (actual time=3612..3612 rows=10 loops=1)\n    -> Sort: revenue DESC, limit input to 10 row(s) per chunk  (actual time=3612..3612 rows=10 loops=1)\n        -> Table scan on <temporary>  (actual time=3611..3611 rows=1000 loops=1)\n            -> Aggregate using temporary table  (actual time=3611..3611 rows=1000 loops=1)\n                -> Nested loop inner join  (cost=143408 rows=204077) (actual time=0.105..2937 rows=182426 loops=1)\n                    -> Nested loop inner join  (cost=71981 rows=204077) (actual time=0.0961..1300 rows=199916 loops=1)\n                        -> Nested loop inner join  (cost=554 rows=2000) (actual time=0.0521..16.3 rows=2000 loops=1)\n                            -> Table scan on p  (cost=104 rows=1000) (actual time=0.0438..2.87 rows=1000 loops=1)\n                            -> Covering index lookup on v using idx_variant_product_status (product_id=p.product_id)  (cost=0.251 rows=2) (actual time=0.0075..0.0124 rows=2 loops=1000)\n                        -> Index lookup on oi using idx_order_item_variant (variant_id=v.variant_id)  (cost=25.5 rows=102) (actual time=0.0706..0.627 rows=100 loops=2000)\n                    -> Filter: (o.`status` in ('PAID','PROCESSING','SHIPPED','DELIVERED'))  (cost=0.25 rows=1) (actual time=0.00756..0.00776 rows=0.913 loops=199916)\n                        -> Single-row index lookup on o using PRIMARY (order_id=oi.order_id)  (cost=0.25 rows=1) (actual time=0.00641..0.00648 rows=1 loops=199916)\n
+step
+=== OPTIMIZED 2: doanh thu theo nguoi ban theo khoang thoi gian ===
+EXPLAIN
+-> Limit: 10 row(s)  (actual time=2285..2285 rows=10 loops=1)\n    -> Sort: revenue DESC, limit input to 10 row(s) per chunk  (actual time=2285..2285 rows=10 loops=1)\n        -> Table scan on <temporary>  (actual time=2285..2285 rows=100 loops=1)\n            -> Aggregate using temporary table  (actual time=2285..2285 rows=100 loops=1)\n                -> Nested loop inner join  (cost=87674 rows=221407) (actual time=0.0868..2005 rows=182426 loops=1)\n                    -> Filter: ((o.`status` in ('PAID','PROCESSING','SHIPPED','DELIVERED')) and (o.created_at >= <cache>((@from_at))) and (o.created_at < <cache>((@to_at))))  (cost=10182 rows=99008) (actual time=0.0511..346 rows=91239 loops=1)\n                        -> Covering index scan on o using idx_order_status_created  (cost=10182 rows=99008) (actual time=0.0439..76.1 rows=100000 loops=1)\n                    -> Index lookup on oi using uq_order_seller_variant (order_id=o.order_id)  (cost=0.559 rows=2.24) (actual time=0.0158..0.0174 rows=2 loops=91239)\n
+step
+=== OPTIMIZED 3: quet ton kho duoi nguong dat lai ===
+EXPLAIN
+-> Filter: ((i.quantity_on_hand - i.reserved_quantity) <= i.reorder_level)  (cost=624 rows=2000) (actual time=0.0967..3.08 rows=216 loops=1)\n    -> Covering index scan on i using idx_inventory_reorder_lookup  (cost=624 rows=6000) (actual time=0.0809..2.33 rows=6000 loops=1)\n
+step
+=== Dung luong sau khi them chi muc ===
+TABLE_NAME	TABLE_ROWS	DATA_LENGTH	INDEX_LENGTH
+inventory	6000	1589248	180224
+order_item	198465	25755648	36831232
+orders	99008	18399232	14761984
+product_variant	2000	196608	458752
+step
+=== Dung luong sau khi da don chi muc ===
+TABLE_NAME	TABLE_ROWS	DATA_LENGTH	INDEX_LENGTH
+inventory	6000	1589248	180224
+order_item	198465	25755648	36831232
+orders	99008	18399232	14761984
+product_variant	2000	196608	458752

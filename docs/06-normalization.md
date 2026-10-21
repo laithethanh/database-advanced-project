@@ -1,60 +1,139 @@
 # Phụ thuộc hàm và chuẩn hóa
 
-## 1. Nguyên tắc
+## 1. Quy ước
 
-Thiết kế tách các nhóm thuộc tính có phụ thuộc chức năng khác nhau. N:M được tách thành quan hệ trung gian; thuộc tính lặp theo dòng đơn được đưa vào `order_item`.
+Với quan hệ `R(X)`, `X → Y` nghĩa là mỗi giá trị của `X` xác định duy nhất một giá trị của `Y`. Bao đóng `X+` là tập thuộc tính suy ra được từ `X` bằng các FD và luật Armstrong. Một khóa ứng viên `K` thỏa `K+ = R` và không có tập con thực sự nào của `K` có bao đóng bằng `R`.
 
-## 2. Một số FD tiêu biểu
+Thiết kế ưu tiên tách các nhóm dữ kiện độc lập, nhưng vẫn giữ một số giá trị dẫn xuất có kiểm soát để bảo toàn lịch sử và giảm chi phí đọc. Vì vậy báo cáo phân biệt rõ:
+
+- **FD của dữ liệu gốc**: quyết định dạng chuẩn của quan hệ.
+- **Giá trị dẫn xuất có kiểm soát**: dư thừa có chủ đích, được bảo vệ bằng `CHECK`, trigger hoặc transaction.
+- **Giá trị snapshot**: dữ kiện lịch sử, không phụ thuộc dữ liệu danh mục hiện tại.
+
+## 2. FD tiêu biểu và bao đóng
 
 ### ACCOUNT
 
-`account_id → email, password_hash, full_name, phone, status, created_at, updated_at`
+Ký hiệu gọn: `A=account_id, E=email, P=password_hash, N=full_name, H=phone, S=status, C=created_at, U=updated_at`.
 
-`email → account_id, password_hash, full_name, phone, status, created_at, updated_at` vì email UNIQUE.
+```text
+A → E,P,N,H,S,C,U
+E → A,P,N,H,S,C,U
+```
+
+Suy ra `A+ = {A,E,P,N,H,S,C,U}` và `E+ = {E,A,P,N,H,S,C,U}`. Khóa ứng viên: `A`, `E`.
+
+Phủ tối tiểu có thể viết:
+
+```text
+A → E, A → P, A → N, A → H, A → S, A → C, A → U
+E → A
+```
+
+Các FD `E → P,N,H,S,C,U` là dư thừa nhờ `E → A` và `A → ...`.
 
 ### PRODUCT_VARIANT
 
-`variant_id → warehouse_id, product_id, sku, color, size, price, compare_at_price, warehouse_quantity, status`
+Ký hiệu: `V=variant_id, W=warehouse_id, P=product_id, K=sku, C=color, Z=size, G=price, R=compare_at_price, Q=warehouse_quantity, S=status`.
 
-`sku → variant_id, warehouse_id, product_id, color, size, price, compare_at_price, warehouse_quantity, status` vì SKU UNIQUE toàn hệ thống.
+```text
+V → W,P,K,C,Z,G,R,Q,S
+K → V,W,P,C,Z,G,R,Q,S
+```
+
+Khóa ứng viên: `V`, `K`. Phủ tối tiểu tương tự ACCOUNT: `V → ...`, `K → V`, các thuộc tính còn lại phụ thuộc trực tiếp vào `V`. Ràng buộc `UNIQUE(warehouse_id, product_id, color, size)` tạo thêm một khóa ứng viên; nó không làm thay đổi kết luận BCNF vì vế trái vẫn là khóa.
 
 ### INVENTORY
 
-`(seller_id, variant_id) → quantity_on_hand, reserved_quantity, reorder_level, updated_at`.
+```text
+(S, V) → Q, R, L, U
+```
+
+Trong đó `S=seller_id`, `V=variant_id`, `Q=quantity_on_hand`, `R=reserved_quantity`, `L=reorder_level`, `U=updated_at`. Bao đóng `(S,V)+ = {S,V,Q,R,L,U}`. Khóa ứng viên duy nhất là `(S,V)`; mọi thuộc tính không khóa phụ thuộc toàn bộ khóa.
+
+### ORDERS
+
+Ký hiệu: `O=order_id, N=order_number, C=customer_id, S=status, T=subtotal, D=discount_total, F=shipping_fee, G=grand_total`.
+
+```text
+O → N,C,S,recipient_name,recipient_phone,shipping_address,T,D,F,G,placed_at,created_at,updated_at
+N → O,C,S,...,T,D,F,G,placed_at,created_at,updated_at
+T,D,F → G          (ràng buộc số học: G = T - D + F)
+```
+
+Khóa ứng viên: `O`, `N`. Các FD `O → ...`, `N → O` là đủ cho phủ tối tiểu; `T,D,F → G` là FD số học có kiểm soát, không phải FD độc lập của dữ liệu gốc.
 
 ### ORDER_ITEM
 
-`order_item_id → order_id, seller_id, variant_id, product_name_snapshot, sku_snapshot, unit_price, quantity, line_discount, line_total`.
+Ký hiệu: `I=order_item_id, O=order_id, S=seller_id, V=variant_id, Q=quantity, P=unit_price, D=line_discount, T=line_total`.
 
-`(order_id, seller_id, variant_id) → order_item_id, ...` theo chính sách mỗi shop/variant chỉ có một dòng trong một order.
+```text
+I → O,S,V,product_name_snapshot,sku_snapshot,P,Q,D,T
+(O,S,V) → I,product_name_snapshot,sku_snapshot,P,Q,D,T
+Q,P,D → T          (công thức line_total = Q*P - D)
+```
 
-## 3. Candidate keys
+Khóa ứng viên: `I` và `(O,S,V)`. Hai FD đầu có vế trái là khóa. FD thứ ba có vế trái **không** là khóa, nên nếu xem công thức là FD của lược đồ thì `order_item` không đạt 3NF/BCNF. Đây là ngoại lệ có chủ đích được trình bày ở mục 4.
 
-| Relation | Candidate key |
+### Các quan hệ còn lại
+
+`CART_ITEM(cart_id, seller_id, variant_id, quantity)` có khóa ghép và không có thuộc tính không khóa phụ thuộc bộ phận. `ORDER_PROMOTION(order_id, promotion_id, discount_amount, snapshot)` có khóa ghép; `discount_amount` là snapshot tại thời điểm áp dụng. `REVIEW` có khóa `review_id` và khóa thay thế `(customer_id, product_id)`. `PROMOTION` có khóa `promotion_id`, khóa thay thế `code`; `used_count` là bộ đếm dẫn xuất có kiểm soát.
+
+## 3. Khóa ứng viên
+
+| Quan hệ | Khóa ứng viên |
 |---|---|
 | Account | `account_id`, `email` |
 | Seller | `account_id`, `seller_code`, `shop_name` |
-| ProductVariant | `variant_id`, `sku` |
+| ProductVariant | `variant_id`, `sku`, `(warehouse_id, product_id, color, size)` |
 | Inventory | `(seller_id, variant_id)` |
 | CartItem | `(cart_id, seller_id, variant_id)` |
 | PromotionProduct | `(promotion_id, product_id)` |
 | PromotionCategory | `(promotion_id, category_id)` |
 | Order | `order_id`, `order_number` |
+| OrderItem | `order_item_id`, `(order_id, seller_id, variant_id)` |
 | OrderPromotion | `(order_id, promotion_id)` |
 | Review | `review_id`, `(customer_id, product_id)` |
 
-## 4. Vì sao đạt 3NF/BCNF ở lõi
+## 4. Dạng chuẩn và các ngoại lệ có kiểm soát
 
-Các bảng lõi có thuộc tính không khóa phụ thuộc vào candidate key và không lưu thuộc tính dẫn xuất từ một non-key determinant. Những quan hệ associative có khóa ghép và thuộc tính phụ thuộc vào toàn bộ khóa.
+### 4.1 Quan hệ đạt 3NF/BCNF
 
-`OrderItem` cố tình lưu snapshot như `unit_price` và `product_name_snapshot` vì chúng mô tả **sự kiện bán tại thời điểm order**, không phải thuộc tính hiện tại của Product. Đây là quyết định nghiệp vụ, không phải dư thừa sai chuẩn hóa.
+Các bảng danh mục, khóa ngoại, bảng kết hợp và bảng sự kiện còn lại có mọi FD không tầm thường với vế trái là siêu khóa. Vì vậy chúng đạt BCNF theo các FD dữ liệu gốc đã khai báo.
 
-`Inventory` đạt BCNF theo FD chính nếu không có determinant phụ khác. `CartItem`, `PromotionProduct`, `PromotionCategory`, `OrderPromotion` cũng đạt BCNF với candidate key ghép tương ứng.
+### 4.2 `order_item.line_total`
 
-## 5. 4NF
+Nếu coi `Q,P,D → line_total` là FD, quan hệ vi phạm 3NF/BCNF. Nhóm giữ `line_total` vì:
 
-Các quan hệ độc lập nhiều giá trị như Product có nhiều color và nhiều size được mô hình hóa bằng `ProductVariant` thay vì lưu hai tập đa trị độc lập trong một bảng. Do đó tránh MVD gây vi phạm 4NF trong thiết kế variant.
+- là snapshot tài chính của dòng hàng, cần đọc nhanh khi lập hóa đơn/báo cáo;
+- được tính lại bởi trigger trước khi ghi;
+- được đối chiếu bởi `CHECK (line_total = quantity*unit_price - line_discount)` và Q25.
 
-## 6. Kiểm chứng formal ở giai đoạn tiếp theo
+Đây là **denormalization có kiểm soát**, không phải kết luận sai rằng quan hệ đạt BCNF. Nếu cần BCNF tuyệt đối, có thể bỏ `line_total` và dùng view/generated column; thiết kế hiện tại chọn đánh đổi có kiểm chứng.
 
-Nhóm cần đưa minimal cover đầy đủ vào phụ lục báo cáo sau khi DDL v1 được chốt. Tài liệu này là baseline để review; mọi thay đổi schema phải cập nhật lại FD/candidate keys và lập luận chuẩn hóa.
+### 4.3 `orders` totals và `promotion.used_count`
+
+- `orders.subtotal`, `discount_total`, `grand_total` được materialize từ `order_item` và `order_promotion`. Nếu chỉ xét FD định danh của dữ liệu gốc, chúng phụ thuộc khóa `order_id` nên không phá BCNF. Nếu xem công thức `subtotal - discount_total + shipping_fee → grand_total` như một FD số học, `orders` cũng là ngoại lệ 3NF/BCNF có kiểm soát giống `order_item`.
+- `promotion.used_count` là bộ đếm materialize từ `order_promotion`; nó không tạo FD nội bộ mới nhưng là dữ liệu dẫn xuất liên quan hệ và phải khớp với số dòng `order_promotion`.
+- Các bất biến `grand_total = subtotal - discount_total + shipping_fee`, `subtotal = SUM(order_item.line_total)`, `discount_total = SUM(order_promotion.discount_amount)` và `used_count` không vượt `usage_limit` được bảo vệ bởi trigger/`CHECK` và transaction checkout.
+
+### 4.4 Snapshot lịch sử
+
+`product_name_snapshot`, `sku_snapshot`, `unit_price`, `promotion_code_snapshot` và `discount_amount` mô tả sự kiện tại thời điểm bán. Chúng không phụ thuộc dữ liệu hiện tại của Product/Promotion, nên không tạo FD `variant_id → snapshot` trên toàn thời gian. Việc lặp có kiểm soát này bảo vệ lịch sử kiểm toán.
+
+## 5. 4NF và phụ thuộc đa trị
+
+Một MVD `X ->> Y` biểu diễn hai tập giá trị độc lập cùng phụ thuộc `X`. Thiết kế tránh lưu hai MVD độc lập trong cùng một quan hệ:
+
+- Product có nhiều màu và nhiều kích thước: mỗi tổ hợp được biểu diễn bằng một dòng `product_variant`, không lưu hai danh sách màu/size trong `product`.
+- Order có nhiều dòng hàng và nhiều khuyến mãi: `order_item` và `order_promotion` là hai quan hệ riêng. Nếu gộp thành `order_fact(order_id, order_item_id, promotion_id)` sẽ có `order_id ->> order_item_id` và `order_id ->> promotion_id`, vi phạm 4NF.
+- Promotion áp dụng cho nhiều product và nhiều category: `promotion_product` và `promotion_category` tách biệt, không lưu hai tập đa trị trong `promotion`.
+
+Vì vậy không có quan hệ nào trong lược đồ lưu hai MVD độc lập trên cùng khóa.
+
+## 6. Kết luận
+
+- Lõi lược đồ đạt BCNF theo các FD dữ liệu gốc.
+- `order_item.line_total` là ngoại lệ 3NF/BCNF có chủ đích nếu xem công thức số học là FD.
+- Các tổng tiền, bộ đếm và snapshot là dư thừa có kiểm soát; tính đúng đắn được bảo vệ bằng trigger, `CHECK`, FK và transaction.
+- Thiết kế đạt 4NF nhờ tách các tập đa trị độc lập thành bảng riêng.

@@ -37,6 +37,7 @@
 | `PLAN_PHAN_CONG_NHOM_7_DE_TAI_7.md`                        | THANH | Tất cả      | Kế hoạch/phân công gốc                                                          |
 | `.env.example`                                             | THANH | DANH          | Chỉ sửa tên biến cấu hình, không đưa secret thật                           |
 | `.gitignore`                                               | THANH | DANH          | Quy tắc repo                                                                        |
+| `requirements.txt`                                         | DANH  | THANH         | Dependency gốc cho toàn repo (Faker, PyMySQL)                                     |
 | `.vscode/settings.json`                                    | THANH | DANH          | Cấu hình dùng chung                                                               |
 | `Gỏi SV- Hướng dẫn  các đề tài CSDL nâng cao.md`  | THANH | TAI           | Tài liệu môn học, coi là reference; không sửa trong quá trình làm đồ án |
 | `Gỏi SV- Hướng dẫn  các đề tài CSDL nâng cao.pdf` | THANH | TAI           | Tài liệu reference; không sửa                                                    |
@@ -69,6 +70,9 @@ TAI chịu trách nhiệm đồng bộ ba sơ đồ. Khi schema SQL thay đổi,
 | `docs/09-transaction-concurrency.md` | KHOA  | THANH  |
 | `docs/10-benchmark.md`               | DANH  | THANH  |
 | `docs/11-reproducibility.md`         | DANH  | THANH  |
+| `docs/12-query-execution-notes.md`   | TUAN  | DANH  |
+| `docs/13-experiment-runbook.md`      | DANH  | KHOA + TUAN |
+| `docs/14-normalization-proof.md`     | TAI   | THANH + TUAN |
 
 **Quy tắc liên kết:** TAI là source of truth cho nghiệp vụ/mô hình; THANH là source of truth cho schema triển khai; TUAN là source of truth cho catalog query; KHOA là source of truth cho transaction/constraint; DANH là source of truth cho benchmark/reproducibility.
 
@@ -129,7 +133,10 @@ TAI giữ object model/class design; TUAN giữ OQL/query. Không để hai ngư
 | ------------------------------ | ----- | ---------------------- |
 | `tests/constraint_tests.sql` | KHOA  | TAI + DANH             |
 | `tests/order_tests.sql`      | KHOA  | THANH + DANH           |
+| `tests/promotion_tests.sql`  | KHOA  | THANH + DANH           |
+| `tests/concurrency_setup.sql` | KHOA | THANH + DANH           |
 | `tests/security_tests.sql`   | DANH  | KHOA + THANH           |
+| `tests/test_dynamic_search.py` | DANH | KHOA + THANH          |
 | `tests/regression/README.md` | DANH  | THANH                  |
 | `tests/regression/`          | DANH  | Tất cả theo artifact |
 
@@ -142,6 +149,8 @@ Hiện tại hai thư mục mới có README nên chưa có file chương riêng
 | Folder/file                   | Owner                          | Quy tắc                       |
 | ----------------------------- | ------------------------------ | ------------------------------ |
 | `report/chapters/README.md` | THANH                          | Quản lý cấu trúc chương  |
+| `report/chapters/report-outline.md` | THANH                    | Khung báo cáo, không sửa nội dung chương |
+| `report/chapters/report-draft.md` | THANH                       | Bản nháp tích hợp; mỗi chương sửa ở file riêng khi tách ra |
 | `report/chapters/`          | Chia theo chương bên dưới | Mỗi chương chỉ 01 author   |
 | `report/appendix/README.md` | DANH                           | Quản lý phụ lục/evidence   |
 | `report/appendix/`          | DANH                           | DANH tích hợp artifact cuối |
@@ -170,6 +179,8 @@ Hiện tại hai thư mục mới có README nên chưa có file chương riêng
 | File/folder          | Owner | Review   |
 | -------------------- | ----- | -------- |
 | `slides/README.md` | THANH | Tất cả |
+| `slides/slide-outline.md` | THANH | Tất cả |
+| `slides/slides-draft.md` | THANH | Tất cả |
 | `slides/`          | THANH | Tất cả |
 
 Các thành viên cung cấp nội dung slide theo chương của mình cho THANH; THANH là người ghép deck cuối để tránh conflict trên file trình chiếu.

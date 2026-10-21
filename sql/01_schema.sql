@@ -75,9 +75,9 @@ INSERT INTO warehouse (code, name, address_text) VALUES
   ('WH-DN', 'Kho nhà cung cấp Đà Nẵng', 'Đà Nẵng'),
   ('WH-HCM', 'Kho nhà cung cấp TP.HCM', 'TP. Hồ Chí Minh');
 
--- A variant is specific to a supplier warehouse. Shops sourcing the same
--- variant from the same warehouse share this variant_id. The same product
--- variant in another warehouse gets a different variant_id.
+-- Một biến thể gắn với một kho nhà cung cấp cụ thể. Các cửa hàng lấy cùng
+-- biến thể từ cùng kho sẽ dùng chung variant_id. Cùng một sản phẩm
+-- biến thể ở kho khác sẽ có variant_id riêng.
 CREATE TABLE product_variant (
   variant_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   warehouse_id BIGINT UNSIGNED NOT NULL,

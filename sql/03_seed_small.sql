@@ -14,7 +14,7 @@ FROM account WHERE email = 'seller01@example.test';
 INSERT INTO category (name, slug)
 VALUES ('Dien tu', 'dien-tu');
 
--- 01_schema.sql already creates WH-HN, WH-DN, and WH-HCM.
+-- 01_schema.sql đã tạo sẵn WH-HN, WH-DN và WH-HCM.
 INSERT INTO product (category_id, name, slug, description, brand, status)
 SELECT category_id, 'San pham Demo', 'san-pham-demo', 'Demo catalog item', 'Demo', 'ACTIVE'
 FROM category WHERE slug = 'dien-tu';
@@ -25,7 +25,7 @@ SELECT w.warehouse_id, p.product_id, 'SKU-DEMO-001', 'Black', 'M', 100000, 12000
 FROM warehouse w CROSS JOIN product p
 WHERE w.code = 'WH-HCM' AND p.slug = 'san-pham-demo';
 
--- Inventory is seller-owned; warehouse_quantity is the supplier warehouse stock.
+-- Tồn kho thuộc về người bán; warehouse_quantity là số lượng tại kho nhà cung cấp.
 INSERT INTO inventory (seller_id, variant_id, quantity_on_hand, reserved_quantity, reorder_level)
 SELECT s.account_id, v.variant_id, 20, 0, 5
 FROM seller s CROSS JOIN product_variant v
