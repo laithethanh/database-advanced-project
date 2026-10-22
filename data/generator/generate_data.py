@@ -48,6 +48,39 @@ THUONG_HIEU = ["Viet Tien", "Canifa", "Samsung", "Xiaomi", "Sunhouse", "Rang Don
 MAU_SAC = ["Den", "Trang", "Xanh", "Do", "Xam"]
 KICH_CO = ["S", "M", "L", "XL"]
 
+DUONG_PHO = [
+    "Nguyen Hue", "Le Loi", "Tran Hung Dao", "Hai Ba Trung", "Vo Van Tan",
+    "Pham Ngu Lao", "Nguyen Trai", "Le Duan", "Ly Tu Trong", "Dong Khoi",
+    "Nguyen Dinh Chieu", "Cach Mang Thang 8", "Le Van Sy", "Hoang Dieu",
+]
+THANH_PHO = [
+    # (city, province, postal_code)
+    ("TP. Ho Chi Minh", "TP. Ho Chi Minh", "700000"),
+    ("Ha Noi", "Ha Noi", "100000"),
+    ("Da Nang", "Da Nang", "550000"),
+    ("Hai Phong", "Hai Phong", "180000"),
+    ("Can Tho", "Can Tho", "900000"),
+    ("Hue", "Thua Thien Hue", "530000"),
+    ("Nha Trang", "Khanh Hoa", "650000"),
+    ("Vung Tau", "Ba Ria - Vung Tau", "790000"),
+]
+PHUONG = ["Phuong 1", "Phuong 2", "Phuong 3", "Phuong 5", "Phuong 7", "Phuong 10"]
+QUAN = ["Quan 1", "Quan 3", "Quan 5", "Quan 7", "Quan Binh Thanh", "Quan Tan Binh", "Quan Go Vap"]
+
+MAU_KHUYEN_MAI = [
+    # (code, name, type, value, min_order, max_discount)
+    ("DGIAM5",   "Giam 5%",   "PERCENT", 5,      100000,  20000),
+    ("DGIAM10",  "Giam 10%",  "PERCENT", 10,     200000,  50000),
+    ("DGIAM15",  "Giam 15%",  "PERCENT", 15,     500000,  100000),
+    ("DGIAM20",  "Giam 20%",  "PERCENT", 20,     300000,  80000),
+    ("DGIAM30",  "Giam 30%",  "PERCENT", 30,     1000000, 200000),
+    ("DGIAM10K", "Giam 10K",  "FIXED",   10000,  100000,  None),
+    ("DGIAM20K", "Giam 20K",  "FIXED",   20000,  200000,  None),
+    ("DGIAM50K", "Giam 50K",  "FIXED",   50000,  500000,  None),
+    ("DGIAM99K", "Giam 99K",  "FIXED",   99000,  1000000, None),
+    ("DFREESHIP","Free ship",  "FIXED",   30000,  0,       None),
+]
+
 
 # ---------------------------------------------------------------------------
 # Kết nối
@@ -100,6 +133,26 @@ def tao_nguoi_ban(cur, fake, so_luong):
         ds_id.append(account_id)
     print(f"  [2] Nguoi ban: {len(ds_id)}")
     return ds_id
+
+
+def tao_dia_chi(cur, rng, fake, ds_khach):
+    """Mỗi khách có 1-3 địa chỉ giao hàng, địa chỉ đầu tiên là mặc định."""
+    dem = 0
+    for customer_id in ds_khach:
+        so_dc = rng.randint(1, 3)
+        for j in range(so_dc):
+            city, province, postal = rng.choice(THANH_PHO)
+            cur.execute(
+                "INSERT INTO address (customer_id, recipient_name, phone, line1, "
+                "ward, district, city, province, postal_code, is_default) "
+                "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                (customer_id, fake.name(), fake.phone_number(),
+                 f"{rng.randint(1, 999)} {rng.choice(DUONG_PHO)}",
+                 rng.choice(PHUONG), rng.choice(QUAN),
+                 city, province, postal, j == 0),
+            )
+            dem += 1
+    print(f"  [+] Dia chi: {dem}")
 
 
 def tao_danh_muc(cur):
@@ -177,6 +230,51 @@ def tao_san_pham(cur, rng, so_luong, ds_danh_muc_la, ds_nguoi_ban):
     return hang_ban
 
 
+def tao_khuyen_mai(cur, rng, ds_danh_muc_la, hang_ban):
+    """Tạo khuyến mãi từ bảng mẫu, gắn vào sản phẩm và/hoặc danh mục.
+
+    Trả về danh sách (promotion_id, code, type, value, min_order, max_discount)
+    để bước đặt hàng dùng.
+    """
+    ds_product_id = list({item[5] for item in hang_ban})   # index 5 = product_id
+    ds_category_id = [cat_id for cat_id, _ in ds_danh_muc_la]
+    so_pp = 0
+    so_pc = 0
+
+    ds_km = []
+    for code, ten, kieu, gia_tri, min_don, max_giam in MAU_KHUYEN_MAI:
+        cur.execute(
+            "INSERT INTO promotion (code, name, promotion_type, discount_value, "
+            "min_order_amount, max_discount, start_at, end_at, status, usage_limit, used_count) "
+            "VALUES (%s, %s, %s, %s, %s, %s, '2025-10-01 00:00:00', '2026-12-31 23:59:59', "
+            "'ACTIVE', %s, 0)",
+            (code, ten, kieu, gia_tri, min_don, max_giam, rng.randint(5000, 100000)),
+        )
+        pid = cur.lastrowid
+        ds_km.append((pid, code, kieu, gia_tri, min_don, max_giam))
+
+        # Gắn vào 2-10 sản phẩm ngẫu nhiên (60% khuyến mãi)
+        if rng.random() < 0.6:
+            for prod_id in rng.sample(ds_product_id, min(len(ds_product_id), rng.randint(2, 10))):
+                cur.execute(
+                    "INSERT INTO promotion_product (promotion_id, product_id) VALUES (%s, %s)",
+                    (pid, prod_id),
+                )
+                so_pp += 1
+
+        # Gắn vào 1-3 danh mục ngẫu nhiên (50% khuyến mãi)
+        if rng.random() < 0.5:
+            for cat_id in rng.sample(ds_category_id, min(len(ds_category_id), rng.randint(1, 3))):
+                cur.execute(
+                    "INSERT INTO promotion_category (promotion_id, category_id) VALUES (%s, %s)",
+                    (pid, cat_id),
+                )
+                so_pc += 1
+
+    print(f"  [+] Khuyen mai: {len(ds_km)}, gan san pham: {so_pp}, gan danh muc: {so_pc}")
+    return ds_km
+
+
 # Trạng thái cuối cùng của đơn và tỉ lệ xuất hiện (tổng = 100)
 TRANG_THAI_DON = ["PENDING_PAYMENT", "CANCELLED", "PAID", "PROCESSING", "SHIPPED", "DELIVERED", "RETURNED"]
 TI_LE_DON      = [5,                  5,           30,     15,           15,        25,          5]
@@ -185,7 +283,7 @@ TI_LE_DON      = [5,                  5,           30,     15,           15,    
 DUONG_DI = ["PAID", "PROCESSING", "SHIPPED", "DELIVERED", "RETURN_REQUESTED", "RETURNED"]
 
 
-def tao_mot_don(cur, rng, fake, seed, so_thu_tu, customer_id, hang_ban, da_danh_gia, dem):
+def tao_mot_don(cur, rng, fake, seed, so_thu_tu, customer_id, hang_ban, da_danh_gia, dem, ds_km):
     """Tạo 1 đơn hàng đi đúng luật của database:
 
     1. Tạo đơn PENDING_PAYMENT với subtotal = 0 (trigger bắt buộc đơn mới bắt đầu từ 0).
@@ -231,8 +329,37 @@ def tao_mot_don(cur, rng, fake, seed, so_thu_tu, customer_id, hang_ban, da_danh_
         cur.execute("UPDATE orders SET status = 'CANCELLED' WHERE order_id = %s", (order_id,))
         return
 
+    # --- Bước 2b: áp dụng khuyến mãi (~30% đơn thanh toán) ---
+    giam_gia = 0
+    if ds_km and rng.random() < 0.3:
+        km = rng.choice(ds_km)
+        promotion_id, ma_km, kieu_km, gia_tri, min_don, max_giam = km
+        if tien_hang >= min_don:
+            if kieu_km == "PERCENT":
+                giam_gia = int(tien_hang * gia_tri / 100)
+                if max_giam and giam_gia > max_giam:
+                    giam_gia = int(max_giam)
+            else:
+                giam_gia = int(gia_tri)
+            giam_gia = min(giam_gia, tien_hang)
+            cur.execute(
+                "INSERT INTO order_promotion (order_id, promotion_id, discount_amount, "
+                "promotion_code_snapshot) VALUES (%s, %s, %s, %s)",
+                (order_id, promotion_id, giam_gia, ma_km),
+            )
+            cur.execute(
+                "UPDATE orders SET discount_total = %s, "
+                "grand_total = subtotal - %s + shipping_fee WHERE order_id = %s",
+                (giam_gia, giam_gia, order_id),
+            )
+            cur.execute(
+                "UPDATE promotion SET used_count = used_count + 1 WHERE promotion_id = %s",
+                (promotion_id,),
+            )
+            dem["khuyen_mai"] += 1
+
     # --- Bước 3: thanh toán. Số tiền PHẢI bằng grand_total, trigger sẽ kiểm tra ---
-    tong_tien = tien_hang + phi_ship
+    tong_tien = tien_hang - giam_gia + phi_ship
     ngay_tra = ngay_dat + timedelta(minutes=rng.randint(1, 60))
     cur.execute(
         "INSERT INTO payment (order_id, provider, transaction_ref, amount, status, paid_at) "
@@ -286,23 +413,49 @@ def tao_mot_don(cur, rng, fake, seed, so_thu_tu, customer_id, hang_ban, da_danh_
                 dem["danh_gia"] += 1
 
 
-def tao_don_hang(conn, rng, fake, seed, so_don, ds_khach, hang_ban, kich_thuoc_lo):
+def tao_don_hang(conn, rng, fake, seed, so_don, ds_khach, hang_ban, kich_thuoc_lo, ds_km):
     """Tạo nhiều đơn, cứ mỗi lô (mặc định 1.000 đơn) thì commit một lần.
 
     Commit theo lô vì 100.000 đơn trong 1 transaction duy nhất sẽ rất nặng;
     nếu lỗi giữa chừng thì chỉ lô đang làm bị rollback, các lô trước đã an toàn.
     """
     da_danh_gia = set()
-    dem = {"mon": 0, "thanh_toan": 0, "danh_gia": 0}
+    dem = {"mon": 0, "thanh_toan": 0, "danh_gia": 0, "khuyen_mai": 0}
     bat_dau = time.perf_counter()
     with conn.cursor() as cur:
         for n in range(1, so_don + 1):
-            tao_mot_don(cur, rng, fake, seed, n, rng.choice(ds_khach), hang_ban, da_danh_gia, dem)
+            tao_mot_don(cur, rng, fake, seed, n, rng.choice(ds_khach), hang_ban, da_danh_gia, dem, ds_km)
             if n % kich_thuoc_lo == 0 or n == so_don:
                 conn.commit()
                 print(f"      ... da luu {n}/{so_don} don ({time.perf_counter() - bat_dau:.1f} giay)")
     print(f"  [5] Don hang: {so_don}, dong hang: {dem['mon']}, "
-          f"thanh toan: {dem['thanh_toan']}, danh gia: {dem['danh_gia']}")
+          f"thanh toan: {dem['thanh_toan']}, khuyen mai: {dem['khuyen_mai']}, "
+          f"danh gia: {dem['danh_gia']}")
+
+
+def tao_gio_hang(cur, rng, ds_khach, hang_ban):
+    """Tạo giỏ hàng ACTIVE cho ~30% khách, mỗi giỏ 1-4 sản phẩm."""
+    so_gio = 0
+    so_mon = 0
+    for customer_id in ds_khach:
+        if rng.random() > 0.3:
+            continue
+        cur.execute(
+            "INSERT INTO cart (customer_id, status) VALUES (%s, 'ACTIVE')",
+            (customer_id,),
+        )
+        cart_id = cur.lastrowid
+        so_gio += 1
+
+        cac_mon = rng.sample(hang_ban, min(len(hang_ban), rng.randint(1, 4)))
+        for seller_id, variant_id, gia, ten_sp, sku, product_id in cac_mon:
+            cur.execute(
+                "INSERT INTO cart_item (cart_id, seller_id, variant_id, quantity) "
+                "VALUES (%s, %s, %s, %s)",
+                (cart_id, seller_id, variant_id, rng.randint(1, 3)),
+            )
+            so_mon += 1
+    print(f"  [+] Gio hang: {so_gio}, mon trong gio: {so_mon}")
 
 
 # ---------------------------------------------------------------------------
@@ -326,16 +479,24 @@ def main():
     conn = connect()
     bat_dau = time.perf_counter()
     try:
-        # Phần 1: khách, người bán, danh mục, sản phẩm -> lưu trong 1 transaction
+        # Phần 1: khách, người bán, địa chỉ, danh mục, sản phẩm, khuyến mãi -> 1 transaction
         with conn.cursor() as cur:
             ds_khach = tao_khach_hang(cur, fake, args.customers)
             ds_ban = tao_nguoi_ban(cur, fake, args.sellers)
+            tao_dia_chi(cur, rng, fake, ds_khach)
             ds_la = tao_danh_muc(cur)
             hang_ban = tao_san_pham(cur, rng, args.products, ds_la, ds_ban)
+            ds_km = tao_khuyen_mai(cur, rng, ds_la, hang_ban)
         conn.commit()
 
-        # Phần 2: đơn hàng -> commit theo từng lô
-        tao_don_hang(conn, rng, fake, args.seed, args.orders, ds_khach, hang_ban, args.batch)
+        # Phần 2: đơn hàng (có áp khuyến mãi) -> commit theo từng lô
+        tao_don_hang(conn, rng, fake, args.seed, args.orders, ds_khach, hang_ban, args.batch, ds_km)
+
+        # Phần 3: giỏ hàng -> 1 transaction
+        with conn.cursor() as cur:
+            tao_gio_hang(cur, rng, ds_khach, hang_ban)
+        conn.commit()
+
         print(f"Xong! Tong thoi gian: {time.perf_counter() - bat_dau:.1f} giay")
     except Exception:
         conn.rollback()

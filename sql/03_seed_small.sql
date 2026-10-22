@@ -1,4 +1,8 @@
-USE ecommerce_advanced;
+-- LƯU Ý: file này chỉ để test thêm dữ liệu vào các bảng với số lượng rất ít, dữ liệu làm việc thực tế là sinh ra từ 
+-- file generate_data.py. Vì thế để chạy file seed này hãy sử dụng file 01_schema.sql sửa tên db là ecommerce_demo, 
+--sau đó mới chạy file seed này.
+
+USE ecommerce_demo;
 
 INSERT INTO account (email, password_hash, full_name, phone) VALUES
 ('customer01@example.test', 'demo-hash', 'Nguyen Van A', '0900000001'),
@@ -40,3 +44,91 @@ FROM cart c CROSS JOIN product_variant v JOIN inventory i ON i.variant_id = v.va
 WHERE c.status = 'ACTIVE' AND v.sku = 'SKU-DEMO-001'
   AND i.seller_id = (SELECT account_id FROM seller WHERE seller_code = 'SEL0001')
   AND c.customer_id = (SELECT account_id FROM customer WHERE customer_code = 'CUS0001');
+
+-- ===================================================================
+-- Bổ sung seed cho 11 bảng còn thiếu (hoàn tất 20/20 bảng)
+-- ===================================================================
+
+-- 10. address – Địa chỉ giao hàng mặc định
+INSERT INTO address (customer_id, recipient_name, phone, line1, ward, district, city, province, postal_code, is_default)
+SELECT account_id, 'Nguyen Van A', '0900000001',
+       '123 Nguyen Hue', 'Phuong Ben Nghe', 'Quan 1', 'TP. Ho Chi Minh', 'TP. Ho Chi Minh', '700000', TRUE
+FROM customer WHERE customer_code = 'CUS0001';
+
+-- 11. promotion – Hai chương trình khuyến mãi (phần trăm & cố định)
+INSERT INTO promotion (code, name, promotion_type, discount_value, min_order_amount, max_discount,
+                       start_at, end_at, status, usage_limit, used_count)
+VALUES
+  ('GIAM10',  'Giam 10 phan tram don hang', 'PERCENT', 10.00,    100000, 15000,
+   '2026-01-01 00:00:00', '2026-12-31 23:59:59', 'ACTIVE', 100, 1),
+  ('GIAM20K', 'Giam 20K don hang',          'FIXED',   20000.00, 150000, NULL,
+   '2026-01-01 00:00:00', '2026-12-31 23:59:59', 'ACTIVE', 50,  0);
+
+-- 12. promotion_product – Gắn GIAM10 cho sản phẩm Demo
+INSERT INTO promotion_product (promotion_id, product_id)
+SELECT pr.promotion_id, p.product_id
+FROM promotion pr CROSS JOIN product p
+WHERE pr.code = 'GIAM10' AND p.slug = 'san-pham-demo';
+
+-- 13. promotion_category – Gắn GIAM20K cho danh mục Điện tử
+INSERT INTO promotion_category (promotion_id, category_id)
+SELECT pr.promotion_id, c.category_id
+FROM promotion pr CROSS JOIN category c
+WHERE pr.code = 'GIAM20K' AND c.slug = 'dien-tu';
+
+-- 14. orders – Đơn hàng đã giao thành công
+--     Tính: đơn giá 100 000 × 2 = 200 000 (subtotal)
+--           GIAM10: 10% × 200 000 = 20 000, giới hạn max 15 000 → discount = 15 000
+--           Phí ship = 30 000
+--           Tổng = 200 000 − 15 000 + 30 000 = 215 000
+INSERT INTO orders (order_number, customer_id, status,
+                    recipient_name, recipient_phone, shipping_address,
+                    subtotal, discount_total, shipping_fee, grand_total, placed_at)
+SELECT 'ORD-20260115-0001', cu.account_id, 'DELIVERED',
+       'Nguyen Van A', '0900000001',
+       '123 Nguyen Hue, Phuong Ben Nghe, Quan 1, TP. Ho Chi Minh',
+       200000, 15000, 30000, 215000, '2026-01-15 10:30:00'
+FROM customer cu WHERE cu.customer_code = 'CUS0001';
+
+-- 15. order_item – Chi tiết đơn hàng
+INSERT INTO order_item (order_id, seller_id, variant_id,
+                        product_name_snapshot, sku_snapshot,
+                        unit_price, quantity, line_discount, line_total)
+SELECT o.order_id, i.seller_id, i.variant_id,
+       'San pham Demo', 'SKU-DEMO-001',
+       100000, 2, 15000, 185000
+FROM orders o
+  CROSS JOIN inventory i
+  JOIN seller s  ON s.account_id  = i.seller_id
+  JOIN product_variant v ON v.variant_id = i.variant_id
+WHERE o.order_number = 'ORD-20260115-0001'
+  AND s.seller_code  = 'SEL0001'
+  AND v.sku          = 'SKU-DEMO-001';
+
+-- 16. order_promotion – Mã khuyến mãi đã áp dụng
+INSERT INTO order_promotion (order_id, promotion_id, discount_amount, promotion_code_snapshot)
+SELECT o.order_id, pr.promotion_id, 15000, 'GIAM10'
+FROM orders o CROSS JOIN promotion pr
+WHERE o.order_number = 'ORD-20260115-0001' AND pr.code = 'GIAM10';
+
+-- 17. payment – Thanh toán thành công qua VNPAY
+INSERT INTO payment (order_id, provider, transaction_ref, amount, status, paid_at)
+SELECT o.order_id, 'VNPAY', 'TXN-VNPAY-00001', 215000, 'SUCCESS', '2026-01-15 10:35:00'
+FROM orders o WHERE o.order_number = 'ORD-20260115-0001';
+
+-- 18. shipment – Vận chuyển qua GHN, đã giao
+INSERT INTO shipment (order_id, carrier, tracking_number, status, shipped_at, delivered_at)
+SELECT o.order_id, 'GHN', 'GHN-TRACK-00001', 'DELIVERED',
+       '2026-01-16 08:00:00', '2026-01-18 14:00:00'
+FROM orders o WHERE o.order_number = 'ORD-20260115-0001';
+
+-- 19. review – Khách đánh giá 5 sao
+INSERT INTO review (product_id, customer_id, order_item_id, rating, title, body, status)
+SELECT p.product_id, cu.account_id, oi.order_item_id,
+       5, 'San pham tot', 'Chat luong tot, giao hang nhanh, dong goi can than.', 'PUBLISHED'
+FROM order_item oi
+  JOIN orders o   ON o.order_id   = oi.order_id
+  JOIN product p  ON p.slug       = 'san-pham-demo'
+  JOIN customer cu ON cu.customer_code = 'CUS0001'
+WHERE o.order_number    = 'ORD-20260115-0001'
+  AND oi.sku_snapshot   = 'SKU-DEMO-001';
