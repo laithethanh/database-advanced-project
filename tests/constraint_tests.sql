@@ -41,9 +41,11 @@ CALL test_expect_error('reserved exceeds on hand',
 CALL test_expect_error('second active cart',
   'INSERT INTO cart(customer_id,status) SELECT account_id,''ACTIVE'' FROM customer WHERE customer_code=''CUS0001''');
 
+-- Fixture: địa chỉ mặc định của CUS0001 (nếu seed nhỏ đã tạo thì không tạo lại).
 INSERT INTO address(customer_id,recipient_name,phone,line1,city,province,is_default)
-SELECT account_id,'Nguyen Van A','0900000001','So 1','HCM','HCM',TRUE
-FROM customer WHERE customer_code='CUS0001';
+SELECT c.account_id,'Nguyen Van A','0900000001','So 1','HCM','HCM',TRUE
+FROM customer c WHERE c.customer_code='CUS0001'
+  AND NOT EXISTS (SELECT 1 FROM address a WHERE a.customer_id=c.account_id AND a.is_default);
 CALL test_expect_error('second default address',
   'INSERT INTO address(customer_id,recipient_name,phone,line1,city,province,is_default) SELECT account_id,''Nguyen Van A'',''0900000001'',''So 2'',''HCM'',''HCM'',TRUE FROM customer WHERE customer_code=''CUS0001''');
 

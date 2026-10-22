@@ -96,12 +96,15 @@ SELECT 'ORD-20260115-0001', cu.account_id, 'DELIVERED',
 FROM customer cu WHERE cu.customer_code = 'CUS0001';
 
 -- 15. order_item – Chi tiết đơn hàng
+--     Lưu ý: line_discount = 0 vì lược đồ giữ bất biến orders.subtotal = SUM(order_item.line_total)
+--     (trigger trg_order_item_after_insert cũng duy trì đúng công thức này).
+--     Khoản giảm của khuyến mãi GIAM10 được ghi nhận ở cấp đơn: orders.discount_total + order_promotion.
 INSERT INTO order_item (order_id, seller_id, variant_id,
                         product_name_snapshot, sku_snapshot,
                         unit_price, quantity, line_discount, line_total)
 SELECT o.order_id, i.seller_id, i.variant_id,
        'San pham Demo', 'SKU-DEMO-001',
-       100000, 2, 15000, 185000
+       100000, 2, 0, 200000
 FROM orders o
   CROSS JOIN inventory i
   JOIN seller s  ON s.account_id  = i.seller_id

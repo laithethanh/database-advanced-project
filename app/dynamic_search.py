@@ -62,6 +62,10 @@ def tao_cau_tim_kiem(tu_khoa=None, danh_muc_id=None, gia_tu=None, gia_den=None,
         raise ValueError(f"Chieu sap xep khong hop le: {chieu!r}")
     if not 1 <= int(gioi_han) <= 100:
         raise ValueError("gioi_han phai tu 1 den 100")
+    if gia_tu is not None and gia_tu < 0:
+        raise ValueError("gia_tu khong duoc am")
+    if gia_den is not None and gia_den < 0:
+        raise ValueError("gia_den khong duoc am")
     if gia_tu is not None and gia_den is not None and gia_tu > gia_den:
         raise ValueError("gia_tu khong duoc lon hon gia_den")
 

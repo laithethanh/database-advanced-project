@@ -145,7 +145,7 @@ Kết quả thực tế (chạy ngày 2026-10-21 trên MySQL 8.4.11): toàn bộ
 
 ## 7. SQL động, SQL nhúng và bảo mật
 
-`app/dynamic_search.py` dùng whitelist cho sort/direction và bind parameter cho keyword, category, price, brand, rating. `tests/test_dynamic_search.py` kiểm tra payload injection vẫn nằm trong params, sort/direction lạ bị từ chối và sort theo giá dùng đúng `v.price`.
+`app/dynamic_search.py` dùng whitelist cho sort/direction và bind parameter cho keyword, category, price. `tests/test_dynamic_search.py` kiểm tra payload injection vẫn nằm trong params, sort/direction lạ bị từ chối, sort theo giá dùng đúng `v.price` và các khoảng giá/giới hạn không hợp lệ bị từ chối trước khi ghép câu lệnh.
 
 `app/embedded_sql.py` minh họa cursor PyMySQL, parameterized query, cập nhật giỏ hàng có kiểm tra tồn tại dòng và gọi checkout.
 
