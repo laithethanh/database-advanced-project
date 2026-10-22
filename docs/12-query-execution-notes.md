@@ -28,10 +28,9 @@
 3. Với Q21, xác nhận Q21A và Q21B trả về cùng dữ liệu trước khi so sánh thời gian.
 4. Không tự tạo kết quả hoặc thời gian chạy. Các tệp hiện chỉ nêu kết quả kỳ vọng cho đến khi nhóm thực sự chạy MySQL.
 
-## Trạng thái chạy thật (2026-10-21)
+## Trạng thái bằng chứng
 
-- Toàn bộ Q01–Q25 và Q18–Q20 (recursive) đã chạy **không lỗi** trên MySQL 8.4.11 với dữ liệu mẫu nhỏ
-  (`report/appendix/tests/06-queries-sample.txt`, `07-recursive-sample.txt`).
-- Trên dữ liệu 100.000 đơn, Q25 trả về **0 dòng vi phạm** (`report/appendix/benchmark/q25-invariant-check.sql`).
-- Kế hoạch thực thi của ba truy vấn đo hiệu năng nằm trong `report/appendix/benchmark/`.
+- Các kết quả Q01–Q25 của những lần chạy cũ đã được dọn khỏi repo.
+- Sau mỗi lần chạy, lưu output thật vào `report/appendix/queries/<run-date>/` hoặc `data/benchmark/<YYYYMMDD>-<machine>/queries/`; không dùng lại số liệu của lần chạy trước.
+- Q25 là điều kiện bắt buộc: phải trả về **0 dòng vi phạm** trên dữ liệu mẫu nhỏ và trên bộ dữ liệu benchmark.
 - Cần chạy lại Q01–Q25 trên bộ dữ liệu 100.000 đơn và lưu đầy đủ kết quả từng truy vấn trước khi nộp báo cáo.

@@ -62,10 +62,10 @@ Sơ đồ 8 bước của `sp_checkout`:
 7. Cập nhật tổng, ghi payment, chuyển PAID, đóng cart, COMMIT
 8. EXIT HANDLER → ROLLBACK
 
-Kết quả kiểm thử (đã chạy thật, `report/appendix/tests/`):
-- Ràng buộc: 7/7 case trả PASS, các truy vấn bất biến trả 0 vi phạm.
-- Rollback: `orders 2 → 2`, `stock 18 → 18`, giỏ vẫn ACTIVE, `used_count` không đổi.
-- Không oversell: session B chờ khóa ~4,2 s; session C bị từ chối `insufficient inventory`.
+Kết quả kiểm thử SQL sẽ được điền từ lần chạy mới nhất:
+- Ràng buộc: tất cả case phải trả PASS, các truy vấn bất biến trả 0 vi phạm.
+- Rollback: số đơn, tồn kho, giỏ và `used_count` phải giữ nguyên.
+- Không oversell: một session chờ khóa, session còn lại bị từ chối `insufficient inventory`.
 
 *Ghi chú: nhấn mạnh thứ tự khoá tránh deadlock và khóa tồn kho theo thứ tự cố định.*
 
@@ -90,12 +90,12 @@ Kết quả kiểm thử (đã chạy thật, `report/appendix/tests/`):
 - `app/embedded_sql.py`: cursor PyMySQL, parameterized query, cập nhật giỏ hàng có kiểm tra dòng
 - Test: `python -m unittest tests.test_dynamic_search -v` → 6/6 PASS
 
-Đã chạy thật (`report/appendix/tests/09-app-dynamic-embedded.txt`):
+Đã chạy thật ngày 22/10 (`report/appendix/danh/sql-injection-demo.txt`, `report/appendix/danh/embedded-sql-demo.txt`):
 - Payload `'; DROP TABLE product; --` → 0 dòng, không lỗi, bảng `product` còn nguyên
-- 3 giá trị sort ngoài whitelist đều bị từ chối trước khi tạo SQL
-- `checkout` qua PyMySQL tạo đơn `PAID`: 2 × 100.000 + 30.000 = 230.000
+- Các giá trị sort ngoài whitelist đều bị từ chối trước khi tạo SQL
+- `checkout` qua PyMySQL tạo đơn `PAID`; lần đặt vượt tồn kho bị rollback, dữ liệu trước/sau không đổi
 
-Ghi chú: `[CẦN ĐIỀN ảnh terminal chạy test và demo payload bị chặn]`
+Ghi chú: dùng ảnh terminal trong `report/appendix/danh/` cho phần demo.
 
 ## Slide 9 — Mô hình đệ quy và ObjectDB/OQL
 
@@ -113,23 +113,21 @@ Ghi chú: `[CẦN ĐIỀN output ObjectDB thật]`
 - Đo: warmup → `EXPLAIN ANALYZE` baseline → tối ưu index → đo lại → đo storage
 - Cùng máy, cùng dữ liệu, ghi lại metadata môi trường
 
-Ghi chú: `[CẦN ĐIỀN bảng thời gian median, kế hoạch thực thi, dung lượng index]`
+Ghi chú: số liệu benchmark 22/10 nằm trong `data/benchmark/20261022-danh-win/`; lần chạy sau lưu thư mục mới.
 
-## Slide 11 — Kết quả thực nghiệm (đã chạy thật)
+## Slide 11 — Kết quả thực nghiệm hiện có
 
 | Hạng mục | Kết quả |
 |---|---|
-| Script SQL 01→05 + test | Chạy sạch trên MySQL 8.4.11, không lỗi |
-| Test constraint | 7/7 PASS, bất biến 0 vi phạm |
-| Test promotion | Kịch bản A: 20.000/110.000 ✓; B: 100.000/30.000 ✓; 4 case lỗi PASS |
-| Test order | 7/7 PASS, rollback giữ nguyên đơn/tồn kho/giỏ |
-| Concurrency 2 session | B chờ khóa ~4,2 s; C bị từ chối → không oversell |
-| Q01–Q25 + recursive | Chạy không lỗi; Q25 = 0 dòng trên 100.000 đơn |
-| Generator | 100.000 đơn, 199.916 dòng hàng, 6,5 phút, seed 20261003 |
-| Benchmark | 3,588 ms → 3,612 ms; chi phí ghi +31% → giữ nguyên lược đồ chỉ mục |
-| App (dynamic/embedded) | Injection bị vô hiệu, checkout tạo đơn 230.000 ✓ |
+| Script SQL 01→05 + test | Script sẵn sàng; kết quả test SQL cập nhật theo lần chạy mới |
+| Test constraint/promotion/order | `[điền từ output lần chạy mới]` |
+| Concurrency 2 session | `[điền từ output lần chạy mới]` |
+| Q01–Q25 + recursive | Q25 bắt buộc 0 dòng; output lưu theo run-date |
+| Generator (22/10) | 100.000 đơn, 200.176 dòng hàng, 89.920 thanh toán, 12.423 review, 492,9 s |
+| Benchmark (22/10) | B1 1,6×; B2 5,5×; B3 ~305×; B4 không đổi; chi phí ghi +8% |
+| App (22/10) | Injection bị vô hiệu; checkout/rollback đúng |
 
-*Ghi chú: mọi số liệu trên lấy từ `report/appendix/`; không có số nào ước lượng.*
+*Ghi chú: số liệu 22/10 lấy từ `data/benchmark/20261022-danh-win/` và `report/appendix/danh/`; các mục còn lại chờ lần chạy mới.*
 
 ## Slide 12 — Demo trực tiếp
 
@@ -145,7 +143,7 @@ Ghi chú: chuẩn bị sẵn 2 terminal, DB sẵn sàng, mọi lệnh trong `doc
 
 - Thiết kế dữ liệu + ràng buộc + trigger + transaction tạo nền tảng đúng đắn
 - Bộ truy vấn nâng cao, SQL động/nhúng, recursive SQL, ODL/OQL và generator đã sẵn sàng
-- Hạn chế: còn `[CẦN ĐIỀN số liệu thực nghiệm]`; invariant liên bảng phải dùng trigger do MySQL thiếu ASSERTION
+- Hạn chế: kết quả test SQL/concurrency/ObjectDB cần chạy lại theo run-date; invariant liên bảng phải dùng trigger do MySQL thiếu ASSERTION
 - Hướng mở rộng: partition theo thời gian, read replica cho báo cáo, cache tồn kho
 
 Ghi chú: cảm ơn, mời hỏi.

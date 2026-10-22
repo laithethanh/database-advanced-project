@@ -1,3 +1,0 @@
-customer_code	cart_id	quantity	available_stock
-CUS2001	5	1	1
-CUS2002	6	1	1

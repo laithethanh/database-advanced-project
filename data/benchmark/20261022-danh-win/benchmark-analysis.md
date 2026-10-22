@@ -58,13 +58,11 @@ phần còn lại là thời gian gửi/nhận giữa Python và MySQL). Điều
 **Bài học chính:** index hiệu quả nhất khi giúp MySQL **đọc ít dòng hơn** (điều kiện lọc có độ chọn lọc cao trên cột
 chưa có index — B2, B3). Với truy vấn phải tổng hợp toàn bộ dữ liệu (B1), index chỉ giảm chi phí mỗi dòng nên hiệu quả hạn chế.
 
-## 5. Liên hệ với kết quả benchmark của nhóm
+## 5. Kết luận mở rộng
 
-Bản benchmark trên nhánh `main` (`report/appendix/benchmark/`) thử 3 index cho các truy vấn tổng hợp và kết luận
-index **không được trình tối ưu chọn** hoặc không cải thiện, trong khi làm ghi chậm thêm 31%. Kết quả ở đây **bổ sung**
-cho kết luận đó: với truy vấn tổng hợp toàn bộ (B1) index chỉ giúp ít, nhưng với truy vấn có điều kiện lọc chọn lọc
-(B2, B3) index cải thiện từ 5 đến hàng trăm lần. Hai kết quả cùng chỉ ra rằng việc thêm index phải dựa trên
-**loại truy vấn** chứ không nên thêm tràn lan.
+Với truy vấn tổng hợp toàn bộ dữ liệu (B1), index chỉ giúp ít; với truy vấn có điều kiện lọc chọn lọc cao
+(B2, B3), index cải thiện từ 5 đến hàng trăm lần. Việc thêm index phải dựa trên **loại truy vấn** chứ không
+nên thêm tràn lan.
 
-> Lưu ý khi so số tuyệt đối: hai lần đo chạy trên hai máy khác nhau với hai generator khác nhau,
+> Lưu ý khi so số tuyệt đối: mỗi lần đo có thể chạy trên máy và generator khác nhau,
 > nên chỉ so sánh xu hướng, không so trực tiếp số mili-giây.

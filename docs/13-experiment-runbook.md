@@ -43,7 +43,7 @@ Kết quả mong đợi của từng nhóm test:
 4. Chạy `sql/08_benchmark.sql`; với mỗi truy vấn được chọn, chạy làm nóng 3 lần và đo thời gian 5 lần. Lưu kế hoạch thô và tính trung vị.
 5. Mỗi lần chỉ thêm một chỉ mục thử nghiệm trong bản sao cơ sở dữ liệu, chạy lại cùng khối lượng công việc, rồi ghi dung lượng chỉ mục và chi phí INSERT/UPDATE. Không báo cáo kết quả phỏng đoán.
 
-Lưu `metadata.md`, kết quả `EXPLAIN ANALYZE` nguyên bản, thời gian và kết quả `SHOW INDEX` tại `data/benchmark/<YYYYMMDD>-<machine>/`, sau đó chép sang `report/appendix/benchmark/` để đưa vào phụ lục báo cáo.
+Lưu `metadata.md`, kết quả `EXPLAIN ANALYZE` nguyên bản, thời gian và kết quả `SHOW INDEX` tại `data/benchmark/<YYYYMMDD>-<machine>/`; mỗi lần chạy tạo một thư mục riêng, không ghi đè kết quả cũ.
 
 ## Kiểm thử hai phiên kết nối cùng mua lượng hàng cuối
 
@@ -69,24 +69,17 @@ CALL sp_checkout(                     CALL sp_checkout(
 SELECT @order_a;                       SELECT @order_b;
 ```
 
-Kết quả đo thật (2026-10-21): Terminal B bị **block ~4,2 s** trên khóa dòng `inventory` (Terminal A giữ khóa 6 s),
-sau đó tạo được đơn `PAID`; lượt gọi tiếp theo bị từ chối với `insufficient inventory` → không oversell.
-Ghi lại kết quả ở cả hai terminal cùng các dòng cuối trong `inventory`, `orders`, `payment`. Khôi phục cơ sở dữ liệu kiểm thử sau khi thử nghiệm xong.
+Kết quả mong đợi: một session phải chờ khóa dòng `inventory`, session còn lại nhận `insufficient inventory` → không oversell.
+Ghi lại kết quả ở cả hai terminal cùng các dòng cuối trong `inventory`, `orders`, `payment` vào `report/appendix/tests/<run-date>/`. Khôi phục cơ sở dữ liệu kiểm thử sau khi thử nghiệm xong.
 
 ## Bằng chứng nhóm cần cung cấp
 
 Thời gian thực tế, kế hoạch thực thi, thời gian chờ khóa, ảnh chụp, kết quả chạy ObjectDB và thông báo lỗi riêng của hệ quản trị phụ thuộc vào môi trường MySQL/ObjectDB. Repository không bịa các kết quả này; hãy thu thập bằng chứng bằng các lệnh phía trên.
 
-## Bằng chứng đã thu thập (lần chạy 2026-10-21, MySQL 8.4.11)
+## Bằng chứng hiện có
 
-| Nhóm | File lưu | Kết quả chính |
-|---|---|---|
-| Constraint | `report/appendix/tests/01-constraint-tests.txt` | 7/7 PASS, bất biến 0 vi phạm |
-| Promotion | `report/appendix/tests/02-promotion-tests.txt` | Kịch bản A 20.000/110.000; B 100.000/30.000; 4 case lỗi PASS |
-| Order/rollback | `report/appendix/tests/03-order-tests.txt` | 7/7 PASS; `orders 2→2`, `stock 18→18`, giỏ ACTIVE, `used_count=1` |
-| Transaction | `report/appendix/tests/04-transaction-tests.txt` | T01 tạo đơn PAID đúng tổng tiền; T05 savepoint |
-| Concurrency | `report/appendix/tests/08-concurrency-two-sessions.txt` | Session B chờ khóa ~4,2 s; session C `insufficient inventory`; không oversell |
-| App | `report/appendix/tests/09-app-dynamic-embedded.txt` | Injection 0 dòng; sort ngoài whitelist bị chặn; checkout 230.000 |
-| Benchmark | `report/appendix/benchmark/` | Baseline/optimized `EXPLAIN ANALYZE`, chi phí ghi +31%, Q25 = 0 vi phạm |
+- Benchmark và generator ngày 22/10: `data/benchmark/20261022-danh-win/` (`metadata.md`, `benchmark-results.md`, `benchmark-analysis.md`, `explain-baseline.txt`, `explain-optimized.txt`).
+- Demo SQL động/SQL nhúng ngày 22/10: `report/appendix/danh/` (`sql-injection-demo.txt`, `embedded-sql-demo.txt`, ảnh chụp terminal).
+- Kết quả test SQL, concurrency và Q01–Q25 của các lần chạy cũ đã được dọn; mỗi lần chạy lại tạo thư mục mới theo run-date.
 
 Còn thiếu: output ObjectDB/OQL và ảnh chụp màn hình cho bài demo.

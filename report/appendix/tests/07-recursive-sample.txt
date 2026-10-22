@@ -1,6 +1,0 @@
-category_id	parent_category_id	name	depth	display_path
-1	NULL	Dien tu	0	Dien tu
-category_id	name	recognized_revenue
-1	Dien tu	300000.00
-category_id	name	distance_from_leaf	path_from_leaf
-1	Dien tu	0	Dien tu

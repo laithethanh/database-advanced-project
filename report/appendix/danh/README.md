@@ -2,9 +2,8 @@
 
 Bản tự viết của Danh cho các phần: generator, SQL động/SQL Injection, SQL nhúng, benchmark.
 Trên nhánh `dev-danh`, ba file `data/generator/generate_data.py`, `app/dynamic_search.py`, `app/embedded_sql.py`
-**thay cho bản trước đó trên `main`**. Lưu ý khi gộp: `tests/test_dynamic_search.py` trên `main` đang gọi hàm
-`build_search_sql` của bản cũ nên cần cập nhật theo bản mới (hàm `tao_cau_tim_kiem`); báo cáo và slide cũng đang
-mô tả bản cũ. Việc giữ bản nào hoặc gộp ra sao do nhóm quyết định khi review Pull Request.
+**thay cho bản trước đó trên `main`**. `tests/test_dynamic_search.py`, báo cáo và slide đã được cập nhật theo
+bản mới (hàm `tao_cau_tim_kiem`).
 
 Tất cả chạy trên database `ecommerce_advanced` dựng bằng `sql/01`→`05` của `main`, MySQL 8.4.11, Python 3.15, PyMySQL 1.2.3.
 Các script hỏi mật khẩu MySQL lúc chạy (không lưu mật khẩu trong file).

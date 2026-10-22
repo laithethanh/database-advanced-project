@@ -139,9 +139,8 @@ Bộ Q01–Q25 nằm trong `sql/06_queries.sql`; Q18–Q20 nằm trong `sql/07_r
 - Q21A/Q21B so sánh hai cách viết.
 - Q25 kiểm tra bất biến và phải trả 0 dòng.
 
-Kết quả thực tế (chạy ngày 2026-10-21 trên MySQL 8.4.11): toàn bộ Q01–Q25 và các truy vấn đệ quy chạy
-**không lỗi**; Q25 trả về **0 dòng** cả trên dữ liệu mẫu nhỏ lẫn trên bộ 100.000 đơn
-(`report/appendix/tests/06-queries-sample.txt`, `report/appendix/benchmark/q25-invariant-check.sql`).
+Kết quả Q01–Q25 và các truy vấn đệ quy được lưu lại sau mỗi lần chạy; Q25 bắt buộc trả về **0 dòng** vi phạm.
+Các kết quả của những lần chạy cũ đã được dọn khỏi repo và không dùng lại trong báo cáo.
 
 ## 7. SQL động, SQL nhúng và bảo mật
 
@@ -149,12 +148,11 @@ Kết quả thực tế (chạy ngày 2026-10-21 trên MySQL 8.4.11): toàn bộ
 
 `app/embedded_sql.py` minh họa cursor PyMySQL, parameterized query, cập nhật giỏ hàng có kiểm tra tồn tại dòng và gọi checkout.
 
-Kết quả chạy thật (`report/appendix/tests/09-app-dynamic-embedded.txt`):
+Kết quả demo ngày 22/10 (`report/appendix/danh/sql-injection-demo.txt`, `report/appendix/danh/embedded-sql-demo.txt`):
 
 - Payload `'; DROP TABLE product; --` trong keyword → trả về 0 dòng, không lỗi, bảng `product` còn nguyên.
-- Ba giá trị sort ngoài whitelist đều bị từ chối trước khi tạo câu lệnh SQL.
-- `change_cart_quantity` đổi số lượng 1 → 2; `checkout` tạo đơn `PAID` với `subtotal = 200.000`,
-  `shipping_fee = 30.000`, `grand_total = 230.000`, 1 payment, 1 dòng hàng.
+- Các giá trị sort ngoài whitelist đều bị từ chối trước khi tạo câu lệnh SQL.
+- `checkout` qua PyMySQL tạo đơn `PAID`; lần đặt vượt tồn kho bị rollback, số đơn và tồn kho trước/sau không đổi.
 - `python -m unittest tests.test_dynamic_search -v` → 6/6 PASS.
 
 ## 8. CSDL hướng đối tượng
@@ -175,13 +173,9 @@ Các kịch bản:
 - T05 savepoint.
 - T06 nhiều mã, một mã lỗi.
 
-Kết quả thực tế (`report/appendix/tests/03-order-tests.txt`, `08-concurrency-two-sessions.txt`):
-
-- Rollback: `orders_after = orders_before` (2 = 2), `stock_after = stock_before` (18 = 18), giỏ vẫn
-  `ACTIVE`, `promotion.used_count` không đổi → không còn đơn mồ côi hay tồn kho bị trừ dở.
-- T03: session B bị **block ~4,2 s** trên khóa dòng `inventory` (session A giữ khóa 6 s), sau đó mới tạo được đơn.
-  Session C bị từ chối với `insufficient inventory` → **không oversell**.
-- Trạng thái cuối: tồn kho 0, số `payment` = số đơn `PAID` = 4, không có dòng thanh toán mồ côi.
+Các kịch bản được chạy lại theo `docs/13-experiment-runbook.md`; mỗi lần chạy lưu output vào
+`report/appendix/tests/<run-date>/`. Không dùng số liệu của lần chạy cũ. Yêu cầu kiểm chứng: rollback không
+để lại đơn mồ côi hoặc tồn kho bị trừ dở; hai session tranh mua lượng hàng cuối phải không oversell.
 
 ## 10. Dữ liệu lớn và benchmark
 
@@ -192,38 +186,39 @@ Hai nguồn dữ liệu được dùng tách biệt, trên hai database khác nh
 | `sql/03_seed_small.sql` | Dữ liệu mẫu nhỏ (vài dòng cho mỗi bảng, fixture `CUS0001`/`SEL0001`/`SKU-DEMO-001`) | Database mẫu `ecommerce_advanced`: test, demo, chạy Q01–Q25 trên dữ liệu nhỏ |
 | `data/generator/generate_data.py` | Dữ liệu lớn 100.000 đơn (seed cố định, mã theo namespace `DCUS*`/`DSEL*`/`DSKU*`) | Database benchmark riêng, **không** nạp seed nhỏ: benchmark và kiểm chứng query |
 
-Generator tạo 100.000 đơn với seed cố định (`--seed 20261003`, 6,5 phút), nhiều trạng thái, review và tồn kho thấp. `sql/08_benchmark.sql` chạy baseline và optimized với `EXPLAIN ANALYZE`, đo metadata và chi phí ghi/dung lượng.
+Generator tạo 100.000 đơn với seed cố định (`--seed 20261003`), nhiều trạng thái, review và tồn kho thấp.
+Benchmark ngày 22/10 chạy bằng `data/benchmark/run_benchmark.py`: warmup, `EXPLAIN ANALYZE` baseline, tạo chỉ
+mục thử nghiệm, đo optimized và chi phí ghi/dung lượng.
 
-Kết quả thực tế (`report/appendix/benchmark/`):
+Kết quả thực tế (`data/benchmark/20261022-danh-win/benchmark-results.md`):
 
-| Truy vấn đo | Baseline | Sau khi thêm 3 chỉ mục thử nghiệm |
-|---|---|---|
-| Doanh thu theo sản phẩm | 3.588 ms / 3.509 ms | 3.612 ms |
-| Doanh thu theo người bán theo khoảng thời gian | 2.280 ms / 2.319 ms | 2.285 ms |
-| Quét tồn kho dưới ngưỡng đặt lại | 0,18 ms (table scan) | 3,08 ms (covering index scan) |
-| Chi phí ghi 10.000 INSERT | 799,53 ms | 1.048,40 ms (+31%) |
+| Mã | Truy vấn đo | Trước | Sau khi thêm chỉ mục thử nghiệm | Nhanh hơn |
+|---|---|---|---|---|
+| B1 | Top 10 sản phẩm theo doanh thu | 1.494,68 ms | 937,74 ms | 1,6× |
+| B2 | Doanh thu theo ngày trong tháng 03/2026 | 39,41 ms | 7,12 ms | 5,5× |
+| B3 | Tra cứu đơn theo số điện thoại người nhận | 38,11 ms | 0,12 ms | ~305× |
+| B4 | 10 đơn gần nhất của một khách (đối chứng) | 0,39 ms | 0,55 ms | ~không đổi |
+| — | Chi phí ghi 89.923 dòng `payment` | 1.975,19 ms | 2.136,96 ms | +8% |
 
-Kết luận: lược đồ chỉ mục sẵn có đã đủ cho các truy vấn phân tích chính; các chỉ mục thử nghiệm không được
-trình tối ưu chọn và làm tăng chi phí ghi nên **không đưa vào schema chính**. Với bài toán quét tồn kho quy
-mô lớn, hướng đúng là dùng bảng tổng hợp theo ngày.
+Kết luận: chỉ mục mới cải thiện rõ các truy vấn có điều kiện lọc chọn lọc cao (B2, B3) nhưng chỉ cải thiện
+hạn chế với truy vấn tổng hợp toàn bộ dữ liệu (B1). Các chỉ mục thử nghiệm đã được xóa sau khi đo và **không
+đưa vào schema chính**; nếu triển khai thật, ưu tiên cân nhắc chỉ mục cho B3/B2 thay vì thêm chỉ mục tràn lan.
 
 ## 11. Kết luận và hạn chế
 
-Đồ án đã có đầy đủ artifact cho thiết kế, ràng buộc, transaction, truy vấn, SQL động/nhúng, recursive SQL, ODL/OQL và generator. Hạn chế chính là các kết quả benchmark/ObjectDB/concurrency cần được chạy thật và điền vào báo cáo; một số invariant liên bảng phải dùng trigger vì MySQL không hỗ trợ ASSERTION.
+Đồ án đã có đầy đủ artifact cho thiết kế, ràng buộc, transaction, truy vấn, SQL động/nhúng, recursive SQL, ODL/OQL và generator. Benchmark ngày 22/10 đã có bằng chứng; các kết quả test SQL, concurrency, Q01–Q25 và ObjectDB cần được chạy lại và lưu theo từng lần chạy. Một số invariant liên bảng phải dùng trigger vì MySQL không hỗ trợ ASSERTION.
 
 ## Phụ lục cần bổ sung
 
-Đã có sẵn trong repository (`report/appendix/`):
+Đã có sẵn trong repository:
 
-- `benchmark/00-environment.md` — metadata môi trường, quy mô dữ liệu 100.000 đơn.
-- `benchmark/01-baseline.txt`, `02-optimized.txt` — kế hoạch thực thi `EXPLAIN ANALYZE` nguyên văn.
-- `benchmark/03-write-cost.md` — chi phí ghi và dung lượng khi thêm chỉ mục.
-- `benchmark/q25-invariant-check.sql` — truy vấn kiểm tra bất biến (0 vi phạm).
-- `benchmark/04-query-coverage-100k.txt` — số dòng trả về của các truy vấn kiểm chứng dữ liệu.
-- `tests/01…07-*.txt` — output constraint/promotion/order/transaction/concurrency và mẫu kết quả truy vấn.
-- `tests/08-concurrency-two-sessions.txt` — bằng chứng khóa dòng và không oversell.
-- `tests/09-app-dynamic-embedded.txt` — bằng chứng SQL động/SQL nhúng chống injection.
-- `tests/regression/2026-10-21.md` — báo cáo hồi quy đầy đủ.
+- `data/benchmark/20261022-danh-win/metadata.md` — metadata môi trường, quy mô dữ liệu và tái lập generator.
+- `data/benchmark/20261022-danh-win/benchmark-results.md`, `benchmark-analysis.md` — số liệu benchmark trước/sau chỉ mục và nhận xét.
+- `data/benchmark/20261022-danh-win/explain-baseline.txt`, `explain-optimized.txt` — kế hoạch thực thi `EXPLAIN ANALYZE` nguyên văn.
+- `report/appendix/danh/sql-injection-demo.txt` — bằng chứng SQL động/SQL Injection ngày 22/10.
+- `report/appendix/danh/embedded-sql-demo.txt` — bằng chứng SQL nhúng/cursor ngày 22/10.
+
+Các kết quả test SQL, concurrency, Q01–Q25 và regression của những lần chạy cũ đã được dọn khỏi repo. Mỗi lần chạy mới lưu vào `report/appendix/tests/<run-date>/` và `report/appendix/queries/<run-date>/`.
 
 Còn phải bổ sung trước khi nộp:
 
@@ -287,25 +282,19 @@ dựa trên cột sinh tự động (`generated always as ... stored`) vì MySQL
 | `sp_checkout(customer, name, phone, address, fee, codes, OUT order_id)` | Thủ tục | Đặt hàng nguyên tử: khóa giỏ → tạo đơn → khóa tồn kho → trừ kho → ghi dòng hàng → áp mã → thanh toán → commit, có `EXIT HANDLER` rollback |
 | `sp_seller_ranking(from, to, limit)` | Thủ tục | Xếp hạng người bán bằng SQL động (`PREPARE`/`EXECUTE` + placeholder) |
 
-# PHỤ LỤC B — Bảng kết quả kiểm thử (đã chạy thật)
+# PHỤ LỤC B — Mẫu ghi kết quả kiểm thử
+
+Bảng dưới đây được điền từ output của lần chạy mới nhất; không dùng lại số liệu của lần chạy cũ.
 
 | Tệp test | Số case | Kết quả |
 |---|---|---|
-| `tests/constraint_tests.sql` | 7 | 7/7 PASS; 5 truy vấn bất biến = 0 |
-| `tests/promotion_tests.sql` | 4 + 2 kịch bản | 4/4 PASS; A: 20.000/110.000; B: 100.000/30.000 |
-| `tests/order_tests.sql` | 7 | 7/7 PASS; rollback giữ nguyên đơn/tồn kho/giỏ; `ORDER_DATA_OK` = 0 |
-| `sql/09_transaction_tests.sql` | T01, T04, T05 | T01 tạo đơn PAID đúng tổng; T05 savepoint hoàn tác đúng |
-| `tests/concurrency_setup.sql` + 2 phiên | T03 | B chờ khóa ~4,2 s; C `insufficient inventory`; tồn kho cuối 0 |
+| `tests/constraint_tests.sql` | 7 | `[điền từ output]` |
+| `tests/promotion_tests.sql` | 4 + 2 kịch bản | `[điền từ output]` |
+| `tests/order_tests.sql` | 7 | `[điền từ output]` |
+| `sql/09_transaction_tests.sql` | T01, T04, T05 | `[điền từ output]` |
+| `tests/concurrency_setup.sql` + 2 phiên | T03 | `[điền từ output]` |
 | `python -m unittest tests.test_dynamic_search -v` | 6 | 6/6 PASS |
 
-# PHỤ LỤC C — Độ phủ truy vấn trên 100.000 đơn
+# PHỤ LỤC C — Độ phủ truy vấn trên dữ liệu lớn
 
-| Truy vấn | Số dòng trả về | Ý nghĩa |
-|---|---|---|
-| Q06 (SKU tồn thấp) | 216 | Có dữ liệu tồn kho thấp để kiểm chứng |
-| Q09 (khách đã đánh giá) | 20.000 | Review sinh từ đơn DELIVERED |
-| Q15 (xếp hạng người bán) | 100 | DENSE_RANK trên 100 người bán |
-| Q19 (doanh thu cây danh mục) | 110 | 10 gốc + 100 nhánh |
-| Q22 (tỷ lệ hoàn trả) | 981 | Nhóm khách hàng "return-prone" |
-| Q24 (sản phẩm sắp hết) | 20 | Sản phẩm nhiều biến thể nhưng tồn thấp |
-| Q25 (vi phạm bất biến) | 0 | Bắt buộc — dữ liệu sạch bất biến |
+Số dòng trả về của Q01–Q25 sẽ được cập nhật từ lần chạy mới nhất. Q25 bắt buộc trả về **0 dòng vi phạm**.

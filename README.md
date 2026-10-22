@@ -228,7 +228,7 @@ project/
 - Python 3.10+ (đã kiểm thử trên 3.13.2).
 - Git.
 
-> Các số liệu thực nghiệm trong báo cáo được đo trên MySQL 8.4.11 với bộ dữ liệu 100.000 đơn do generator tạo ra; bằng chứng nằm trong `report/appendix/`.
+> Kết quả thực nghiệm mới nhất nằm trong `data/benchmark/20261022-danh-win/` và `report/appendix/danh/`. Các lần chạy sau lưu vào `data/benchmark/<YYYYMMDD>-<machine>/`; không dùng lại kết quả cũ.
 
 ### Quy trình tổng quát
 
@@ -292,9 +292,9 @@ Quy trình chi tiết, cách lưu bằng chứng và kịch bản hai phiên n�
 - [x] Test cases valid/invalid (`tests/constraint_tests.sql`, `tests/order_tests.sql`, `tests/promotion_tests.sql`, `tests/test_dynamic_search.py`).
 - [x] README có thể chạy lại từ database trắng.
 - [x] Bản nháp báo cáo và slide (`report/chapters/report-draft.md`, `slides/slides-draft.md`).
-- [x] Chạy thật toàn bộ script SQL và test trên MySQL 8.4.11, lưu log bằng chứng (`report/appendix/tests/`).
-- [x] Chạy transaction/concurrency 2 session (bằng chứng khóa dòng ~4,2 s và không oversell).
-- [x] Chạy benchmark `EXPLAIN ANALYZE` trên 100.000 đơn và điền số liệu thật vào báo cáo.
+- [ ] Chạy lại toàn bộ script SQL và test trên MySQL 8.4.11, lưu log bằng chứng theo run-date.
+- [ ] Chạy transaction/concurrency 2 session và lưu bằng chứng khóa dòng/không oversell theo run-date.
+- [x] Chạy benchmark `EXPLAIN ANALYZE` trên 100.000 đơn ngày 22/10 (`data/benchmark/20261022-danh-win/`).
 - [ ] Chạy ObjectDB/OQL và lưu output 5 truy vấn (cần môi trường ObjectDB/JPA).
 - [ ] Bổ sung output đầy đủ Q01–Q25 trên bộ 100.000 đơn (ảnh/CSV từng truy vấn).
 - [ ] Báo cáo 20–30 trang hoàn chỉnh + phụ lục.
