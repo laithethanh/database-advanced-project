@@ -188,6 +188,7 @@ project/
 │  │  ├─ report-outline.md
 │  │  └─ report-draft.md
 │  └─ appendix/
+├─ db_config.py
 ├─ requirements.txt
 └─ README.md
 ```
@@ -228,7 +229,7 @@ project/
 - Python 3.10+ (đã kiểm thử trên 3.13.2).
 - Git.
 
-> Kết quả thực nghiệm mới nhất nằm trong `data/benchmark/20261022-danh-win/` và `report/appendix/danh/`. Các lần chạy sau lưu vào `data/benchmark/<YYYYMMDD>-<machine>/`; không dùng lại kết quả cũ.
+> Kết quả thực nghiệm mới nhất nằm trong `data/benchmark/20261022-danh-win/` và `report/appendix/danh/`. Các lần chạy sau lưu vào `data/benchmark/<YYYYMMDD-HHMMSS>-<machine>/`; không dùng lại kết quả cũ.
 
 ### Quy trình tổng quát
 
@@ -238,9 +239,10 @@ cd <repository-folder>
 pip install -r requirements.txt
 ```
 
-Dựng database mẫu `ecommerce_advanced` trên MySQL:
+Dựng database mẫu `ecommerce_advanced` trên MySQL. Nếu database đã tồn tại, drop trước để tránh lỗi khi tạo lại bảng:
 
 ```powershell
+mysql -u <user> -p -e "DROP DATABASE IF EXISTS ecommerce_advanced;"
 mysql -u <user> -p < sql/01_schema.sql
 mysql -u <user> -p < sql/02_constraints.sql
 mysql -u <user> -p < sql/03_seed_small.sql
@@ -249,6 +251,7 @@ mysql -u <user> -p < sql/05_triggers.sql
 mysql -u <user> -p < tests/constraint_tests.sql
 mysql -u <user> -p < tests/promotion_tests.sql
 mysql -u <user> -p < tests/order_tests.sql
+mysql -u <user> -p < sql/09_transaction_tests.sql
 mysql -u <user> -p < sql/06_queries.sql
 mysql -u <user> -p < sql/07_recursive.sql
 ```
@@ -258,13 +261,17 @@ mysql -u <user> -p < sql/07_recursive.sql
 Với database benchmark **sạch riêng** (không nạp seed nhỏ), nạp `01`, `02`, `04`, `05`, sau đó chạy generator và benchmark:
 
 ```powershell
-python data/generator/generate_data.py --orders 100000 --seed 20261003
-mysql -u <user> -p < sql/08_benchmark.sql
+python data/generator/generate_data.py --customers 10000 --sellers 100 --products 1000 --orders 100000 --seed 20261003
+python data/benchmark/run_benchmark.py
 ```
+
+> Lần chạy 22/10 có nạp thêm `03_seed_small.sql` trước generator (xem `data/benchmark/20261022-danh-win/metadata.md`). Các lần chạy mới nên dùng database sạch không seed để tách fixture khỏi dữ liệu đo.
+>
+> `sql/08_benchmark.sql` chỉ là bản SQL tham chiếu; script tạo bằng chứng hiện hành là `data/benchmark/run_benchmark.py`.
 
 Quy trình chi tiết, cách lưu bằng chứng và kịch bản hai phiên nằm trong `docs/13-experiment-runbook.md`.
 
-> Không commit password, connection string thật hoặc `.env` chứa thông tin nhạy cảm. Dùng `.env.example`.
+> Không commit password, connection string thật hoặc `.env` chứa thông tin nhạy cảm. Dùng `.env.example`; các script Python tự đọc `.env` ở thư mục gốc.
 
 ## 🌿 Quy trình Git
 

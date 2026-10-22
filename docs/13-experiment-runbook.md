@@ -6,6 +6,7 @@ Dùng MySQL 8.0.18 trở lên (bắt buộc để dùng `EXPLAIN ANALYZE`) và m
 
 ```powershell
 pip install -r requirements.txt
+mysql -u <user> -p -e "DROP DATABASE IF EXISTS ecommerce_advanced;"
 mysql -u <user> -p < sql/01_schema.sql
 mysql -u <user> -p < sql/02_constraints.sql
 mysql -u <user> -p < sql/03_seed_small.sql
@@ -14,6 +15,7 @@ mysql -u <user> -p < sql/05_triggers.sql
 mysql -u <user> -p < tests/constraint_tests.sql
 mysql -u <user> -p < tests/promotion_tests.sql
 mysql -u <user> -p < tests/order_tests.sql
+mysql -u <user> -p < sql/09_transaction_tests.sql
 python -m unittest tests.test_dynamic_search -v
 mysql -u <user> -p < sql/06_queries.sql
 mysql -u <user> -p < sql/07_recursive.sql
@@ -34,16 +36,19 @@ Kết quả mong đợi của từng nhóm test:
 | `tests/constraint_tests.sql` | Mọi `CALL test_expect_error` trả về `PASS`; các truy vấn bất biến trả về 0 |
 | `tests/promotion_tests.sql` | Kịch bản A: `promo_sum=20000`, `order_discount_total=20000`, `order_grand_total=110000`; kịch bản B: `promo_sum=100000`, `order_grand_total=30000`; các case lỗi trả `PASS` |
 | `tests/order_tests.sql` | `fixture_status=FIXTURE_OK`; các case lỗi trả `PASS`; `orders_after=orders_before`, `stock_after=stock_before`, `promotion_used_count=1`; `ORDER_DATA_OK` có 0 vi phạm |
+| `sql/09_transaction_tests.sql` | T01 tạo đơn `PAID` có tổng tiền khớp dòng hàng; T05 giữ nguyên số điện thoại sau rollback savepoint. T03/T04/T06 là các khối hướng dẫn/chạy thủ công, không tự động trong file. |
 
 ## Dữ liệu lớn và đo hiệu năng
 
-1. Tạo một cơ sở dữ liệu sạch khác bằng các script 01, 02, 04 và 05 (bỏ qua `03_seed_small.sql` vì dữ liệu mẫu nhỏ không dùng để đo); sao chép `.env.example` thành `.env` và nạp các giá trị vào shell, tuyệt đối không commit tệp này.
+1. Tạo một cơ sở dữ liệu sạch khác bằng các script 01, 02, 04 và 05 (bỏ qua `03_seed_small.sql` vì dữ liệu mẫu nhỏ không dùng để đo); nếu database đã tồn tại thì drop trước. Sao chép `.env.example` thành `.env` và điền thông tin kết nối; các script Python tự đọc tệp này, tuyệt đối không commit `.env`.
 2. Chạy `pip install -r data/generator/requirements.txt`.
-3. Chạy `python data/generator/generate_data.py --orders 100000 --seed 20261003`.
-4. Chạy `sql/08_benchmark.sql`; với mỗi truy vấn được chọn, chạy làm nóng 3 lần và đo thời gian 5 lần. Lưu kế hoạch thô và tính trung vị.
+3. Chạy `python data/generator/generate_data.py --customers 10000 --sellers 100 --products 1000 --orders 100000 --seed 20261003`.
+4. Chạy `python data/benchmark/run_benchmark.py --warmup 3 --runs 7`; script tự chạy baseline, tạo index thử nghiệm, đo optimized, đo chi phí ghi, dọn index và ghi bằng chứng.
 5. Mỗi lần chỉ thêm một chỉ mục thử nghiệm trong bản sao cơ sở dữ liệu, chạy lại cùng khối lượng công việc, rồi ghi dung lượng chỉ mục và chi phí INSERT/UPDATE. Không báo cáo kết quả phỏng đoán.
 
-Lưu `metadata.md`, kết quả `EXPLAIN ANALYZE` nguyên bản, thời gian và kết quả `SHOW INDEX` tại `data/benchmark/<YYYYMMDD>-<machine>/`; mỗi lần chạy tạo một thư mục riêng, không ghi đè kết quả cũ.
+Lưu `metadata.md`, kết quả `EXPLAIN ANALYZE` nguyên bản, thời gian và kết quả `SHOW INDEX` tại `data/benchmark/<YYYYMMDD-HHMMSS>-<machine>/`; mỗi lần chạy tạo một thư mục riêng, không ghi đè kết quả cũ. Lần chạy 22/10 có nạp thêm seed nhỏ trước generator; các lần sau dùng database sạch không seed.
+
+`sql/08_benchmark.sql` chỉ là bản SQL tham chiếu; script tạo bằng chứng hiện hành là `data/benchmark/run_benchmark.py`.
 
 ## Kiểm thử hai phiên kết nối cùng mua lượng hàng cuối
 

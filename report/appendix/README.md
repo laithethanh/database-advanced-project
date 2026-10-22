@@ -13,8 +13,8 @@ report/appendix/
 └── logs/<run-date>/             # log generator, thời gian chạy, mã commit
 ```
 
-Benchmark và metadata môi trường được lưu trong `data/benchmark/<YYYYMMDD>-<machine>/`.
+Benchmark và metadata môi trường được lưu trong `data/benchmark/<YYYYMMDD-HHMMSS>-<machine>/`.
 
 Quy ước đặt tên file: `<mục>-<mã truy vấn>-<timestamp>.<ext>`, ví dụ `Q01-<YYYYMMDD>-<HHMMSS>.txt`.
 
-Không tạo file bằng tay với số liệu ước lượng; mọi file trong thư mục này phải là output thật của lần chạy. Không giữ kết quả của các lần chạy cũ trong repo; mỗi lần chạy tạo thư mục riêng theo ngày.
+Không tạo file bằng tay với số liệu ước lượng; mọi file trong thư mục này phải là output thật của lần chạy. Không giữ kết quả của các lần chạy cũ trong repo; mỗi lần chạy tạo thư mục riêng theo ngày và giờ.

@@ -31,6 +31,6 @@
 ## Trạng thái bằng chứng
 
 - Các kết quả Q01–Q25 của những lần chạy cũ đã được dọn khỏi repo.
-- Sau mỗi lần chạy, lưu output thật vào `report/appendix/queries/<run-date>/` hoặc `data/benchmark/<YYYYMMDD>-<machine>/queries/`; không dùng lại số liệu của lần chạy trước.
+- Sau mỗi lần chạy, lưu output thật vào `report/appendix/queries/<run-date>/` hoặc `data/benchmark/<YYYYMMDD-HHMMSS>-<machine>/queries/`; không dùng lại số liệu của lần chạy trước.
 - Q25 là điều kiện bắt buộc: phải trả về **0 dòng vi phạm** trên dữ liệu mẫu nhỏ và trên bộ dữ liệu benchmark.
 - Cần chạy lại Q01–Q25 trên bộ dữ liệu 100.000 đơn và lưu đầy đủ kết quả từng truy vấn trước khi nộp báo cáo.

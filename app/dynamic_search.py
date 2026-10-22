@@ -10,16 +10,21 @@ File gồm 2 cách viết tìm kiếm để so sánh:
 Chỉ chạy trên database thử nghiệm ở máy mình (ecommerce_advanced).
 """
 
-import getpass
+import sys
+from pathlib import Path
 
 import pymysql
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from db_config import db_params
 
 
 def connect():
     return pymysql.connect(
-        host="127.0.0.1", port=3306, user="root",
-        password=getpass.getpass("Mat khau MySQL: "),
-        database="ecommerce_advanced", charset="utf8mb4",
+        **db_params(),
         cursorclass=pymysql.cursors.DictCursor,     # mỗi dòng kết quả là một dict {tên cột: giá trị}
     )
 

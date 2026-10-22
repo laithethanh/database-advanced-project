@@ -1,6 +1,6 @@
 # Danh mục kiểm thử hồi quy
 
-Chạy trên cơ sở dữ liệu mẫu vừa dựng theo thứ tự: `constraint_tests.sql`, `promotion_tests.sql`, `order_tests.sql`, `09_transaction_tests.sql`, sau đó chạy `python -m unittest tests.test_dynamic_search -v`. Với T03, dựng lại cơ sở dữ liệu sạch, chạy `concurrency_setup.sql` rồi mở hai terminal chạy `concurrency_session_a.sql` và `concurrency_session_b.sql`. Tiêu chí đạt:
+Chạy trên cơ sở dữ liệu mẫu vừa dựng theo thứ tự: `tests/constraint_tests.sql`, `tests/promotion_tests.sql`, `tests/order_tests.sql`, `sql/09_transaction_tests.sql`, sau đó chạy `python -m unittest tests.test_dynamic_search -v`. Với T03, dựng lại cơ sở dữ liệu sạch, chạy `concurrency_setup.sql` rồi mở hai terminal chạy `concurrency_session_a.sql` và `concurrency_session_b.sql`. Tiêu chí đạt:
 
 | ID | Kết quả mong đợi |
 |---|---|

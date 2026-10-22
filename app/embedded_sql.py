@@ -16,16 +16,21 @@ Chạy lại nhiều lần được: mỗi lần chạy, giỏ cũ đã đặt h
 """
 
 import argparse
-import getpass
+import sys
+from pathlib import Path
 
 import pymysql
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from db_config import db_params
 
 
 def connect():
     return pymysql.connect(
-        host="127.0.0.1", port=3306, user="root",
-        password=getpass.getpass("Mat khau MySQL: "),
-        database="ecommerce_advanced", charset="utf8mb4",
+        **db_params(),
         autocommit=False,                              # tự quản lý transaction bằng commit/rollback
         cursorclass=pymysql.cursors.DictCursor,
     )

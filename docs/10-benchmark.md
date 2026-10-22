@@ -2,12 +2,12 @@
 
 ## Bộ dữ liệu
 
-- Tối thiểu 100.000 đơn hàng (generator mặc định `--orders 100000`).
+- Tối thiểu 100.000 đơn hàng. Generator có tham số mặc định nhỏ, nên phải truyền đủ quy mô chuẩn.
 - Hàng trăm hoặc hàng nghìn sản phẩm, biến thể, khách hàng và nhiều cấp danh mục.
 - Dữ liệu do trình sinh tạo ra phải dùng seed cố định để mọi nhóm chạy lại được cùng dữ liệu.
 
 ```bash
-python data/generator/generate_data.py --orders 100000 --seed 20261003
+python data/generator/generate_data.py --customers 10000 --sellers 100 --products 1000 --orders 100000 --seed 20261003
 ```
 
 ## Quy trình đo
@@ -20,31 +20,37 @@ python data/generator/generate_data.py --orders 100000 --seed 20261003
 6. Đo chi phí ghi và dung lượng: so sánh `data_length`/`index_length` trước và sau, đo chi phí INSERT/UPDATE và lấy trung vị qua nhiều lần lặp.
 7. Dọn chỉ mục thử nghiệm sau khi đã lưu output.
 
-Script đo hiện hành là `data/benchmark/run_benchmark.py`; `sql/08_benchmark.sql` là bản SQL tham chiếu.
+Script đo hiện hành là `data/benchmark/run_benchmark.py`:
+
+```bash
+python data/benchmark/run_benchmark.py --warmup 3 --runs 7
+```
+
+`sql/08_benchmark.sql` chỉ là bản SQL tham chiếu, không dùng để tạo bằng chứng mới.
 
 ## Nguyên tắc
 
 - Chạy mỗi truy vấn nhiều lần, ghi **trung vị** và điều kiện môi trường.
 - Không kết luận hiệu năng chỉ từ một lần chạy.
 - Không tự tạo số liệu; mọi ô `[CẦN ĐIỀN]` trong báo cáo phải thay bằng output thật.
-- Lưu nguyên văn output của `EXPLAIN ANALYZE` vào `data/benchmark/<YYYYMMDD>-<machine>/`.
-- Không giữ kết quả của các lần chạy cũ trong repo; mỗi lần chạy tạo một thư mục riêng theo ngày.
+- Lưu nguyên văn output của `EXPLAIN ANALYZE` vào `data/benchmark/<YYYYMMDD-HHMMSS>-<machine>/`.
+- Không giữ kết quả của các lần chạy cũ trong repo; mỗi lần chạy tạo một thư mục riêng theo ngày và giờ.
 
 ## Nội dung cần lưu
 
 | Nội dung | Nơi lưu |
 |---|---|
-| Metadata môi trường, quy mô dữ liệu | `data/benchmark/<YYYYMMDD>-<machine>/metadata.md` |
-| Kế hoạch thực thi baseline | `data/benchmark/<YYYYMMDD>-<machine>/explain-baseline.txt` |
-| Kế hoạch thực thi sau tối ưu | `data/benchmark/<YYYYMMDD>-<machine>/explain-optimized.txt` |
-| Số liệu đo và nhận xét | `data/benchmark/<YYYYMMDD>-<machine>/benchmark-results.md`, `benchmark-analysis.md` |
+| Metadata môi trường, quy mô dữ liệu | `data/benchmark/<YYYYMMDD-HHMMSS>-<machine>/metadata.md` |
+| Kế hoạch thực thi baseline | `data/benchmark/<YYYYMMDD-HHMMSS>-<machine>/explain-baseline.txt` |
+| Kế hoạch thực thi sau tối ưu | `data/benchmark/<YYYYMMDD-HHMMSS>-<machine>/explain-optimized.txt` |
+| Số liệu đo và nhận xét | `data/benchmark/<YYYYMMDD-HHMMSS>-<machine>/benchmark-results.md`, `benchmark-analysis.md` |
 | Bản sao artifact hiện có | `data/benchmark/20261022-danh-win/` |
 
 ## Kết quả đo thật (lần chạy 2026-10-22)
 
 Môi trường: MySQL Community Server 8.4.11, REPEATABLE-READ, `innodb_buffer_pool_size` = 128 MB,
-bộ dữ liệu 100.003 đơn / 200.182 dòng hàng / 89.923 thanh toán (gồm dữ liệu generator và các đơn demo).
-Nguồn: `data/benchmark/20261022-danh-win/benchmark-results.md`.
+bộ dữ liệu 100.003 đơn / 200.182 dòng hàng / 89.923 thanh toán (gồm dữ liệu generator, fixture seed nhỏ và các đơn demo).
+Nguồn: `data/benchmark/20261022-danh-win/benchmark-results.md` và `metadata.md`.
 
 | Mã | Truy vấn đo | Trước | Sau khi thêm chỉ mục thử nghiệm | Nhanh hơn |
 |---|---|---|---|---|

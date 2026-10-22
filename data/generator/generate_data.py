@@ -15,13 +15,20 @@ Nguyên tắc:
 """
 
 import argparse
-import getpass
 import random
+import sys
 import time
 from datetime import datetime, timedelta
+from pathlib import Path
 
 import pymysql
 from faker import Faker
+
+ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from db_config import db_params
 
 
 # ---------------------------------------------------------------------------
@@ -87,11 +94,7 @@ MAU_KHUYEN_MAI = [
 # ---------------------------------------------------------------------------
 
 def connect():
-    return pymysql.connect(
-        host="127.0.0.1", port=3306, user="root",
-        password=getpass.getpass("Mat khau MySQL: "),
-        database="ecommerce_advanced", charset="utf8mb4",
-    )
+    return pymysql.connect(**db_params())
 
 
 # ---------------------------------------------------------------------------

@@ -4,6 +4,7 @@ Cách chạy (từ thư mục gốc project, sau khi đã có dữ liệu 100.00
     python data/benchmark/run_benchmark.py
     python data/benchmark/run_benchmark.py --runs 7 --warmup 3      (mặc định)
     python data/benchmark/run_benchmark.py --keep-indexes            (giữ lại index thử nghiệm)
+    python data/benchmark/run_benchmark.py --label lan-chay-01       (đặt tên thư mục kết quả)
 
 Quy trình:
     1. Ghi môi trường + số dòng + dung lượng bảng
@@ -13,20 +14,31 @@ Quy trình:
     5. Đo cái giá: dung lượng index tăng thêm, thời gian ghi chậm đi bao nhiêu
     6. Xóa index thử nghiệm (để schema giống bản của nhóm), ghi báo cáo ra file
 
-Kết quả ghi vào data/benchmark/<ngày>-danh-win/:
+Kết quả ghi vào data/benchmark/<YYYYMMDD-HHMMSS>-<machine>/:
+    metadata.md            môi trường và phiên bản thư viện
     benchmark-results.md   bảng tổng hợp
     explain-baseline.txt   kế hoạch thực thi nguyên văn trước khi thêm index
     explain-optimized.txt  kế hoạch thực thi nguyên văn sau khi thêm index
 """
 
 import argparse
-import getpass
+import importlib.metadata
+import platform
+import re
 import statistics
+import sys
 import time
+import unicodedata
 from datetime import datetime
 from pathlib import Path
 
 import pymysql
+
+ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from db_config import db_params
 
 TRANG_THAI_CO_DOANH_THU = "('PAID','PROCESSING','SHIPPED','DELIVERED')"
 
@@ -89,11 +101,7 @@ TRUY_VAN = [
 
 
 def connect():
-    return pymysql.connect(
-        host="127.0.0.1", port=3306, user="root",
-        password=getpass.getpass("Mat khau MySQL: "),
-        database="ecommerce_advanced", charset="utf8mb4", autocommit=True,
-    )
+    return pymysql.connect(**db_params(), autocommit=True)
 
 
 def gia_tri(cur, sql, args=()):
@@ -107,6 +115,21 @@ def ms(giay):
 
 def kb(byte):
     return f"{byte / 1024:,.0f}".replace(",", ".") + " KB"
+
+
+def ten_an_toan(gia_tri):
+    ten = unicodedata.normalize("NFKD", gia_tri).encode("ascii", "ignore").decode("ascii")
+    ten = re.sub(r"[^A-Za-z0-9_.-]+", "-", ten).strip(".-_")
+    if not ten:
+        raise ValueError("nhan thu muc khong hop le")
+    return ten
+
+
+def phien_ban(ten_goi):
+    try:
+        return importlib.metadata.version(ten_goi)
+    except importlib.metadata.PackageNotFoundError:
+        return "khong ro"
 
 
 def dung_luong_index(cur, bang):
@@ -185,27 +208,49 @@ def main():
     parser.add_argument("--warmup", type=int, default=3)
     parser.add_argument("--runs", type=int, default=7)
     parser.add_argument("--keep-indexes", action="store_true")
+    parser.add_argument("--label", default=None)
     args = parser.parse_args()
+    if args.warmup < 0:
+        parser.error("--warmup phai >= 0")
+    if args.runs < 1:
+        parser.error("--runs phai >= 1")
 
-    thu_muc = Path(__file__).resolve().parent / f"{datetime.now():%Y%m%d}-danh-win"
-    thu_muc.mkdir(parents=True, exist_ok=True)
+    luc_chay = datetime.now()
+    ten_may = ten_an_toan(platform.node() or "local")
+    nhan = ten_an_toan(args.label) if args.label else f"{luc_chay:%Y%m%d-%H%M%S}-{ten_may}"
+    thu_muc = Path(__file__).resolve().parent / nhan
+    if thu_muc.exists():
+        raise SystemExit(f"Thu muc ket qua da ton tai: {thu_muc}")
 
     conn = connect()
     bat_dau_tong = time.perf_counter()
+    da_don_index = False
     try:
         with conn.cursor() as cur:
             cur.execute("SET SESSION information_schema_stats_expiry = 0")
             # ---- 1. Môi trường ----
+            so_don = gia_tri(cur, "SELECT COUNT(*) FROM orders")
+            if so_don < 100000:
+                raise SystemExit(
+                    f"Can it nhat 100.000 don de chay benchmark, hien co {so_don:,} don."
+                )
             moi_truong = {
                 "MySQL": gia_tri(cur, "SELECT VERSION()"),
                 "Muc co lap": gia_tri(cur, "SELECT @@transaction_isolation"),
                 "innodb_buffer_pool_size": f"{gia_tri(cur, 'SELECT @@innodb_buffer_pool_size'):,} byte",
-                "So don (orders)": gia_tri(cur, "SELECT COUNT(*) FROM orders"),
+                "He dieu hanh": platform.platform(),
+                "Python": platform.python_version(),
+                "Faker": phien_ban("Faker"),
+                "PyMySQL": pymysql.__version__,
+                "So don (orders)": so_don,
                 "So dong hang (order_item)": gia_tri(cur, "SELECT COUNT(*) FROM order_item"),
                 "So thanh toan (payment)": gia_tri(cur, "SELECT COUNT(*) FROM payment"),
             }
             cur.execute("SELECT recipient_phone, customer_id FROM orders WHERE order_id = 50000")
-            sdt, khach = cur.fetchone()
+            row = cur.fetchone()
+            if row is None:
+                raise SystemExit("Khong tim thay order_id = 50000 de lay tham so B3/B4.")
+            sdt, khach = row
             ts = {"sdt": sdt, "khach": khach}
             print("[1] Moi truong:", moi_truong)
 
@@ -235,20 +280,24 @@ def main():
             print("[5] Do chi phi ghi (chep bang payment sang bang tam, 3 lan moi truong hop)")
             so_dong_ghi, ghi_khong, ghi_co = do_chi_phi_ghi(cur, conn, 3)
             print(f"   khong index: {ms(ghi_khong)} ms | co index: {ms(ghi_co)} ms")
-
-            # ---- 6. Dọn dẹp ----
-            if not args.keep_indexes:
-                xoa_index_thu_nghiem(cur)
-                print("[6] Da xoa index thu nghiem (schema tro ve nhu cu)")
     finally:
+        if not args.keep_indexes:
+            try:
+                with conn.cursor() as cur:
+                    xoa_index_thu_nghiem(cur)
+                    da_don_index = True
+                    print("[6] Da xoa index thu nghiem (schema tro ve nhu cu)")
+            except Exception as loi:
+                print(f"[6] Khong the xoa index thu nghiem: {loi}")
         conn.close()
 
     # ---- Ghi file ----
     tong_gio = time.perf_counter() - bat_dau_tong
+    thu_muc.mkdir(parents=True)
     dong = [
-        "# Benchmark trước/sau khi thêm index — máy của Danh",
+        "# Benchmark trước/sau khi thêm index",
         "",
-        f"Chạy lúc {datetime.now():%d/%m/%Y %H:%M}, tổng thời gian {tong_gio:.0f} giây. "
+        f"Chạy lúc {luc_chay:%d/%m/%Y %H:%M}, tổng thời gian {tong_gio:.0f} giây. "
         f"Mỗi truy vấn làm nóng {args.warmup} lần, đo {args.runs} lần, lấy **trung vị** "
         "(thời gian tính cả gửi truy vấn và nhận kết quả về Python).",
         "",
@@ -293,10 +342,26 @@ def main():
         f"không có index thử nghiệm **{ms(ghi_khong)} ms**, có index **{ms(ghi_co)} ms** "
         f"(**{(ghi_co / ghi_khong - 1) * 100:+.0f}%**).",
         "",
-        f"Index thử nghiệm {'được GIỮ LẠI' if args.keep_indexes else 'đã được xóa sau khi đo'}.",
+        f"Index thử nghiệm {'được GIỮ LẠI' if args.keep_indexes else ('đã được xóa sau khi đo' if da_don_index else 'CHƯA được xóa')}.",
         "Kế hoạch thực thi nguyên văn: `explain-baseline.txt`, `explain-optimized.txt`.",
     ]
     (thu_muc / "benchmark-results.md").write_text("\n".join(dong) + "\n", encoding="utf-8")
+    metadata = [
+        "# Metadata benchmark",
+        "",
+        f"- Nhãn: `{nhan}`",
+        f"- Chạy lúc: {luc_chay:%d/%m/%Y %H:%M:%S}",
+        f"- Lệnh: `{' '.join(sys.argv)}`",
+        f"- Warmup: {args.warmup} lần",
+        f"- Số lần đo: {args.runs} lần",
+        "",
+        "## Môi trường",
+        "",
+        "| Thuộc tính | Giá trị |",
+        "|---|---|",
+    ]
+    metadata += [f"| {k} | {v} |" for k, v in moi_truong.items()]
+    (thu_muc / "metadata.md").write_text("\n".join(metadata) + "\n", encoding="utf-8")
     for ten, bo in (("explain-baseline.txt", truoc), ("explain-optimized.txt", sau)):
         noi_dung = []
         for q in TRUY_VAN:

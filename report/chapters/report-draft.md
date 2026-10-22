@@ -184,9 +184,9 @@ Hai nguồn dữ liệu được dùng tách biệt, trên hai database khác nh
 | Nguồn | Nội dung | Phạm vi sử dụng |
 |---|---|---|
 | `sql/03_seed_small.sql` | Dữ liệu mẫu nhỏ (vài dòng cho mỗi bảng, fixture `CUS0001`/`SEL0001`/`SKU-DEMO-001`) | Database mẫu `ecommerce_advanced`: test, demo, chạy Q01–Q25 trên dữ liệu nhỏ |
-| `data/generator/generate_data.py` | Dữ liệu lớn 100.000 đơn (seed cố định, mã theo namespace `DCUS*`/`DSEL*`/`DSKU*`) | Database benchmark riêng, **không** nạp seed nhỏ: benchmark và kiểm chứng query |
+| `data/generator/generate_data.py` | Dữ liệu lớn 100.000 đơn (seed cố định, mã theo namespace `DCUS*`/`DSEL*`/`DSKU*`) | Database benchmark riêng: benchmark và kiểm chứng query; các lần chạy mới dùng database sạch không seed |
 
-Generator tạo 100.000 đơn với seed cố định (`--seed 20261003`), nhiều trạng thái, review và tồn kho thấp.
+Generator tạo 100.000 đơn với seed cố định (`--seed 20261003`), nhiều trạng thái, review và tồn kho thấp. Lần chạy 22/10 có nạp thêm seed nhỏ trước generator; số đếm trong metadata vì vậy gồm cả fixture này.
 Benchmark ngày 22/10 chạy bằng `data/benchmark/run_benchmark.py`: warmup, `EXPLAIN ANALYZE` baseline, tạo chỉ
 mục thử nghiệm, đo optimized và chi phí ghi/dung lượng.
 
@@ -291,7 +291,7 @@ Bảng dưới đây được điền từ output của lần chạy mới nhấ
 | `tests/constraint_tests.sql` | 7 | `[điền từ output]` |
 | `tests/promotion_tests.sql` | 4 + 2 kịch bản | `[điền từ output]` |
 | `tests/order_tests.sql` | 7 | `[điền từ output]` |
-| `sql/09_transaction_tests.sql` | T01, T04, T05 | `[điền từ output]` |
+| `sql/09_transaction_tests.sql` | T01, T05 (T03/T04/T06 chạy thủ công) | `[điền từ output]` |
 | `tests/concurrency_setup.sql` + 2 phiên | T03 | `[điền từ output]` |
 | `python -m unittest tests.test_dynamic_search -v` | 6 | 6/6 PASS |
 

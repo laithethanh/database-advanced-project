@@ -65,6 +65,7 @@ database-advanced-project/
 │   └── slides-draft.md
 ├── .env.example
 ├── .gitignore
+├── db_config.py
 ├── requirements.txt
 ├── README.md
 └── PLAN_PHAN_CONG_NHOM_7_DE_TAI_7.md
@@ -86,4 +87,4 @@ database-advanced-project/
 
 Thứ tự triển khai chính: `01_schema.sql` → `02_constraints.sql` → seed nhỏ → routines/triggers → queries → recursive → benchmark/transaction.
 
-Vai trò hai nguồn dữ liệu: `03_seed_small.sql` nạp dữ liệu mẫu nhỏ cho database mẫu (fixture test, demo, chạy Q01–Q25 trên dữ liệu nhỏ); `data/generator/generate_data.py` sinh dữ liệu lớn cho database benchmark riêng (không nạp seed nhỏ).
+Vai trò hai nguồn dữ liệu: `03_seed_small.sql` nạp dữ liệu mẫu nhỏ cho database mẫu (fixture test, demo, chạy Q01–Q25 trên dữ liệu nhỏ); `data/generator/generate_data.py` sinh dữ liệu lớn cho database benchmark riêng (các lần chạy mới không nạp seed nhỏ; lần 22/10 có nạp seed nhỏ, xem metadata).
