@@ -185,6 +185,13 @@ Kết quả thực tế (`report/appendix/tests/03-order-tests.txt`, `08-concurr
 
 ## 10. Dữ liệu lớn và benchmark
 
+Hai nguồn dữ liệu được dùng tách biệt, trên hai database khác nhau:
+
+| Nguồn | Nội dung | Phạm vi sử dụng |
+|---|---|---|
+| `sql/03_seed_small.sql` | Dữ liệu mẫu nhỏ (vài dòng cho mỗi bảng, fixture `CUS0001`/`SEL0001`/`SKU-DEMO-001`) | Database mẫu `ecommerce_advanced`: test, demo, chạy Q01–Q25 trên dữ liệu nhỏ |
+| `data/generator/generate_data.py` | Dữ liệu lớn 100.000 đơn (seed cố định, mã theo namespace `DCUS*`/`DSEL*`/`DSKU*`) | Database benchmark riêng, **không** nạp seed nhỏ: benchmark và kiểm chứng query |
+
 Generator tạo 100.000 đơn với seed cố định (`--seed 20261003`, 6,5 phút), nhiều trạng thái, review và tồn kho thấp. `sql/08_benchmark.sql` chạy baseline và optimized với `EXPLAIN ANALYZE`, đo metadata và chi phí ghi/dung lượng.
 
 Kết quả thực tế (`report/appendix/benchmark/`):

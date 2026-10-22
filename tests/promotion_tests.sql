@@ -1,6 +1,7 @@
 -- Kiểm thử áp dụng nhiều mã giảm giá trên một đơn.
 -- Chạy sau 01_schema, 02_constraints, 03_seed_small, 04_functions, 05_triggers
 -- và tests/constraint_tests.sql (để có sẵn thủ tục test_expect_error).
+-- 03_seed_small.sql cung cấp fixture: CUS0001, SEL0001, SKU-DEMO-001.
 USE ecommerce_advanced;
 
 -- Fixture: hai mã cho kịch bản cộng dồn bình thường. Idempotent để chạy lại được.

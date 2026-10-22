@@ -10,7 +10,7 @@ Thành viên mới có thể tạo cơ sở dữ liệu từ đầu, nạp dữ 
 1. cài dependency: pip install -r requirements.txt
 2. tạo database/schema: sql/01_schema.sql
 3. áp dụng ràng buộc: sql/02_constraints.sql
-4. nạp dữ liệu mẫu nhỏ: sql/03_seed_small.sql
+4. nạp dữ liệu mẫu nhỏ: sql/03_seed_small.sql (chỉ dùng cho database mẫu)
 5. tạo function/procedure: sql/04_functions.sql
 6. tạo trigger: sql/05_triggers.sql
 7. chạy constraint_tests.sql, promotion_tests.sql, order_tests.sql
@@ -21,6 +21,15 @@ Thành viên mới có thể tạo cơ sở dữ liệu từ đầu, nạp dữ 
 ```
 
 Bước 3–6 phải chạy đúng thứ tự vì trigger và thủ tục giả định các cột/ràng buộc đã tồn tại. Không chạy generator trên database đã có đơn hàng; generator chủ động từ chối để bảo đảm dữ liệu có thể tái lập.
+
+Hai nguồn dữ liệu dùng cho hai mục đích khác nhau, không trộn vào cùng một database:
+
+| Nguồn | Phạm vi | Database |
+|---|---|---|
+| `sql/03_seed_small.sql` | Dữ liệu mẫu nhỏ: fixture cho `tests/*.sql`, demo, chạy Q01–Q25 trên dữ liệu nhỏ | `ecommerce_advanced` (database mẫu) |
+| `data/generator/generate_data.py` | Dữ liệu lớn 100.000 đơn cho benchmark và kiểm chứng query | database benchmark riêng, **không** nạp seed nhỏ |
+
+Fixture do seed nhỏ tạo và các file test phụ thuộc vào: `CUS0001` (khách), `SEL0001` (người bán), `SKU-DEMO-001` (biến thể). Generator sinh mã theo namespace riêng (`DCUS*`, `DSEL*`, `DSKU*`) nên **không** thay thế được seed cho mục đích test.
 
 ## Lệnh mẫu
 

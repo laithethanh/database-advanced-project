@@ -1,8 +1,13 @@
--- LƯU Ý: file này chỉ để test thêm dữ liệu vào các bảng với số lượng rất ít, dữ liệu làm việc thực tế là sinh ra từ 
--- file generate_data.py. Vì thế để chạy file seed này hãy sử dụng file 01_schema.sql sửa tên db là ecommerce_demo, 
---sau đó mới chạy file seed này.
+-- LƯU Ý: file này chỉ nạp DỮ LIỆU MẪU NHỎ (vài dòng cho mỗi bảng) dùng làm fixture cho
+-- tests/*.sql, cho demo (app/) và để chạy Q01-Q25 trên dữ liệu nhỏ.
+-- Dữ liệu làm việc thực tế (100.000 đơn) do data/generator/generate_data.py sinh ra và phải chạy
+-- trên MỘT DATABASE RIÊNG; database đó KHÔNG nạp file seed này.
+-- Thứ tự chạy trên database mẫu (ecommerce_advanced):
+--   01_schema.sql -> 02_constraints.sql -> 03_seed_small.sql -> 04_functions.sql -> 05_triggers.sql
+--   -> tests/*.sql -> 06_queries.sql -> 07_recursive.sql
+-- Fixture do file này tạo và các file test phụ thuộc: CUS0001, SEL0001, SKU-DEMO-001.
 
-USE ecommerce_demo;
+USE ecommerce_advanced;
 
 INSERT INTO account (email, password_hash, full_name, phone) VALUES
 ('customer01@example.test', 'demo-hash', 'Nguyen Van A', '0900000001'),

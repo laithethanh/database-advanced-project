@@ -155,11 +155,11 @@ Ghi chú: cảm ơn, mời hỏi.
 ## Phụ lục — kịch bản demo chi tiết
 
 ```text
-# 0. Chuẩn bị
+# 0. Chuẩn bị (database mẫu ecommerce_advanced)
 python -m pip install -r requirements.txt
 mysql -u root -p < sql/01_schema.sql
 mysql -u root -p < sql/02_constraints.sql
-mysql -u root -p < sql/03_seed_small.sql
+mysql -u root -p < sql/03_seed_small.sql   # dữ liệu mẫu nhỏ: fixture cho test/demo
 mysql -u root -p < sql/04_functions.sql
 mysql -u root -p < sql/05_triggers.sql
 

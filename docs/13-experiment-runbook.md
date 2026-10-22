@@ -21,9 +21,11 @@ mysql -u <user> -p < sql/07_recursive.sql
 
 `sql/01_schema.sql` là tệp lược đồ chuẩn, không chỉnh sửa trong phạm vi dự án. Giữ thứ tự schema → constraints → seed → function/procedure → trigger → test để mọi đối tượng phụ thuộc đã tồn tại trước khi được gọi.
 
+`sql/03_seed_small.sql` chỉ nạp **dữ liệu mẫu nhỏ** (vài dòng cho mỗi bảng) vào database mẫu `ecommerce_advanced`: đây là fixture cho `tests/*.sql` (`CUS0001`, `SEL0001`, `SKU-DEMO-001`), dữ liệu cho demo và cho các truy vấn Q01–Q25 chạy trên dữ liệu nhỏ. Database đo hiệu năng là database **khác, sạch**, không nạp file seed này (xem mục "Dữ liệu lớn và đo hiệu năng").
+
 `tests/constraint_tests.sql` tạo thủ tục trợ giúp `test_expect_error`, vì vậy phải chạy **trước** `tests/promotion_tests.sql` và `tests/order_tests.sql`. Ba tệp test này đều idempotent ở mức fixture nên có thể chạy lại trên cùng cơ sở dữ liệu mẫu.
 
-`tests/promotion_tests.sql` tạo promotion và gọi checkout với nhiều mã, nên chỉ chạy trên cơ sở dữ liệu mẫu mới. Ví dụ gọi trực tiếp: `CALL sp_checkout(<customer_id>,'A','0900000001','HCM',30000,'X,Y',@order_id);` (tối đa 5 mã, cách nhau bởi dấu phẩy).
+`tests/promotion_tests.sql` tạo promotion và gọi checkout với nhiều mã, nên chỉ chạy trên cơ sở dữ liệu mẫu mới (đã nạp `03_seed_small.sql`: cần `CUS0001`, `SEL0001`, `SKU-DEMO-001`). Ví dụ gọi trực tiếp: `CALL sp_checkout(<customer_id>,'A','0900000001','HCM',30000,'X,Y',@order_id);` (tối đa 5 mã, cách nhau bởi dấu phẩy).
 
 Kết quả mong đợi của từng nhóm test:
 
@@ -35,7 +37,7 @@ Kết quả mong đợi của từng nhóm test:
 
 ## Dữ liệu lớn và đo hiệu năng
 
-1. Tạo một cơ sở dữ liệu sạch khác bằng các script 01, 02, 04 và 05 (bỏ qua `03_seed_small.sql`); sao chép `.env.example` thành `.env` và nạp các giá trị vào shell, tuyệt đối không commit tệp này.
+1. Tạo một cơ sở dữ liệu sạch khác bằng các script 01, 02, 04 và 05 (bỏ qua `03_seed_small.sql` vì dữ liệu mẫu nhỏ không dùng để đo); sao chép `.env.example` thành `.env` và nạp các giá trị vào shell, tuyệt đối không commit tệp này.
 2. Chạy `pip install -r data/generator/requirements.txt`.
 3. Chạy `python data/generator/generate_data.py --orders 100000 --seed 20261003`.
 4. Chạy `sql/08_benchmark.sql`; với mỗi truy vấn được chọn, chạy làm nóng 3 lần và đo thời gian 5 lần. Lưu kế hoạch thô và tính trung vị.
@@ -45,7 +47,7 @@ Lưu `metadata.md`, kết quả `EXPLAIN ANALYZE` nguyên bản, thời gian và
 
 ## Kiểm thử hai phiên kết nối cùng mua lượng hàng cuối
 
-Chạy `mysql -u <user> -p < tests/concurrency_setup.sql` trên **cơ sở dữ liệu mẫu mới tạo** (tệp này idempotent, chạy lại được).
+Chạy `mysql -u <user> -p < tests/concurrency_setup.sql` trên **cơ sở dữ liệu mẫu mới tạo** (tệp này idempotent, chạy lại được). Tình huống này dùng đúng fixture của seed nhỏ (`SEL0001`, `SKU-DEMO-001`) nên database phải đã nạp `03_seed_small.sql`.
 Sau đó mở hai cửa sổ terminal:
 
 ```powershell

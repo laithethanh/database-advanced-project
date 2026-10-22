@@ -1,5 +1,6 @@
 -- Kiểm thử ràng buộc tự động: mỗi CALL dưới đây phải trả về PASS.
 -- Chạy trên database mẫu mới dựng: 01, 02, 03, 04, 05.
+-- 03_seed_small.sql cung cấp fixture: CUS0001, SEL0001, SKU-DEMO-001.
 USE ecommerce_advanced;
 
 DROP PROCEDURE IF EXISTS test_expect_error;

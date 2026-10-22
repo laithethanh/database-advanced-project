@@ -82,7 +82,7 @@ TAI chịu trách nhiệm đồng bộ ba sơ đồ. Khi schema SQL thay đổi,
 | -------------------------------- | ----- | ------------ | ------------------------------------------------------ |
 | `sql/01_schema.sql`            | THANH | TAI + KHOA   | CREATE DATABASE/TABLE, PK/FK/index nền tảng          |
 | `sql/02_constraints.sql`       | KHOA  | THANH + TAI  | CHECK/UNIQUE/FK bổ sung và invariant cần constraint |
-| `sql/03_seed_small.sql`        | DANH  | TAI          | Seed nhỏ deterministic                                |
+| `sql/03_seed_small.sql`        | DANH  | TAI          | Seed nhỏ deterministic (chỉ DB mẫu, không dùng để đo) |
 | `sql/04_functions.sql`         | KHOA  | THANH + TUAN | Function, checkout procedure, seller ranking           |
 | `sql/05_triggers.sql`          | KHOA  | THANH + TAI  | Trigger integrity/state/cycle/review                   |
 | `sql/06_queries.sql`           | TUAN  | THANH + DANH | Q01–Q25 SQL nâng cao                                 |

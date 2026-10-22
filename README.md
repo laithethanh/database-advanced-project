@@ -238,7 +238,7 @@ cd <repository-folder>
 pip install -r requirements.txt
 ```
 
-Dựng database mẫu trên MySQL:
+Dựng database mẫu `ecommerce_advanced` trên MySQL:
 
 ```powershell
 mysql -u <user> -p < sql/01_schema.sql
@@ -253,7 +253,9 @@ mysql -u <user> -p < sql/06_queries.sql
 mysql -u <user> -p < sql/07_recursive.sql
 ```
 
-Với database benchmark sạch, nạp `01`, `02`, `04`, `05`, sau đó chạy generator và benchmark:
+`sql/03_seed_small.sql` chỉ nạp **dữ liệu mẫu nhỏ** (vài dòng cho mỗi bảng) làm fixture cho `tests/*.sql`, cho demo và để chạy Q01–Q25 trên dữ liệu nhỏ. Fixture quan trọng do file này tạo: `CUS0001`, `SEL0001`, `SKU-DEMO-001`.
+
+Với database benchmark **sạch riêng** (không nạp seed nhỏ), nạp `01`, `02`, `04`, `05`, sau đó chạy generator và benchmark:
 
 ```powershell
 python data/generator/generate_data.py --orders 100000 --seed 20261003

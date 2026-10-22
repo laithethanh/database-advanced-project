@@ -84,4 +84,6 @@ database-advanced-project/
 | `report/` | Nội dung báo cáo cuối kỳ |
 | `slides/` | Slide bảo vệ |
 
-Thứ tự triển khai chính: `01_schema.sql` → `02_constraints.sql` → seed → routines/triggers → queries → recursive → benchmark/transaction.
+Thứ tự triển khai chính: `01_schema.sql` → `02_constraints.sql` → seed nhỏ → routines/triggers → queries → recursive → benchmark/transaction.
+
+Vai trò hai nguồn dữ liệu: `03_seed_small.sql` nạp dữ liệu mẫu nhỏ cho database mẫu (fixture test, demo, chạy Q01–Q25 trên dữ liệu nhỏ); `data/generator/generate_data.py` sinh dữ liệu lớn cho database benchmark riêng (không nạp seed nhỏ).

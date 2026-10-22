@@ -1,5 +1,6 @@
 -- Kiểm thử đơn hàng; chạy sau 04_functions.sql, 05_triggers.sql,
--- tests/constraint_tests.sql và tests/promotion_tests.sql trên database mẫu mới.
+-- tests/constraint_tests.sql và tests/promotion_tests.sql trên database mẫu mới
+-- (đã nạp 03_seed_small.sql: cần fixture CUS0001, SEL0001, SKU-DEMO-001).
 USE ecommerce_advanced;
 
 SELECT o.order_id,o.status,o.subtotal,o.discount_total,o.shipping_fee,o.grand_total,SUM(oi.line_total) AS item_sum
