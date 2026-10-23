@@ -155,8 +155,8 @@ BEGIN
   UPDATE orders SET status='PAID' WHERE order_id=p_order_id;
   UPDATE cart SET status='CHECKED_OUT' WHERE cart_id=v_cart_id;
   COMMIT;
-END$$
-
+END$$  
+ 
 CREATE PROCEDURE sp_seller_ranking(IN p_from DATETIME,IN p_to DATETIME,IN p_limit INT)
 SQL SECURITY INVOKER
 BEGIN
