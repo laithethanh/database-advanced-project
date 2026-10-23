@@ -128,7 +128,7 @@ Thực nghiệm:
 
 - Đặt hàng thành công → commit.
 - Lỗi giữa chừng → rollback toàn bộ.
-- Hai session cùng mua số lượng tồn kho cuối → không oversell.
+- Hai session cùng mua số lượng tồn kho cuối → không oversell; A checkout thành công với order `PAID`, B bị từ chối bằng `1644`.
 - Kiểm tra contention/lock và tính nhất quán dữ liệu.
 
 ### 10. Dữ liệu lớn, benchmark và tối ưu
@@ -300,7 +300,7 @@ Quy trình chi tiết, cách lưu bằng chứng và kịch bản hai phiên n�
 - [x] README có thể chạy lại từ database trắng.
 - [x] Bản nháp báo cáo và slide (`report/chapters/report-draft.md`, `slides/slides-draft.md`).
 - [x] Chạy lại toàn bộ script SQL và test trên MySQL 8.4.11, lưu log bằng chứng ngày 23/10 (`report/appendix/tests/20261023/`).
-- [ ] Chạy transaction/concurrency 2 session và lưu bằng chứng khóa dòng/không oversell theo run-date. Script gốc đã chạy nhưng session B vẫn thành công; kiểm tra bổ sung mới cho thấy B thất bại khi session A thực sự lấy đơn vị cuối.
+- [ ] Chạy transaction/concurrency 2 session và lưu bằng chứng khóa dòng/không oversell theo run-date. Script `tests/concurrency_session_a.sql` đã được sửa thành checkout đầy đủ: A tạo order `PAID` + payment, B nhận `1644`, tồn kho `0`. Test xác minh ngày 23/10 đạt; cần chạy lại 24/10 và lưu log.
 - [x] Chạy benchmark `EXPLAIN ANALYZE` trên 100.000 đơn ngày 23/10 (`data/benchmark/20261023-004420-DESKTOP-97LS755/`).
 - [ ] Chạy ObjectDB/OQL và lưu output 5 truy vấn (cần môi trường ObjectDB/JPA).
 - [x] Bổ sung output đầy đủ Q01–Q25 trên bộ 100.000 đơn (`report/appendix/queries/20261023/`).
@@ -325,7 +325,7 @@ Quy trình chi tiết, cách lưu bằng chứng và kịch bản hai phiên n�
 
 ## 📌 Trạng thái
 
-**Đã chạy lại toàn bộ SQL/test, generator 100.000 đơn, benchmark, Q01–Q25 và demo SQL động/nhúng trên MySQL 8.4.11 ngày 23/10. Còn thiếu ObjectDB/OQL, hoàn thiện báo cáo/slide và xử lý T03 script gốc.**
+**Đã chạy lại toàn bộ SQL/test, generator 100.000 đơn, benchmark, Q01–Q25 và demo SQL động/nhúng trên MySQL 8.4.11 ngày 23/10. Còn thiếu ObjectDB/OQL, hoàn thiện báo cáo/slide và log T03 chính thức ngày 24/10.**
 
 Phần đã sẵn sàng: schema + constraint, trigger/procedure/function, 25 truy vấn nâng cao + recursive SQL, SQL động/nhúng, ODL/OQL, generator 100.000 đơn, bộ test, tài liệu thiết kế, bằng chứng thực nghiệm 23/10 và bản nháp báo cáo/slide.
 

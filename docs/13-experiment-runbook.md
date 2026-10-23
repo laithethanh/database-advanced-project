@@ -36,7 +36,7 @@ Kết quả mong đợi của từng nhóm test:
 | `tests/constraint_tests.sql` | Mọi `CALL test_expect_error` trả về `PASS`; các truy vấn bất biến trả về 0 |
 | `tests/promotion_tests.sql` | Kịch bản A: `promo_sum=20000`, `order_discount_total=20000`, `order_grand_total=110000`; kịch bản B: `promo_sum=100000`, `order_grand_total=30000`; các case lỗi trả `PASS` |
 | `tests/order_tests.sql` | `fixture_status=FIXTURE_OK`; các case lỗi trả `PASS`; `orders_after=orders_before`, `stock_after=stock_before`, `promotion_used_count=1`; `ORDER_DATA_OK` có 0 vi phạm |
-| `sql/09_transaction_tests.sql` | T01 tạo đơn `PAID` có tổng tiền khớp dòng hàng; T05 giữ nguyên số điện thoại sau rollback savepoint. T03/T04/T06 là các khối hướng dẫn/chạy thủ công, không tự động trong file. |
+| `sql/09_transaction_tests.sql` | T01 tạo đơn `PAID` có tổng tiền khớp dòng hàng; T05 giữ nguyên số điện thoại sau rollback savepoint. T03 dùng bộ `tests/concurrency_setup.sql` + `concurrency_session_a.sql` + `concurrency_session_b.sql`, chạy thủ công 2 terminal; T04/T06 chạy thủ công; cả ba không tự động trong file. |
 
 ## Dữ liệu lớn và đo hiệu năng
 
@@ -56,7 +56,7 @@ Chạy `mysql -u <user> -p < tests/concurrency_setup.sql` trên **cơ sở dữ 
 Sau đó mở hai cửa sổ terminal:
 
 ```powershell
-# Terminal A (giữ khóa dòng inventory trong 6 giây)
+# Terminal A (checkout đầy đủ: order PAID, giữ khóa 6 giây)
 mysql -u <user> -p ecommerce_advanced < tests/concurrency_session_a.sql
 # Terminal B, chạy khoảng 2 giây sau khi bắt đầu Terminal A
 mysql -u <user> -p ecommerce_advanced < tests/concurrency_session_b.sql
@@ -74,7 +74,7 @@ CALL sp_checkout(                     CALL sp_checkout(
 SELECT @order_a;                       SELECT @order_b;
 ```
 
-Kết quả mong đợi: một session phải chờ khóa dòng `inventory`, session còn lại nhận `insufficient inventory` → không oversell.
+Kết quả mong đợi: A checkout thành công với order `PAID` và payment `SUCCESS`; B chờ khóa dòng `inventory` rồi nhận `insufficient inventory`; tồn kho `0`; không oversell.
 Ghi lại kết quả ở cả hai terminal cùng các dòng cuối trong `inventory`, `orders`, `payment` vào `report/appendix/tests/<run-date>/`. Khôi phục cơ sở dữ liệu kiểm thử sau khi thử nghiệm xong.
 
 ## Bằng chứng nhóm cần cung cấp
@@ -84,11 +84,11 @@ Thời gian thực tế, kế hoạch thực thi, thời gian chờ khóa, ảnh
 ## Bằng chứng hiện có
 
 - Benchmark và generator ngày 23/10: `data/benchmark/20261023-004420-DESKTOP-97LS755/` (`metadata.md`, `benchmark-results.md`, `explain-baseline.txt`, `explain-optimized.txt`).
-- Test SQL, transaction, concurrency và Python ngày 23/10: `report/appendix/tests/20261023/`.
+- Test SQL, transaction, concurrency và Python ngày 23/10: `report/appendix/tests/20261023/` (log T03 `21_concurrency_two_sessions.txt` là bản cũ, session B vẫn thành công).
 - Kết quả Q01–Q25 trên 100.000 đơn ngày 23/10: `report/appendix/queries/20261023/`.
 - Demo SQL động/SQL nhúng ngày 23/10: `report/appendix/danh/20261023/`.
 - Bằng chứng lịch sử 22/10: `data/benchmark/20261022-danh-win/` và `report/appendix/danh/`.
 
-Lưu ý T03: script gốc `tests/concurrency_session_a.sql` chỉ giữ khóa rồi COMMIT, không tiêu thụ đơn vị cuối, nên session B vẫn thành công sau khi chờ. Kiểm tra bổ sung trong `report/appendix/tests/20261023/71_concurrency_manual_two_sessions.txt` mới thể hiện B nhận `insufficient inventory` khi A thực sự lấy đơn vị cuối.
+Lưu ý T03: `tests/concurrency_session_a.sql` hiện checkout đầy đủ trong transaction: khóa cart + inventory, tạo order/order_item/payment, chuyển `PAID`, cart `CHECKED_OUT`, giữ khóa 6 giây. Session B gọi `sp_checkout` và nhận `1644`; test xác minh cho kết quả A `PAID`, B không có order, kho `0`.
 
-Còn thiếu: output ObjectDB/OQL và ảnh chụp màn hình cho bài demo.
+Còn thiếu: output ObjectDB/OQL, log T03 chính thức ngày 24/10 (`20`–`21c`) và ảnh chụp màn hình cho bài demo.
