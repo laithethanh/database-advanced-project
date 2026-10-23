@@ -1,0 +1,30 @@
+# SQL: tests\promotion_tests.sql
+# Exit code: 0
+
+## stdout
+
+order_id_a	promo_rows	promo_sum	order_discount_total	order_grand_total
+2	2	20000.00	20000.00	110000.00
+order_id_b	promo_rows	promo_sum	order_discount_total	order_grand_total
+3	2	100000.00	100000.00	30000.00
+test_name	error_sqlstate	error_message	result
+duplicate promotion code in one checkout	45000	duplicate promotion code	PASS
+test_name	error_sqlstate	error_message	result
+unknown promotion code in list	45000	promotion code not found	PASS
+test_name	error_sqlstate	error_message	result
+more than five promotion codes	45000	too many promotion codes	PASS
+test_name	error_sqlstate	error_message	result
+promotion cannot be attached to a paid order	45000	promotions can only be added while order is PENDING_PAYMENT	PASS
+orders_before	orders_after	used_before	used_after	active_carts_before	active_carts_after
+3	3	4	4	0	0
+code	used_count
+T10K	1
+T10P	1
+T60A	1
+T60B	1
+invalid_order_discounts
+0
+
+## stderr
+
+

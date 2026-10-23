@@ -1,0 +1,9 @@
+# concurrency_setup.sql
+# Exit code: 0
+
+## stdout
+
+customer_code	cart_id	quantity	available_stock
+CUS2001	4	1	1
+CUS2002	5	1	1
+

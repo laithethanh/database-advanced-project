@@ -83,8 +83,12 @@ Thời gian thực tế, kế hoạch thực thi, thời gian chờ khóa, ảnh
 
 ## Bằng chứng hiện có
 
-- Benchmark và generator ngày 22/10: `data/benchmark/20261022-danh-win/` (`metadata.md`, `benchmark-results.md`, `benchmark-analysis.md`, `explain-baseline.txt`, `explain-optimized.txt`).
-- Demo SQL động/SQL nhúng ngày 22/10: `report/appendix/danh/` (`sql-injection-demo.txt`, `embedded-sql-demo.txt`, ảnh chụp terminal).
-- Kết quả test SQL, concurrency và Q01–Q25 của các lần chạy cũ đã được dọn; mỗi lần chạy lại tạo thư mục mới theo run-date.
+- Benchmark và generator ngày 23/10: `data/benchmark/20261023-004420-DESKTOP-97LS755/` (`metadata.md`, `benchmark-results.md`, `explain-baseline.txt`, `explain-optimized.txt`).
+- Test SQL, transaction, concurrency và Python ngày 23/10: `report/appendix/tests/20261023/`.
+- Kết quả Q01–Q25 trên 100.000 đơn ngày 23/10: `report/appendix/queries/20261023/`.
+- Demo SQL động/SQL nhúng ngày 23/10: `report/appendix/danh/20261023/`.
+- Bằng chứng lịch sử 22/10: `data/benchmark/20261022-danh-win/` và `report/appendix/danh/`.
+
+Lưu ý T03: script gốc `tests/concurrency_session_a.sql` chỉ giữ khóa rồi COMMIT, không tiêu thụ đơn vị cuối, nên session B vẫn thành công sau khi chờ. Kiểm tra bổ sung trong `report/appendix/tests/20261023/71_concurrency_manual_two_sessions.txt` mới thể hiện B nhận `insufficient inventory` khi A thực sự lấy đơn vị cuối.
 
 Còn thiếu: output ObjectDB/OQL và ảnh chụp màn hình cho bài demo.

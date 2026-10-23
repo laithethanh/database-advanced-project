@@ -6,7 +6,7 @@ Cấu trúc thư mục dự kiến (tạo khi chạy thực nghiệm):
 
 ```text
 report/appendix/
-├── danh/                        # bằng chứng SQL động/nhúng ngày 22/10
+├── danh/<run-date>/             # bằng chứng SQL động/nhúng (22/10, 23/10)
 ├── queries/<run-date>/          # kết quả Q01–Q25 + kế hoạch thực thi
 ├── tests/<run-date>/            # log constraint/promotion/order/concurrency
 ├── objectdb/<run-date>/         # output OQ01–OQ05 và mapping JPQL

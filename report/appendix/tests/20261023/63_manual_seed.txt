@@ -1,0 +1,10 @@
+# SQL: sql\03_seed_small.sql
+# Exit code: 0
+
+## stdout
+
+
+
+## stderr
+
+

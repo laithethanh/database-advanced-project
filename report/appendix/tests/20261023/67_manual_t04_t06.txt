@@ -1,0 +1,20 @@
+# SQL: C:\Users\lai the thanh\AppData\Local\Temp\opencode\manual_t04_t06.sql
+# Exit code: 0
+
+## stdout
+
+Note (Code 1051): Unknown table 'ecommerce_advanced.tmp_promo'
+order_t04	status_t04
+2	PAID
+test_name	error_sqlstate	error_message	result
+T04 PAID -> DELIVERED	45000	invalid order status transition	PASS
+test_name	error_sqlstate	error_message	result
+T04 DELIVERED -> PROCESSING	45000	invalid order status transition	PASS
+test_name	error_sqlstate	error_message	result
+T06 valid + unknown promotion rollback	45000	promotion code not found	PASS
+orders_before	orders_after	stock_before	stock_after	used_before	used_after
+2	2	19	19	1	1
+
+## stderr
+
+

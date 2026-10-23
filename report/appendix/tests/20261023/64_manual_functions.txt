@@ -1,0 +1,12 @@
+# SQL: sql\04_functions.sql
+# Exit code: 0
+
+## stdout
+
+Note (Code 1305): FUNCTION ecommerce_advanced.fn_promotion_discount does not exist
+Note (Code 1305): PROCEDURE ecommerce_advanced.sp_checkout does not exist
+Note (Code 1305): PROCEDURE ecommerce_advanced.sp_seller_ranking does not exist
+
+## stderr
+
+

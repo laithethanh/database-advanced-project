@@ -1,0 +1,50 @@
+# Script: app\dynamic_search.py
+# Args: 
+# Started: 2026-10-23 00:46:20
+# Elapsed: 0.4 seconds
+# Exit code: 0
+
+## stdout
+
+
+===== A. Tim kiem binh thuong voi tu khoa 'Áo' =====
+[Khong an toan]
+   -> 20 dong
+      {'ten': 'Dao kéo Samsung 00005', 'gia': Decimal('589000.00')}
+      {'ten': 'Dao kéo Samsung 00005', 'gia': Decimal('1236000.00')}
+      {'ten': 'Dao kéo Samsung 00005', 'gia': Decimal('1425000.00')}
+[An toan, loc gia <= 500.000, sap theo gia]
+   -> 20 dong
+      {'product_id': 289, 'ten': 'Dao kéo Samsung 00289', 'sku': 'DSKU-000289-1', 'gia': Decimal('50000.00')}
+      {'product_id': 285, 'ten': 'Quần jean Xiaomi 00285', 'sku': 'DSKU-000285-1', 'gia': Decimal('51000.00')}
+      {'product_id': 292, 'ten': 'Áo sơ mi Anker 00292', 'sku': 'DSKU-000292-2', 'gia': Decimal('53000.00')}
+
+===== B. Tan cong 1: lay TOAN BO san pham. Nhap: "' OR '1'='1' -- " =====
+[Khong an toan] Cau SQL thuc te:
+   SELECT p.name AS ten, v.price AS gia FROM product p JOIN product_variant v ON v.product_id = p.product_id WHERE p.name LIKE '%' OR '1'='1' -- %' LIMIT 20
+   -> 2480 dong
+      {'ten': 'Quần jean Samsung 00001', 'gia': Decimal('704000.00')}
+      {'ten': 'Quần jean Samsung 00001', 'gia': Decimal('99000.00')}
+      {'ten': 'Quần jean Sunhouse 00002', 'gia': Decimal('1337000.00')}
+[An toan] Tham so gui di: ["%' OR '1'='1' -- %", 20]
+   -> 0 dong
+
+===== C. Tan cong 2: an cap email tai khoan. Nhap: "khongco' UNION SELECT email, password_hash FROM account -- " =====
+[Khong an toan] Cau SQL thuc te:
+   SELECT p.name AS ten, v.price AS gia FROM product p JOIN product_variant v ON v.product_id = p.product_id WHERE p.name LIKE '%khongco' UNION SELECT email, password_hash FROM account -- %' LIMIT 20
+   -> 10100 dong
+      {'ten': 'khach000001@example.test', 'gia': 'demo-hash'}
+      {'ten': 'khach000002@example.test', 'gia': 'demo-hash'}
+      {'ten': 'khach000003@example.test', 'gia': 'demo-hash'}
+[An toan] Tham so gui di: ["%khongco' UNION SELECT email, password_hash FROM account -- %", 20]
+   -> 0 dong
+
+===== D. Tan cong qua o sap xep (khong dung tham so duoc) -> whitelist chan =====
+   Bi chan: Khong cho phep sap xep theo: 'gia; DROP TABLE product'
+   Bi chan: Khong cho phep sap xep theo: '(SELECT password_hash FROM account LIMIT 1)'
+
+Bang product van con nguyen: 1000 san pham
+
+## stderr
+
+

@@ -4,11 +4,12 @@
 -- mysql -u <user> -p ecommerce_advanced < tests/concurrency_session_b.sql
 --
 -- Kết quả mong đợi:
--- 1. Lời gọi bị BLOCK khoảng 4 giây cho tới khi session A COMMIT (đo được thời gian chờ khoá).
--- 2. Sau đó tạo được đơn PAID với order_id = @order_b.
+-- 1. Lời gọi bị BLOCK khoảng 4 giây cho tới khi session A COMMIT.
+-- 2. Sau đó nhận ERROR 1644 'insufficient inventory'; transaction B rollback.
+-- 3. Không tạo order/payment cho B; CUS2001 có đúng 1 order PAID; kho còn 0.
 --
--- Nếu session A đã dùng hết lượng hàng (thay vì chỉ giữ khoá rồi COMMIT),
--- lời gọi này sẽ báo lỗi 1644 'insufficient inventory' — đó chính là bằng chứng không oversell.
+-- MySQL client dừng khi gặp lỗi 1644 nên các SELECT cuối file có thể không chạy;
+-- dùng query xác nhận riêng trong docs/15.
 
 CALL sp_checkout(
   (SELECT account_id FROM customer WHERE customer_code = 'CUS2002'),

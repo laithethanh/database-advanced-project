@@ -288,13 +288,15 @@ Bảng dưới đây được điền từ output của lần chạy mới nhấ
 
 | Tệp test | Số case | Kết quả |
 |---|---|---|
-| `tests/constraint_tests.sql` | 7 | `[điền từ output]` |
-| `tests/promotion_tests.sql` | 4 + 2 kịch bản | `[điền từ output]` |
-| `tests/order_tests.sql` | 7 | `[điền từ output]` |
-| `sql/09_transaction_tests.sql` | T01, T05 (T03/T04/T06 chạy thủ công) | `[điền từ output]` |
-| `tests/concurrency_setup.sql` + 2 phiên | T03 | `[điền từ output]` |
+| `tests/constraint_tests.sql` | 7 | 7/7 PASS; 5 bất biến trả `0` |
+| `tests/promotion_tests.sql` | 4 + 2 kịch bản | 4/4 case lỗi PASS; A đúng `20000/110000`, B đúng `100000/30000` |
+| `tests/order_tests.sql` | 7 | 7/7 PASS; `orders/stock` không đổi; `ORDER_DATA_OK=0` |
+| `sql/09_transaction_tests.sql` | T01, T05 (T03/T04/T06 chạy thủ công) | T01 và T05 PASS; T04/T06 PASS ở log thủ công |
+| `tests/concurrency_setup.sql` + 2 phiên | T03 | Script gốc: B chờ 4,08 giây rồi thành công, kho còn 0; kiểm tra bổ sung: B nhận `insufficient inventory` |
 | `python -m unittest tests.test_dynamic_search -v` | 6 | 6/6 PASS |
+
+Bằng chứng ngày 23/10: `report/appendix/tests/20261023/`.
 
 # PHỤ LỤC C — Độ phủ truy vấn trên dữ liệu lớn
 
-Số dòng trả về của Q01–Q25 sẽ được cập nhật từ lần chạy mới nhất. Q25 bắt buộc trả về **0 dòng vi phạm**.
+Q01–Q25 đã chạy trên 100.000 đơn; output tại `report/appendix/queries/20261023/06_queries_100k.txt` và `07_recursive_100k.txt`. Q25 trả về **0 dòng vi phạm**.

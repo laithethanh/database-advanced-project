@@ -229,7 +229,7 @@ project/
 - Python 3.10+ (đã kiểm thử trên 3.13.2).
 - Git.
 
-> Kết quả thực nghiệm mới nhất nằm trong `data/benchmark/20261022-danh-win/` và `report/appendix/danh/`. Các lần chạy sau lưu vào `data/benchmark/<YYYYMMDD-HHMMSS>-<machine>/`; không dùng lại kết quả cũ.
+> Kết quả thực nghiệm mới nhất ngày 23/10 nằm trong `data/benchmark/20261023-004420-DESKTOP-97LS755/`, `report/appendix/tests/20261023/`, `report/appendix/queries/20261023/` và `report/appendix/danh/20261023/`. Kết quả 22/10 vẫn được giữ làm lịch sử; không dùng lại kết quả cũ cho lần báo cáo mới.
 
 ### Quy trình tổng quát
 
@@ -299,11 +299,11 @@ Quy trình chi tiết, cách lưu bằng chứng và kịch bản hai phiên n�
 - [x] Test cases valid/invalid (`tests/constraint_tests.sql`, `tests/order_tests.sql`, `tests/promotion_tests.sql`, `tests/test_dynamic_search.py`).
 - [x] README có thể chạy lại từ database trắng.
 - [x] Bản nháp báo cáo và slide (`report/chapters/report-draft.md`, `slides/slides-draft.md`).
-- [ ] Chạy lại toàn bộ script SQL và test trên MySQL 8.4.11, lưu log bằng chứng theo run-date.
-- [ ] Chạy transaction/concurrency 2 session và lưu bằng chứng khóa dòng/không oversell theo run-date.
-- [x] Chạy benchmark `EXPLAIN ANALYZE` trên 100.000 đơn ngày 22/10 (`data/benchmark/20261022-danh-win/`).
+- [x] Chạy lại toàn bộ script SQL và test trên MySQL 8.4.11, lưu log bằng chứng ngày 23/10 (`report/appendix/tests/20261023/`).
+- [ ] Chạy transaction/concurrency 2 session và lưu bằng chứng khóa dòng/không oversell theo run-date. Script gốc đã chạy nhưng session B vẫn thành công; kiểm tra bổ sung mới cho thấy B thất bại khi session A thực sự lấy đơn vị cuối.
+- [x] Chạy benchmark `EXPLAIN ANALYZE` trên 100.000 đơn ngày 23/10 (`data/benchmark/20261023-004420-DESKTOP-97LS755/`).
 - [ ] Chạy ObjectDB/OQL và lưu output 5 truy vấn (cần môi trường ObjectDB/JPA).
-- [ ] Bổ sung output đầy đủ Q01–Q25 trên bộ 100.000 đơn (ảnh/CSV từng truy vấn).
+- [x] Bổ sung output đầy đủ Q01–Q25 trên bộ 100.000 đơn (`report/appendix/queries/20261023/`).
 - [ ] Báo cáo 20–30 trang hoàn chỉnh + phụ lục.
 - [ ] Slide + demo + mỗi thành viên nắm rõ phần của mình và phần tích hợp.
 - [ ] GitHub có lịch sử commit/phân công làm việc rõ ràng.
@@ -325,8 +325,8 @@ Quy trình chi tiết, cách lưu bằng chứng và kịch bản hai phiên n�
 
 ## 📌 Trạng thái
 
-**Artifact mã nguồn và tài liệu đã hoàn thiện; còn chờ chạy thực nghiệm thật trên MySQL 8.0 để điền số liệu báo cáo.**
+**Đã chạy lại toàn bộ SQL/test, generator 100.000 đơn, benchmark, Q01–Q25 và demo SQL động/nhúng trên MySQL 8.4.11 ngày 23/10. Còn thiếu ObjectDB/OQL, hoàn thiện báo cáo/slide và xử lý T03 script gốc.**
 
-Phần đã sẵn sàng: schema + constraint, trigger/procedure/function, 25 truy vấn nâng cao + recursive SQL, SQL động/nhúng, ODL/OQL, generator 100.000 đơn, bộ test, tài liệu thiết kế và bản nháp báo cáo/slide. Phần còn lại là chạy thật và điền bằng chứng (mục t checklist chưa tick ở trên).
+Phần đã sẵn sàng: schema + constraint, trigger/procedure/function, 25 truy vấn nâng cao + recursive SQL, SQL động/nhúng, ODL/OQL, generator 100.000 đơn, bộ test, tài liệu thiết kế, bằng chứng thực nghiệm 23/10 và bản nháp báo cáo/slide.
 
 README này mô tả mục tiêu, phạm vi, công nghệ, cấu trúc repository, quy trình chạy và tiêu chí hoàn thành. Phân công chi tiết và kế hoạch theo tuần nằm trong `PLAN_PHAN_CONG_NHOM_7_DE_TAI_7.md`.

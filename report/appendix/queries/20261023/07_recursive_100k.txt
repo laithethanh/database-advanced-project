@@ -1,0 +1,67 @@
+# SQL: sql\07_recursive.sql
+# Generated with PyMySQL (UTF-8)
+
+## Q18. Duyệt toàn bộ rừng danh mục; đường dẫn ổn định và dễ đọc.
+
+category_id	parent_category_id	name	depth	display_path
+
+1	NULL	Thời trang	0	Thời trang
+2	1	Áo	1	Thời trang > Áo
+3	2	Áo thun	2	Thời trang > Áo > Áo thun
+4	2	Áo sơ mi	2	Thời trang > Áo > Áo sơ mi
+5	2	Áo khoác	2	Thời trang > Áo > Áo khoác
+6	1	Quần	1	Thời trang > Quần
+7	6	Quần jean	2	Thời trang > Quần > Quần jean
+8	6	Quần short	2	Thời trang > Quần > Quần short
+9	NULL	Điện tử	0	Điện tử
+10	9	Điện thoại	1	Điện tử > Điện thoại
+11	10	Điện thoại Android	2	Điện tử > Điện thoại > Điện thoại Android
+12	10	iPhone	2	Điện tử > Điện thoại > iPhone
+13	9	Phụ kiện	1	Điện tử > Phụ kiện
+14	13	Tai nghe	2	Điện tử > Phụ kiện > Tai nghe
+15	13	Sạc dự phòng	2	Điện tử > Phụ kiện > Sạc dự phòng
+16	NULL	Nhà cửa	0	Nhà cửa
+17	16	Nhà bếp	1	Nhà cửa > Nhà bếp
+18	17	Nồi chảo	2	Nhà cửa > Nhà bếp > Nồi chảo
+19	17	Dao kéo	2	Nhà cửa > Nhà bếp > Dao kéo
+20	16	Trang trí	1	Nhà cửa > Trang trí
+21	20	Đèn ngủ	2	Nhà cửa > Trang trí > Đèn ngủ
+22	20	Tranh treo tường	2	Nhà cửa > Trang trí > Tranh treo tường
+
+## Q19. Doanh thu của cây con thuộc từng danh mục. Nhánh chưa có đơn đã thanh toán trở đi sẽ có doanh thu bằng 0.
+
+category_id	name	recognized_revenue
+
+1	Thời trang	144478722000.00
+16	Nhà cửa	105581478000.00
+9	Điện tử	104086293000.00
+2	Áo	91076246000.00
+13	Phụ kiện	57168384000.00
+20	Trang trí	56039776000.00
+6	Quần	53402476000.00
+17	Nhà bếp	49541702000.00
+10	Điện thoại	46917909000.00
+15	Sạc dự phòng	34499594000.00
+4	Áo sơ mi	32755864000.00
+19	Dao kéo	30443262000.00
+7	Quần jean	30334651000.00
+5	Áo khoác	29862965000.00
+22	Tranh treo tường	29462644000.00
+3	Áo thun	28457417000.00
+12	iPhone	27011532000.00
+21	Đèn ngủ	26577132000.00
+8	Quần short	23067825000.00
+14	Tai nghe	22668790000.00
+11	Điện thoại Android	19906377000.00
+18	Nồi chảo	19098440000.00
+
+## Q20. Đường dẫn/độ sâu từ một danh mục lên các danh mục tổ tiên, hữu ích cho điều hướng breadcrumb.
+
+category_id	name	distance_from_leaf	path_from_leaf
+
+
+### Result set 2
+
+cycle_start
+
+
