@@ -1,9 +1,12 @@
 ﻿USE ecommerce_advanced;
 DELIMITER $$
+DROP TRIGGER IF EXISTS trg_product_validate_category$$
+DROP TRIGGER IF EXISTS trg_product_validate_category_update$$
 DROP TRIGGER IF EXISTS trg_product_validate_seller_category$$
 DROP TRIGGER IF EXISTS trg_product_validate_seller_category_update$$
 DROP TRIGGER IF EXISTS trg_product_variant_validate_product$$
 DROP TRIGGER IF EXISTS trg_cart_item_validate_variant$$
+DROP TRIGGER IF EXISTS trg_cart_item_validate_variant_update$$
 DROP TRIGGER IF EXISTS trg_inventory_no_negative_reserved$$
 DROP TRIGGER IF EXISTS trg_inventory_no_negative_reserved_update$$
 DROP TRIGGER IF EXISTS trg_order_item_validate$$
@@ -18,24 +21,29 @@ DROP TRIGGER IF EXISTS trg_category_no_cycle_update$$
 DROP TRIGGER IF EXISTS trg_review_validate$$
 DROP TRIGGER IF EXISTS trg_review_validate_update$$
 
-CREATE TRIGGER trg_product_validate_seller_category BEFORE INSERT ON product FOR EACH ROW
+CREATE TRIGGER trg_product_validate_category BEFORE INSERT ON product FOR EACH ROW
 BEGIN
-  IF NOT EXISTS (SELECT 1 FROM seller WHERE account_id=NEW.seller_id AND shop_status='ACTIVE') THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='product seller must be ACTIVE'; END IF;
   IF NOT EXISTS (SELECT 1 FROM category WHERE category_id=NEW.category_id AND status='ACTIVE') THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='product category must be ACTIVE'; END IF;
 END$$
-CREATE TRIGGER trg_product_validate_seller_category_update BEFORE UPDATE ON product FOR EACH ROW
+CREATE TRIGGER trg_product_validate_category_update BEFORE UPDATE ON product FOR EACH ROW
 BEGIN
-  IF NOT EXISTS (SELECT 1 FROM seller WHERE account_id=NEW.seller_id AND shop_status='ACTIVE') THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='product seller must be ACTIVE'; END IF;
   IF NOT EXISTS (SELECT 1 FROM category WHERE category_id=NEW.category_id AND status='ACTIVE') THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='product category must be ACTIVE'; END IF;
 END$$
 CREATE TRIGGER trg_product_variant_validate_product BEFORE INSERT ON product_variant FOR EACH ROW
 BEGIN
-  IF NOT EXISTS (SELECT 1 FROM product p JOIN seller s ON s.account_id=p.seller_id WHERE p.product_id=NEW.product_id AND p.status='ACTIVE' AND s.shop_status='ACTIVE') THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='variant product must be ACTIVE and owned by an ACTIVE seller'; END IF;
+  IF NOT EXISTS (SELECT 1 FROM product p WHERE p.product_id=NEW.product_id AND p.status='ACTIVE') THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='variant product must be ACTIVE'; END IF;
+  IF NOT EXISTS (SELECT 1 FROM warehouse w WHERE w.warehouse_id=NEW.warehouse_id AND w.status='ACTIVE') THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='variant warehouse must be ACTIVE'; END IF;
 END$$
 CREATE TRIGGER trg_cart_item_validate_variant BEFORE INSERT ON cart_item FOR EACH ROW
 BEGIN
   IF NEW.quantity<=0 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='cart item quantity must be positive'; END IF;
-  IF NOT EXISTS (SELECT 1 FROM product_variant v JOIN product p ON p.product_id=v.product_id JOIN seller s ON s.account_id=p.seller_id WHERE v.variant_id=NEW.variant_id AND v.status='ACTIVE' AND p.status='ACTIVE' AND s.shop_status='ACTIVE') THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='cart item variant is not sellable'; END IF;
+  IF NOT EXISTS (SELECT 1 FROM product_variant v JOIN product p ON p.product_id=v.product_id JOIN warehouse w ON w.warehouse_id=v.warehouse_id JOIN inventory i ON i.variant_id=v.variant_id AND i.seller_id=NEW.seller_id JOIN seller s ON s.account_id=i.seller_id WHERE v.variant_id=NEW.variant_id AND v.status='ACTIVE' AND p.status='ACTIVE' AND w.status='ACTIVE' AND s.shop_status='ACTIVE') THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='cart item seller/variant is not sellable'; END IF;
+  IF NOT EXISTS (SELECT 1 FROM cart WHERE cart_id=NEW.cart_id AND status='ACTIVE') THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='items can only be added to an ACTIVE cart'; END IF;
+END$$
+CREATE TRIGGER trg_cart_item_validate_variant_update BEFORE UPDATE ON cart_item FOR EACH ROW
+BEGIN
+  IF NEW.quantity<=0 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='cart item quantity must be positive'; END IF;
+  IF NOT EXISTS (SELECT 1 FROM product_variant v JOIN product p ON p.product_id=v.product_id JOIN warehouse w ON w.warehouse_id=v.warehouse_id JOIN inventory i ON i.variant_id=v.variant_id AND i.seller_id=NEW.seller_id JOIN seller s ON s.account_id=i.seller_id WHERE v.variant_id=NEW.variant_id AND v.status='ACTIVE' AND p.status='ACTIVE' AND w.status='ACTIVE' AND s.shop_status='ACTIVE') THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='cart item seller/variant is not sellable'; END IF;
   IF NOT EXISTS (SELECT 1 FROM cart WHERE cart_id=NEW.cart_id AND status='ACTIVE') THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='items can only be added to an ACTIVE cart'; END IF;
 END$$
 CREATE TRIGGER trg_inventory_no_negative_reserved BEFORE INSERT ON inventory FOR EACH ROW

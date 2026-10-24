@@ -31,6 +31,7 @@ BEGIN
   DECLARE v_done INT DEFAULT 0;
   DECLARE v_cart_id BIGINT UNSIGNED DEFAULT NULL;
   DECLARE v_variant_id BIGINT UNSIGNED;
+  DECLARE v_seller_id BIGINT UNSIGNED;
   DECLARE v_qty INT UNSIGNED;
   DECLARE v_price DECIMAL(15,2);
   DECLARE v_product_id BIGINT UNSIGNED;
@@ -53,13 +54,13 @@ BEGIN
   DECLARE v_scope_count INT DEFAULT 0;
   DECLARE v_available INT DEFAULT 0;
   DECLARE v_take INT DEFAULT 0;
-  DECLARE v_warehouse_id BIGINT UNSIGNED;
+  DECLARE v_stock_seller_id BIGINT UNSIGNED;
   DECLARE v_remaining INT UNSIGNED;
   DECLARE v_item_count INT DEFAULT 0;
   DECLARE v_invalid_items INT DEFAULT 0;
 
   DECLARE cur_items CURSOR FOR
-    SELECT ci.variant_id,ci.quantity,v.price,p.product_id,p.name,v.sku
+    SELECT ci.variant_id,ci.seller_id,ci.quantity,v.price,p.product_id,p.name,v.sku
     FROM cart_item ci JOIN product_variant v ON v.variant_id=ci.variant_id JOIN product p ON p.product_id=v.product_id
     WHERE ci.cart_id=v_cart_id ORDER BY ci.variant_id;
   DECLARE CONTINUE HANDLER FOR NOT FOUND SET v_done=1;
@@ -77,9 +78,10 @@ BEGIN
   FROM cart_item ci
   JOIN product_variant v ON v.variant_id=ci.variant_id
   JOIN product p ON p.product_id=v.product_id
-  JOIN seller s ON s.account_id=p.seller_id
+  JOIN warehouse w ON w.warehouse_id=v.warehouse_id
+  JOIN seller s ON s.account_id=ci.seller_id
   WHERE ci.cart_id=v_cart_id
-    AND NOT (v.status='ACTIVE' AND p.status='ACTIVE' AND s.shop_status='ACTIVE');
+    AND NOT (v.status='ACTIVE' AND p.status='ACTIVE' AND w.status='ACTIVE' AND s.shop_status='ACTIVE');
   IF v_invalid_items>0 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='cart contains a variant that is no longer sellable'; END IF;
 
   SET v_order_number=CONCAT('ORD-',DATE_FORMAT(UTC_TIMESTAMP(),'%Y%m%d%H%i%s'),'-',LPAD(FLOOR(RAND()*1000000),6,'0'));
@@ -90,46 +92,43 @@ BEGIN
   SET v_done=0;
   OPEN cur_items;
   item_loop: LOOP
-    FETCH cur_items INTO v_variant_id,v_qty,v_price,v_product_id,v_product_name,v_sku;
+    FETCH cur_items INTO v_variant_id,v_seller_id,v_qty,v_price,v_product_id,v_product_name,v_sku;
     IF v_done=1 THEN LEAVE item_loop; END IF;
     SET v_remaining=v_qty;
     BEGIN
       DECLARE v_stock_done INT DEFAULT 0;
       DECLARE cur_stock CURSOR FOR
-        SELECT warehouse_id,quantity_on_hand-reserved_quantity
-        FROM inventory WHERE variant_id=v_variant_id AND quantity_on_hand>reserved_quantity
-        ORDER BY warehouse_id FOR UPDATE;
+        SELECT seller_id,quantity_on_hand-reserved_quantity
+        FROM inventory WHERE variant_id=v_variant_id AND seller_id=v_seller_id
+          AND quantity_on_hand>reserved_quantity FOR UPDATE;
       DECLARE CONTINUE HANDLER FOR NOT FOUND SET v_stock_done=1;
       OPEN cur_stock;
       stock_loop: LOOP
-        FETCH cur_stock INTO v_warehouse_id,v_available;
+        FETCH cur_stock INTO v_stock_seller_id,v_available;
         IF v_stock_done=1 OR v_remaining=0 THEN LEAVE stock_loop; END IF;
         SET v_take=LEAST(v_remaining,v_available);
         UPDATE inventory SET quantity_on_hand=quantity_on_hand-v_take
-        WHERE warehouse_id=v_warehouse_id AND variant_id=v_variant_id AND quantity_on_hand-reserved_quantity>=v_take;
+        WHERE seller_id=v_stock_seller_id AND variant_id=v_variant_id AND quantity_on_hand-reserved_quantity>=v_take;
         IF ROW_COUNT()<>1 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='inventory changed concurrently; checkout aborted'; END IF;
         SET v_remaining=v_remaining-v_take;
       END LOOP;
       CLOSE cur_stock;
     END;
     IF v_remaining>0 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='insufficient inventory'; END IF;
-    INSERT INTO order_item(order_id,variant_id,product_name_snapshot,sku_snapshot,unit_price,quantity,line_discount,line_total)
-    VALUES(p_order_id,v_variant_id,v_product_name,v_sku,v_price,v_qty,0,v_qty*v_price);
+    INSERT INTO order_item(order_id,seller_id,variant_id,product_name_snapshot,sku_snapshot,unit_price,quantity,line_discount,line_total)
+    VALUES(p_order_id,v_seller_id,v_variant_id,v_product_name,v_sku,v_price,v_qty,0,v_qty*v_price);
     SET v_subtotal=v_subtotal+v_qty*v_price;
   END LOOP;
   CLOSE cur_items;
 
   IF p_promotion_code IS NOT NULL AND p_promotion_code<>'' THEN
-    SELECT promotion_id,promotion_type,discount_value,max_discount,min_order_amount,status,start_at,end_at,usage_limit
-    INTO v_promotion_id,v_promotion_type,v_promotion_value,v_promotion_max,v_promotion_min,v_promotion_status,v_start,v_end,v_usage_limit
+    SELECT promotion_id,promotion_type,discount_value,max_discount,min_order_amount,status,start_at,end_at,usage_limit,used_count
+    INTO v_promotion_id,v_promotion_type,v_promotion_value,v_promotion_max,v_promotion_min,v_promotion_status,v_start,v_end,v_usage_limit,v_usage_count
     FROM promotion WHERE code=p_promotion_code FOR UPDATE;
     IF v_promotion_id IS NULL THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='promotion code not found'; END IF;
     IF v_promotion_status<>'ACTIVE' OR UTC_TIMESTAMP() NOT BETWEEN v_start AND v_end THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='promotion is not currently active'; END IF;
     IF v_subtotal<v_promotion_min THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='order does not meet promotion minimum'; END IF;
-    IF v_usage_limit IS NOT NULL THEN
-      SELECT COUNT(*) INTO v_usage_count FROM order_promotion WHERE promotion_id=v_promotion_id;
-      IF v_usage_count>=v_usage_limit THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='promotion usage limit reached'; END IF;
-    END IF;
+    IF v_usage_limit IS NOT NULL AND v_usage_count>=v_usage_limit THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='promotion usage limit reached'; END IF;
     SELECT COUNT(*) INTO v_scope_count FROM promotion_product WHERE promotion_id=v_promotion_id;
     SELECT v_scope_count+COUNT(*) INTO v_scope_count FROM promotion_category WHERE promotion_id=v_promotion_id;
     IF v_scope_count=0 THEN
@@ -149,23 +148,23 @@ BEGIN
   UPDATE orders SET subtotal=v_subtotal,discount_total=v_discount,grand_total=v_subtotal-v_discount+p_shipping_fee WHERE order_id=p_order_id;
   IF v_promotion_id IS NOT NULL THEN
     INSERT INTO order_promotion(order_id,promotion_id,discount_amount,promotion_code_snapshot) VALUES(p_order_id,v_promotion_id,v_discount,p_promotion_code);
+    UPDATE promotion SET used_count=used_count+1 WHERE promotion_id=v_promotion_id;
   END IF;
   INSERT INTO payment(order_id,provider,amount,status,paid_at)
     SELECT order_id,'CHECKOUT',grand_total,'SUCCESS',UTC_TIMESTAMP() FROM orders WHERE order_id=p_order_id;
   UPDATE orders SET status='PAID' WHERE order_id=p_order_id;
   UPDATE cart SET status='CHECKED_OUT' WHERE cart_id=v_cart_id;
   COMMIT;
-END$$  
- 
+END$$
+
 CREATE PROCEDURE sp_seller_ranking(IN p_from DATETIME,IN p_to DATETIME,IN p_limit INT)
 SQL SECURITY INVOKER
 BEGIN
   IF p_from IS NULL OR p_to IS NULL OR p_from>=p_to THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='invalid ranking date range'; END IF;
   IF p_limit IS NULL OR p_limit<=0 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='ranking limit must be positive'; END IF;
   SET @sql=CONCAT(
-    'SELECT s.account_id AS seller_id,s.shop_name,COUNT(DISTINCT o.order_id) AS order_count,COALESCE(SUM(oi.line_total),0) AS revenue ',
-    'FROM seller s LEFT JOIN product p ON p.seller_id=s.account_id LEFT JOIN product_variant v ON v.product_id=p.product_id ',
-    'LEFT JOIN order_item oi ON oi.variant_id=v.variant_id LEFT JOIN orders o ON o.order_id=oi.order_id ',
+    'SELECT s.account_id AS seller_id,s.shop_name,COUNT(DISTINCT o.order_id) AS order_count,COALESCE(SUM(CASE WHEN o.order_id IS NOT NULL THEN oi.line_total ELSE 0 END),0) AS revenue ',
+    'FROM seller s LEFT JOIN order_item oi ON oi.seller_id=s.account_id LEFT JOIN orders o ON o.order_id=oi.order_id ',
     'AND o.status IN (''PAID'',''PROCESSING'',''SHIPPED'',''DELIVERED'') AND o.created_at>=? AND o.created_at<? ',
     'WHERE s.shop_status=''ACTIVE'' GROUP BY s.account_id,s.shop_name ',
     'ORDER BY revenue DESC,order_count DESC,s.account_id LIMIT ',CAST(p_limit AS UNSIGNED));
