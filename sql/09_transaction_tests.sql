@@ -1,8 +1,6 @@
 USE ecommerce_advanced;
  
 
- USE ecommerce_advanced;
-
 -- =========================================================================
 -- TUẦN 7: KIỂM TRA TRANSACTION VÀ TEST ROLLBACK KHI GỌI PROCEDURE SP_CHECKOUT
 -- Người thực hiện: Khoa
