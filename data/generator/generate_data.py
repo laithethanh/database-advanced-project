@@ -51,9 +51,30 @@ CAY_DANH_MUC = {
     },
 }
 
-THUONG_HIEU = ["Viet Tien", "Canifa", "Samsung", "Xiaomi", "Sunhouse", "Rang Dong", "Owen", "Anker"]
 MAU_SAC = ["Den", "Trang", "Xanh", "Do", "Xam"]
-KICH_CO = ["S", "M", "L", "XL"]
+
+# Mỗi danh mục lá có thương hiệu, kiểu biến thể (ghi vào cột size) và khoảng giá (nghìn đồng) riêng,
+# để không sinh ra dữ liệu vô lý kiểu "Nồi chảo size XL" hay "iPhone của Viet Tien".
+#   tên danh mục lá: (thương hiệu, giá trị biến thể, (giá thấp nhất, giá cao nhất) nghìn đồng)
+THONG_TIN_LOAI = {
+    "Áo thun":            (["Viet Tien", "Canifa", "Owen", "Coolmate"], ["S", "M", "L", "XL"], (80, 400)),
+    "Áo sơ mi":           (["Viet Tien", "Owen", "An Phuoc"],           ["S", "M", "L", "XL"], (200, 800)),
+    "Áo khoác":           (["Canifa", "Owen", "Coolmate"],              ["S", "M", "L", "XL"], (300, 1500)),
+    "Quần jean":          (["Canifa", "Owen", "Coolmate"],              ["28", "29", "30", "31", "32"], (300, 900)),
+    "Quần short":         (["Canifa", "Coolmate"],                      ["S", "M", "L", "XL"], (100, 400)),
+    "Điện thoại Android": (["Samsung", "Xiaomi", "Oppo"],               ["64GB", "128GB", "256GB"], (2000, 20000)),
+    "iPhone":             (["Apple"],                                   ["128GB", "256GB", "512GB"], (15000, 35000)),
+    "Tai nghe":           (["Sony", "Xiaomi", "Anker"],                 ["Co day", "Khong day"], (200, 3000)),
+    "Sạc dự phòng":       (["Anker", "Xiaomi"],                         ["10000mAh", "20000mAh"], (300, 1200)),
+    "Nồi chảo":           (["Sunhouse", "Lock&Lock"],                   ["20cm", "24cm", "28cm"], (150, 1200)),
+    "Dao kéo":            (["Sunhouse", "Lock&Lock"],                   ["Bo 3 mon", "Bo 5 mon"], (100, 600)),
+    "Đèn ngủ":            (["Rang Dong", "Dien Quang"],                 ["Nho", "Vua", "Lon"], (80, 500)),
+    "Tranh treo tường":   (["Tranh Viet"],                              ["30x40cm", "40x60cm", "60x90cm"], (150, 1500)),
+}
+
+# Kiểm tra mọi danh mục lá trong cây đều có thông tin ở trên
+_LA = {la for nhom in CAY_DANH_MUC.values() for ds in nhom.values() for la in ds}
+assert _LA == set(THONG_TIN_LOAI), f"Thieu/thua thong tin loai: {_LA ^ set(THONG_TIN_LOAI)}"
 
 DUONG_PHO = [
     "Nguyen Hue", "Le Loi", "Tran Hung Dao", "Hai Ba Trung", "Vo Van Tan",
@@ -195,7 +216,8 @@ def tao_san_pham(cur, rng, so_luong, ds_danh_muc_la, ds_nguoi_ban):
     so_bien_the = 0
     for i in range(1, so_luong + 1):
         category_id, ten_loai = rng.choice(ds_danh_muc_la)
-        thuong_hieu = rng.choice(THUONG_HIEU)
+        ds_thuong_hieu, ds_bien_the, (gia_min, gia_max) = THONG_TIN_LOAI[ten_loai]
+        thuong_hieu = rng.choice(ds_thuong_hieu)
         ten_sp = f"{ten_loai} {thuong_hieu} {i:05d}"
         cur.execute(
             "INSERT INTO product (category_id, name, slug, description, brand, status) "
@@ -204,10 +226,10 @@ def tao_san_pham(cur, rng, so_luong, ds_danh_muc_la, ds_nguoi_ban):
         )
         product_id = cur.lastrowid
 
-        # Chọn 2-3 tổ hợp màu/size KHÁC NHAU cho sản phẩm này
-        to_hop = rng.sample([(m, k) for m in MAU_SAC for k in KICH_CO], rng.randint(2, 3))
+        # Chọn 2-3 tổ hợp màu/biến thể KHÁC NHAU, biến thể đúng theo loại hàng (size, dung lượng, kích thước...)
+        to_hop = rng.sample([(m, k) for m in MAU_SAC for k in ds_bien_the], rng.randint(2, 3))
         for j, (mau, co) in enumerate(to_hop, start=1):
-            gia = rng.randint(50, 2000) * 1000                     # 50.000đ - 2.000.000đ
+            gia = rng.randint(gia_min, gia_max) * 1000             # giá theo loại hàng
             gia_goc = gia + rng.randint(0, 5) * 10000 if rng.random() < 0.5 else None
             sku = f"DSKU-{i:06d}-{j}"
             cur.execute(

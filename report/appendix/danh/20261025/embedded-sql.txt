@@ -1,0 +1,32 @@
+
+[1] Khach hang: Duyên Nguyễn (id 1)
+    Gio hang ACTIVE: cart_id = 1 (da co san)
+
+[2] Them 2 mon con hang vao gio:
+      + Quần jean Canifa 00001 (DSKU-000001-1), gia 627.000đ, kho con 59
+      + Quần jean Canifa 00001 (DSKU-000001-2), gia 324.000đ, kho con 33
+
+[3] Duyet gio hang bang cursor:
+      - Quần jean Canifa 00001 (DSKU-000001-1) x1 = 627.000đ
+      - Quần jean Canifa 00001 (DSKU-000001-2) x1 = 324.000đ
+      - Dao kéo Lock&Lock 00317 (DSKU-000317-1) x3 = 1.488.000đ
+      - Sạc dự phòng Xiaomi 00592 (DSKU-000592-2) x2 = 1.844.000đ
+      - Đèn ngủ Rang Dong 00672 (DSKU-000672-1) x3 = 1.461.000đ
+      Tong tien hang: 5.744.000đ
+
+[4] Thu dat 1059 cai 'Quần jean Canifa 00001' trong khi kho chi con 59:
+      Bi tu choi: loi 1644 - insufficient inventory
+      Truoc: 100000 don, kho 59  |  Sau: 100000 don, kho 59  -> KHONG THAY DOI (rollback dung)
+
+[5] Sua lai thanh 2 cai roi dat hang:
+      - Quần jean Canifa 00001 (DSKU-000001-1) x2 = 1.254.000đ
+      - Quần jean Canifa 00001 (DSKU-000001-2) x1 = 324.000đ
+      - Dao kéo Lock&Lock 00317 (DSKU-000317-1) x3 = 1.488.000đ
+      - Sạc dự phòng Xiaomi 00592 (DSKU-000592-2) x2 = 1.844.000đ
+      - Đèn ngủ Rang Dong 00672 (DSKU-000672-1) x3 = 1.461.000đ
+      Tong tien hang: 6.371.000đ
+      Dat hang thanh cong! order_id = 100002
+
+[6] Don ORD-20261025131742-758cd17cd076: trang thai PAID, tien hang 6.371.000đ + ship 30.000đ = 6.401.000đ
+    Gio hang sau khi dat: CHECKED_OUT
+    Ton kho 'Quần jean Canifa 00001': 59 -> 57 (da tru 2)
