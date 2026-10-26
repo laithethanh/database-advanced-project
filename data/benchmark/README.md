@@ -1,3 +1,3 @@
-# Benchmark data
+# Dữ liệu đo hiệu năng
 
-Store benchmark manifests and metadata here. Large generated datasets should not be committed blindly.
+Lưu thông tin mô tả lần đo và siêu dữ liệu tại đây. Không commit tràn lan các bộ dữ liệu được sinh có dung lượng lớn.

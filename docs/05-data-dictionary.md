@@ -1,198 +1,37 @@
-# Data dictionary
+# Từ điển dữ liệu
 
-Quy ước: `PK` khóa chính, `FK` khóa ngoại, `UQ` unique, `NN` not null. Các cột tiền dùng `DECIMAL(15,2)`.
+Từ điển này tuân theo `sql/01_schema.sql`. Tất cả cột định danh dùng `BIGINT UNSIGNED`; giá trị tiền tệ dùng `DECIMAL(15,2)`.
 
-## ACCOUNT
-| Column | Type | Null | Key | Description |
-|---|---|---:|---|---|
-| account_id | BIGINT UNSIGNED | No | PK | ID tài khoản |
-| email | VARCHAR(255) | No | UQ | Email đăng nhập |
-| password_hash | VARCHAR(255) | No | | Hash mật khẩu |
-| full_name | VARCHAR(150) | No | | Họ tên |
-| phone | VARCHAR(30) | Yes | | Số điện thoại |
-| status | ENUM | No | | ACTIVE/BLOCKED/DELETED |
-| created_at | DATETIME | No | | Thời điểm tạo |
-| updated_at | DATETIME | No | | Thời điểm cập nhật |
+| Bảng | Các cột khóa và mục đích |
+|---|---|
+| `account` | `account_id` PK; `email` duy nhất; mật khẩu đã băm, họ tên, số điện thoại, trạng thái tài khoản và dấu thời gian. |
+| `customer` | `account_id` PK/FK to account; unique `customer_code`. |
+| `seller` | `account_id` PK/FK tới account; `seller_code` và `shop_name` duy nhất; `shop_status`. |
+| `address` | `address_id` PK; `customer_id` FK; thông tin người nhận và địa chỉ tại Việt Nam; cờ địa chỉ mặc định. |
+| `category` | `category_id` PK; nullable self-FK `parent_category_id`; unique slug; active status. |
+| `product` | `product_id` PK; `category_id` FK; slug duy nhất trên toàn hệ thống; tên, mô tả, thương hiệu, trạng thái và dấu thời gian. Bảng không có khóa ngoại tới người bán. |
+| `warehouse` | `warehouse_id` PK; mã duy nhất; tên, địa chỉ dạng văn bản và trạng thái. Lược đồ tạo sẵn WH-HN, WH-DN và WH-HCM. |
+| `product_variant` | `variant_id` PK; khóa ngoại `warehouse_id` và `product_id`; SKU duy nhất; màu sắc, kích cỡ, giá, giá niêm yết để so sánh, `warehouse_quantity` tại kho nhà cung cấp và trạng thái. Duy nhất `(warehouse_id, product_id, color, size)`. |
+| `inventory` | Khóa chính ghép `(seller_id, variant_id)`; khóa ngoại người bán và biến thể; số lượng thực có `quantity_on_hand`, `reserved_quantity`, `reorder_level` và thời điểm cập nhật. |
+| `cart` | `cart_id` PK; khóa ngoại khách hàng; trạng thái và dấu thời gian. `sql/02_constraints.sql` bổ sung khóa duy nhất được sinh tự động để ngăn một khách hàng có nhiều giỏ hàng ACTIVE. |
+| `cart_item` | Khóa chính ghép `(cart_id, seller_id, variant_id)`; khóa ngoại giỏ hàng và khóa ngoại ghép `(seller_id, variant_id)` tới inventory; số lượng và thời điểm thêm. Mỗi dòng chỉ rõ cửa hàng được chọn. |
+| `promotion` | `promotion_id` PK; mã tùy chọn và duy nhất; loại/giá trị, giá trị đơn hàng tối thiểu, mức giảm tối đa, thời gian hiệu lực, trạng thái, giới hạn sử dụng và `used_count`. |
+| `promotion_product` | Composite PK `(promotion_id, product_id)`; promotion/product mapping. |
+| `promotion_category` | Composite PK `(promotion_id, category_id)`; promotion/category mapping. |
+| `orders` | `order_id` PK; mã đơn hàng duy nhất; khóa ngoại khách hàng; trạng thái vòng đời; bản chụp người nhận/địa chỉ; tiền hàng, giảm giá, phí vận chuyển, tổng tiền và dấu thời gian. |
+| `order_item` | `order_item_id` PK; khóa ngoại đơn hàng; khóa ngoại ghép `seller_id` và `variant_id` tới inventory; bản chụp sản phẩm/SKU, đơn giá, số lượng, mức giảm và thành tiền; duy nhất `(order_id, seller_id, variant_id)`. |
+| `order_promotion` | Khóa chính ghép `(order_id, promotion_id)`; mỗi dòng là một mã đã áp dụng, gồm mức giảm thực tế và bản chụp mã khuyến mãi. Tổng `discount_amount` của một đơn bằng `orders.discount_total`. |
+| `payment` | `payment_id` PK; khóa ngoại đơn hàng; nhà cung cấp thanh toán, mã giao dịch có thể để trống nhưng nếu có phải duy nhất, số tiền, trạng thái và dấu thời gian thanh toán. |
+| `shipment` | `shipment_id` PK; khóa ngoại đơn hàng; đơn vị vận chuyển, mã theo dõi có thể để trống nhưng nếu có phải duy nhất, trạng thái và dấu thời gian gửi/giao hàng. |
+| `review` | `review_id` PK; khóa ngoại sản phẩm/khách hàng/chi tiết đơn hàng; điểm đánh giá, tiêu đề, nội dung, trạng thái kiểm duyệt và dấu thời gian; duy nhất `(customer_id, product_id)`. |
 
-## CUSTOMER
-| Column | Type | Null | Key | Description |
-|---|---|---:|---|---|
-| account_id | BIGINT UNSIGNED | No | PK/FK | Account tương ứng |
-| customer_code | VARCHAR(30) | No | UQ | Mã khách hàng |
+## Các khái niệm về tồn kho
 
-## SELLER
-| Column | Type | Null | Key | Description |
-|---|---|---:|---|---|
-| account_id | BIGINT UNSIGNED | No | PK/FK | Account tương ứng |
-| seller_code | VARCHAR(30) | No | UQ | Mã người bán |
-| shop_name | VARCHAR(150) | No | UQ | Tên shop |
-| shop_status | ENUM | No | | PENDING/ACTIVE/SUSPENDED/CLOSED |
-| created_at | DATETIME | No | | Thời điểm tạo shop |
+- `product_variant.warehouse_quantity`: số lượng của biến thể tương ứng được ghi nhận tại kho nhà cung cấp.
+- `inventory.quantity_on_hand`: số lượng biến thể đó được phân bổ cho người bán/cửa hàng.
+- `inventory.reserved_quantity`: phần tồn kho của người bán đã được giữ chỗ để xử lý đơn; giá trị này không được vượt `quantity_on_hand`.
+- `quantity_on_hand - reserved_quantity`: số lượng hàng hiện còn có thể bán của người bán.
 
-## ADDRESS
-| Column | Type | Null | Key | Description |
-|---|---|---:|---|---|
-| address_id | BIGINT UNSIGNED | No | PK | ID địa chỉ |
-| customer_id | BIGINT UNSIGNED | No | FK | Chủ địa chỉ |
-| recipient_name | VARCHAR(150) | No | | Người nhận |
-| phone | VARCHAR(30) | No | | Điện thoại nhận |
-| line1 | VARCHAR(255) | No | | Địa chỉ chi tiết |
-| ward | VARCHAR(100) | Yes | | Phường/xã |
-| district | VARCHAR(100) | Yes | | Quận/huyện |
-| city | VARCHAR(100) | No | | Thành phố |
-| province | VARCHAR(100) | No | | Tỉnh/thành |
-| postal_code | VARCHAR(20) | Yes | | Mã bưu chính |
-| is_default | BOOLEAN | No | | Địa chỉ mặc định |
+## Quy tắc xác định chủ sở hữu tồn kho
 
-## CATEGORY
-| Column | Type | Null | Key | Description |
-|---|---|---:|---|---|
-| category_id | BIGINT UNSIGNED | No | PK | ID danh mục |
-| parent_category_id | BIGINT UNSIGNED | Yes | FK | Category cha; null nếu root |
-| name | VARCHAR(150) | No | | Tên danh mục |
-| slug | VARCHAR(180) | No | UQ | Khóa URL |
-| status | ENUM | No | | ACTIVE/INACTIVE |
-| created_at | DATETIME | No | | Thời điểm tạo |
-
-## PRODUCT
-| Column | Type | Null | Key | Description |
-|---|---|---:|---|---|
-| product_id | BIGINT UNSIGNED | No | PK | ID sản phẩm |
-| seller_id | BIGINT UNSIGNED | No | FK | Seller sở hữu |
-| category_id | BIGINT UNSIGNED | No | FK | Category chính |
-| name | VARCHAR(255) | No | | Tên sản phẩm |
-| slug | VARCHAR(180) | No | | Slug trong phạm vi seller |
-| description | TEXT | Yes | | Mô tả |
-| brand | VARCHAR(120) | Yes | | Thương hiệu |
-| status | ENUM | No | | DRAFT/ACTIVE/INACTIVE/ARCHIVED |
-| created_at | DATETIME | No | | Thời điểm tạo |
-| updated_at | DATETIME | No | | Thời điểm cập nhật |
-
-## PRODUCT_VARIANT
-| Column | Type | Null | Key | Description |
-|---|---|---:|---|---|
-| variant_id | BIGINT UNSIGNED | No | PK | ID biến thể/SKU |
-| product_id | BIGINT UNSIGNED | No | FK | Product cha |
-| sku | VARCHAR(80) | No | UQ | SKU toàn hệ thống |
-| color | VARCHAR(60) | No | | Màu; chuỗi rỗng nếu không áp dụng |
-| size | VARCHAR(60) | No | | Size; chuỗi rỗng nếu không áp dụng |
-| price | DECIMAL(15,2) | No | | Giá bán hiện tại |
-| compare_at_price | DECIMAL(15,2) | Yes | | Giá tham chiếu |
-| status | ENUM | No | | ACTIVE/INACTIVE/ARCHIVED |
-
-## CART / CART_ITEM
-| Table.Column | Type | Null | Key | Description |
-|---|---|---:|---|---|
-| cart.cart_id | BIGINT UNSIGNED | No | PK | ID giỏ |
-| cart.customer_id | BIGINT UNSIGNED | No | FK | Chủ giỏ |
-| cart.status | ENUM | No | | ACTIVE/CHECKED_OUT/ABANDONED |
-| cart.created_at | DATETIME | No | | Thời điểm tạo |
-| cart.updated_at | DATETIME | No | | Thời điểm cập nhật |
-| cart_item.cart_id | BIGINT UNSIGNED | No | PK/FK | Giỏ |
-| cart_item.variant_id | BIGINT UNSIGNED | No | PK/FK | SKU |
-| cart_item.quantity | INT UNSIGNED | No | | Số lượng |
-| cart_item.added_at | DATETIME | No | | Thời điểm thêm |
-
-## WAREHOUSE / INVENTORY
-| Table.Column | Type | Null | Key | Description |
-|---|---|---:|---|---|
-| warehouse.warehouse_id | BIGINT UNSIGNED | No | PK | ID kho |
-| warehouse.code | VARCHAR(40) | No | UQ | Mã kho |
-| warehouse.name | VARCHAR(150) | No | | Tên kho |
-| warehouse.address_text | VARCHAR(500) | Yes | | Địa chỉ kho |
-| warehouse.status | ENUM | No | | ACTIVE/INACTIVE |
-| inventory.warehouse_id | BIGINT UNSIGNED | No | PK/FK | Kho |
-| inventory.variant_id | BIGINT UNSIGNED | No | PK/FK | SKU |
-| inventory.quantity_on_hand | INT UNSIGNED | No | | Tồn thực |
-| inventory.reserved_quantity | INT UNSIGNED | No | | Tồn đã giữ |
-| inventory.reorder_level | INT UNSIGNED | No | | Ngưỡng cảnh báo |
-| inventory.updated_at | DATETIME | No | | Thời điểm cập nhật |
-
-## PROMOTION / JUNCTIONS
-| Table.Column | Type | Null | Key | Description |
-|---|---|---:|---|---|
-| promotion.promotion_id | BIGINT UNSIGNED | No | PK | ID promotion |
-| promotion.code | VARCHAR(50) | Yes | UQ | Coupon code |
-| promotion.name | VARCHAR(150) | No | | Tên promotion |
-| promotion.promotion_type | ENUM | No | | PERCENT/FIXED |
-| promotion.discount_value | DECIMAL(15,2) | No | | Giá trị giảm |
-| promotion.min_order_amount | DECIMAL(15,2) | No | | Đơn tối thiểu |
-| promotion.max_discount | DECIMAL(15,2) | Yes | | Mức giảm tối đa |
-| promotion.start_at | DATETIME | No | | Bắt đầu hiệu lực |
-| promotion.end_at | DATETIME | No | | Kết thúc hiệu lực |
-| promotion.status | ENUM | No | | DRAFT/ACTIVE/INACTIVE/EXPIRED |
-| promotion.usage_limit | INT UNSIGNED | Yes | | Giới hạn lượt dùng |
-| promotion_product.promotion_id | BIGINT UNSIGNED | No | PK/FK | Promotion |
-| promotion_product.product_id | BIGINT UNSIGNED | No | PK/FK | Product được áp dụng |
-| promotion_category.promotion_id | BIGINT UNSIGNED | No | PK/FK | Promotion |
-| promotion_category.category_id | BIGINT UNSIGNED | No | PK/FK | Category được áp dụng |
-
-## ORDERS / ORDER_ITEM / ORDER_PROMOTION
-| Table.Column | Type | Null | Key | Description |
-|---|---|---:|---|---|
-| orders.order_id | BIGINT UNSIGNED | No | PK | ID đơn |
-| orders.order_number | VARCHAR(40) | No | UQ | Mã đơn nghiệp vụ |
-| orders.customer_id | BIGINT UNSIGNED | No | FK | Chủ đơn |
-| orders.status | ENUM | No | | State của đơn |
-| orders.recipient_name | VARCHAR(150) | No | | Snapshot người nhận |
-| orders.recipient_phone | VARCHAR(30) | No | | Snapshot điện thoại |
-| orders.shipping_address | VARCHAR(600) | No | | Snapshot địa chỉ |
-| orders.subtotal | DECIMAL(15,2) | No | | Tổng dòng trước discount |
-| orders.discount_total | DECIMAL(15,2) | No | | Tổng giảm |
-| orders.shipping_fee | DECIMAL(15,2) | No | | Phí vận chuyển |
-| orders.grand_total | DECIMAL(15,2) | No | | Tổng phải trả |
-| orders.placed_at | DATETIME | Yes | | Thời điểm đặt |
-| orders.created_at | DATETIME | No | | Thời điểm tạo |
-| orders.updated_at | DATETIME | No | | Thời điểm cập nhật |
-| order_item.order_item_id | BIGINT UNSIGNED | No | PK | ID dòng |
-| order_item.order_id | BIGINT UNSIGNED | No | FK | Đơn |
-| order_item.variant_id | BIGINT UNSIGNED | No | FK | SKU được mua |
-| order_item.product_name_snapshot | VARCHAR(255) | No | | Tên tại lúc mua |
-| order_item.sku_snapshot | VARCHAR(80) | No | | SKU tại lúc mua |
-| order_item.unit_price | DECIMAL(15,2) | No | | Giá tại lúc mua |
-| order_item.quantity | INT UNSIGNED | No | | Số lượng |
-| order_item.line_discount | DECIMAL(15,2) | No | | Giảm trên dòng |
-| order_item.line_total | DECIMAL(15,2) | No | | Tổng dòng |
-| order_promotion.order_id | BIGINT UNSIGNED | No | PK/FK | Đơn |
-| order_promotion.promotion_id | BIGINT UNSIGNED | No | PK/FK | Promotion |
-| order_promotion.discount_amount | DECIMAL(15,2) | No | | Snapshot discount |
-| order_promotion.promotion_code_snapshot | VARCHAR(50) | Yes | | Code tại lúc dùng |
-
-## PAYMENT / SHIPMENT
-| Table.Column | Type | Null | Key | Description |
-|---|---|---:|---|---|
-| payment.payment_id | BIGINT UNSIGNED | No | PK | ID thanh toán |
-| payment.order_id | BIGINT UNSIGNED | No | FK | Đơn |
-| payment.provider | VARCHAR(50) | No | | Payment provider |
-| payment.transaction_ref | VARCHAR(120) | Yes | UQ | Mã giao dịch gateway |
-| payment.amount | DECIMAL(15,2) | No | | Số tiền giao dịch |
-| payment.status | ENUM | No | | PENDING/SUCCESS/FAILED/REFUNDED |
-| payment.paid_at | DATETIME | Yes | | Thời điểm thanh toán |
-| payment.created_at | DATETIME | No | | Thời điểm tạo |
-| shipment.shipment_id | BIGINT UNSIGNED | No | PK | ID shipment |
-| shipment.order_id | BIGINT UNSIGNED | No | FK | Đơn |
-| shipment.carrier | VARCHAR(80) | No | | Đơn vị vận chuyển |
-| shipment.tracking_number | VARCHAR(120) | Yes | UQ | Mã tracking |
-| shipment.status | ENUM | No | | PENDING/SHIPPED/IN_TRANSIT/DELIVERED/RETURNED |
-| shipment.shipped_at | DATETIME | Yes | | Thời điểm gửi |
-| shipment.delivered_at | DATETIME | Yes | | Thời điểm giao |
-
-## REVIEW
-| Column | Type | Null | Key | Description |
-|---|---|---:|---|---|
-| review_id | BIGINT UNSIGNED | No | PK | ID review |
-| product_id | BIGINT UNSIGNED | No | FK | Product được đánh giá |
-| customer_id | BIGINT UNSIGNED | No | FK | Người đánh giá |
-| order_item_id | BIGINT UNSIGNED | No | FK | Bằng chứng đã mua |
-| rating | TINYINT UNSIGNED | No | | 1..5 |
-| title | VARCHAR(200) | Yes | | Tiêu đề |
-| body | TEXT | Yes | | Nội dung |
-| status | ENUM | No | | PUBLISHED/HIDDEN/PENDING |
-| created_at | DATETIME | No | | Thời điểm tạo |
-| updated_at | DATETIME | No | | Thời điểm cập nhật |
-
-## Snapshot và derived data
-
-`order_item.unit_price`, `product_name_snapshot`, `sku_snapshot` và thông tin giao hàng trong `orders` là snapshot của giao dịch. Chúng phải giữ nguyên sau khi catalog thay đổi.
-
-`subtotal`, `discount_total`, `grand_total`, `line_total`, `quantity_on_hand` và `reserved_quantity` có ý nghĩa nghiệp vụ riêng. Nhóm phải thống nhất procedure/trigger hoặc invariant query để không cho phép các giá trị mâu thuẫn.
+Cả `cart_item` và `order_item` đều lưu `seller_id`, kết hợp với `variant_id` để tham chiếu một dòng `inventory` tồn tại. Khi đặt hàng, hệ thống chỉ trừ tồn kho của người bán đã chọn; `product_variant.warehouse_quantity` vẫn là số lượng tại kho nhà cung cấp.

@@ -1,1 +1,8 @@
--- Test dynamic SQL with invalid sort/field and representative SQL injection payloads.
+-- Kiểm thử bảo mật SQL động chạy bằng Python (không cần kết nối MySQL):
+-- python -m unittest tests.test_dynamic_search -v
+--
+-- Bộ test kiểm tra:
+-- 1. Chuỗi tấn công trong keyword vẫn nằm trong params, không nội suy vào SQL.
+-- 2. sort/direction ngoài whitelist bị từ chối trước khi tạo SQL.
+-- 3. min_price âm, min_price > max_price, min_rating ngoài [1,5], limit ngoài [1,100] bị từ chối.
+-- 4. sort=price dùng đúng biểu thức v.price đã có trong SELECT.

@@ -1,3 +1,6 @@
-# Report chapters
+# Các chương báo cáo
 
-Draft report chapters according to the 12-week plan and the outline in the root README.
+- `report-outline.md`: đề cương chương theo yêu cầu đề tài.
+- `report-draft.md`: bản nháp nội dung đầy đủ theo 11 chương + phụ lục, dùng làm nguồn điền vào file báo cáo chính thức.
+
+Mọi vị trí đánh dấu `[CẦN ĐIỀN]` phải được thay bằng output thực tế của MySQL/ObjectDB trước khi nộp.

@@ -1,0 +1,27 @@
+# Concurrency T03 - log chạy thực tế
+
+Session A: mở transaction, khóa dòng inventory, SLEEP(6), COMMIT.
+Session B: bắt đầu sau 2 giây, gọi sp_checkout cho CUS2002.
+
+- Session A exit code: 0
+- Session B exit code: 0
+- Thời gian session B (gồm chờ khóa): 4.08 giây
+
+## Session A stdout/stderr
+
+locked_stock
+1
+hold_lock_seconds
+0
+session_a
+session A: released the lock
+
+
+## Session B stdout/stderr
+
+Note (Code 1051): Unknown table 'ecommerce_advanced.tmp_promo'
+order_b	order_status	payment_rows
+6	PAID	1
+stock	cus2001_paid_orders
+0	0
+

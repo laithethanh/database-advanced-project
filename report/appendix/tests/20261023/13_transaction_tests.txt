@@ -1,0 +1,14 @@
+# SQL: sql\09_transaction_tests.sql
+# Exit code: 0
+
+## stdout
+
+Note (Code 1051): Unknown table 'ecommerce_advanced.tmp_promo'
+created_order_id	stock_before	subtotal	grand_total	item_sum
+5	18	100000.00	130000.00	100000.00
+phone_after_savepoint_rollback
+0900000001
+
+## stderr
+
+

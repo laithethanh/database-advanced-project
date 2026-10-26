@@ -1,0 +1,32 @@
+# Script: data\benchmark\run_benchmark.py
+# Args: --warmup 3 --runs 7
+# Started: 2026-10-23 00:44:19
+# Elapsed: 95.5 seconds
+# Exit code: 0
+
+## stdout
+
+[1] Moi truong: {'MySQL': '8.4.11', 'Muc co lap': 'REPEATABLE-READ', 'innodb_buffer_pool_size': '134,217,728 byte', 'He dieu hanh': 'Windows-11-10.0.26200-SP0', 'Python': '3.13.2', 'Faker': '39.1.0', 'PyMySQL': '2.2.8', 'So don (orders)': 100000, 'So dong hang (order_item)': 200329, 'So thanh toan (payment)': 89908}
+[2] BASELINE (lam nong 3 lan, do 7 lan moi truy van)
+   [truoc] B1: trung vi 3.297,26 ms, 10 dong
+   [truoc] B2: trung vi 97,69 ms, 31 dong
+   [truoc] B3: trung vi 88,69 ms, 1 dong
+   [truoc] B4: trung vi 1,27 ms, 9 dong
+[3] Tao index thu nghiem
+   idx_bench_oi_variant_order_total: 1.706,52 ms
+   idx_bench_payment_status_paid: 581,38 ms
+   idx_bench_orders_recipient_phone: 898,10 ms
+[4] OPTIMIZED
+   [sau] B1: trung vi 2.074,29 ms, 10 dong
+   [sau] B2: trung vi 14,69 ms, 31 dong
+   [sau] B3: trung vi 0,82 ms, 1 dong
+   [sau] B4: trung vi 1,22 ms, 9 dong
+[5] Do chi phi ghi (chep bang payment sang bang tam, 3 lan moi truong hop)
+   khong index: 4.449,21 ms | co index: 5.251,58 ms
+[6] Da xoa index thu nghiem (schema tro ve nhu cu)
+
+Xong sau 95 giay. Ket qua ghi o: C:\Users\lai the thanh\Desktop\Đồ án CSDL nâng cao\data\benchmark\20261023-004420-DESKTOP-97LS755
+
+## stderr
+
+

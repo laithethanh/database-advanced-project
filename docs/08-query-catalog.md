@@ -7,7 +7,7 @@
 | Q03 | seller chưa có order | OUTER JOIN/NOT EXISTS |
 | Q04 | customer chưa từng mua | NOT EXISTS |
 | Q05 | SKU chưa từng bán | NOT EXISTS |
-| Q06 | SKU có tồn kho thấp | JOIN/HAVING |
+| Q06 | SKU có tồn kho thấp | JOIN + biểu thức tồn kho khả dụng |
 | Q07 | customer mua ≥ N SKU | GROUP BY/HAVING |
 | Q08 | SKU cao hơn giá trung bình category | correlated subquery |
 | Q09 | customer có mua và review | EXISTS |
@@ -18,7 +18,7 @@
 | Q14 | top N SKU từng category | window `ROW_NUMBER` |
 | Q15 | xếp hạng seller | `DENSE_RANK` |
 | Q16 | doanh thu theo tháng | CTE/window |
-| Q17 | rolling sales 30 ngày | window frame |
+| Q17 | rolling sales 30 ngày lịch | window frame `RANGE` theo ngày |
 | Q18 | duyệt cây category | recursive CTE |
 | Q19 | doanh thu subtree category | recursive CTE + aggregate |
 | Q20 | depth/path category | recursive CTE |
@@ -26,6 +26,6 @@
 | Q22 | customer có tỷ lệ return cao | conditional aggregation |
 | Q23 | hiệu quả promotion | JOIN/GROUP BY |
 | Q24 | product nhiều variant nhưng stock thấp | GROUP BY/HAVING |
-| Q25 | phát hiện invariant violation | anti-query |
+| Q25 | phát hiện vi phạm bất biến dữ liệu | truy vấn phát hiện bản ghi vi phạm |
 
 Mỗi query khi triển khai phải có: mục tiêu nghiệp vụ, SQL, dữ liệu kiểm thử, expected result, actual result và execution plan nếu thuộc nhóm benchmark.

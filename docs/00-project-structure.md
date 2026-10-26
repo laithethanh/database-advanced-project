@@ -14,7 +14,10 @@ database-advanced-project/
 │   ├── 08-query-catalog.md
 │   ├── 09-transaction-concurrency.md
 │   ├── 10-benchmark.md
-│   └── 11-reproducibility.md
+│   ├── 11-reproducibility.md
+│   ├── 12-query-execution-notes.md
+│   ├── 13-experiment-runbook.md
+│   └── 14-normalization-proof.md
 ├── diagrams/
 │   ├── eer.mmd
 │   ├── erd.mmd
@@ -43,16 +46,27 @@ database-advanced-project/
 │   ├── model/
 │   └── queries/
 ├── tests/
+│   ├── concurrency_setup.sql
+│   ├── concurrency_session_a.sql
+│   ├── concurrency_session_b.sql
 │   ├── constraint_tests.sql
 │   ├── order_tests.sql
+│   ├── promotion_tests.sql
 │   ├── security_tests.sql
+│   ├── test_dynamic_search.py
 │   └── regression/
 ├── report/
 │   ├── chapters/
+│   │   ├── report-outline.md
+│   │   └── report-draft.md
 │   └── appendix/
 ├── slides/
+│   ├── slide-outline.md
+│   └── slides-draft.md
 ├── .env.example
 ├── .gitignore
+├── db_config.py
+├── requirements.txt
 ├── README.md
 └── PLAN_PHAN_CONG_NHOM_7_DE_TAI_7.md
 ```
@@ -71,4 +85,6 @@ database-advanced-project/
 | `report/` | Nội dung báo cáo cuối kỳ |
 | `slides/` | Slide bảo vệ |
 
-Thứ tự triển khai chính: `01_schema.sql` → `02_constraints.sql` → seed → routines/triggers → queries → recursive → benchmark/transaction.
+Thứ tự triển khai chính: `01_schema.sql` → `02_constraints.sql` → seed nhỏ → routines/triggers → queries → recursive → benchmark/transaction.
+
+Vai trò hai nguồn dữ liệu: `03_seed_small.sql` nạp dữ liệu mẫu nhỏ cho database mẫu (fixture test, demo, chạy Q01–Q25 trên dữ liệu nhỏ); `data/generator/generate_data.py` sinh dữ liệu lớn cho database benchmark riêng (các lần chạy mới không nạp seed nhỏ; lần 22/10 có nạp seed nhỏ, xem metadata).

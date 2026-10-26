@@ -1,50 +1,177 @@
-﻿# Sample seed data
+# Dữ liệu mẫu khởi tạo
 #
-# This file contains the same demo data represented by
-# sql/03_seed_small.sql, but as plain data rather than SQL statements.
+# Tệp này chứa cùng dữ liệu minh họa được biểu diễn trong
+# sql/03_seed_small.sql, nhưng ở dạng dữ liệu thuần thay vì câu lệnh SQL.
 
 accounts:
   - email: customer01@example.test
     password_hash: demo-hash
     full_name: Nguyen Van A
     phone: '0900000001'
-    role: customer
-    customer_code: CUS0001
 
   - email: seller01@example.test
     password_hash: demo-hash
     full_name: Tran Van B
     phone: '0900000002'
-    role: seller
+
+customers:
+  - account_email: customer01@example.test
+    customer_code: CUS0001
+
+sellers:
+  - account_email: seller01@example.test
     seller_code: SEL0001
     shop_name: Shop Demo
     shop_status: ACTIVE
 
 categories:
-  - name: Điện tử
+  - name: Dien tu
     slug: dien-tu
 
 warehouses:
-  - code: WH-HCM-01
-    name: Kho TP.HCM
+  - code: WH-HN
+    name: Kho nhà cung cấp Hà Nội
+    address_text: Hà Nội
+  - code: WH-DN
+    name: Kho nhà cung cấp Đà Nẵng
+    address_text: Đà Nẵng
+  - code: WH-HCM
+    name: Kho nhà cung cấp TP.HCM
+    address_text: TP. Hồ Chí Minh
 
 products:
-  - seller_code: SEL0001
-    category_slug: dien-tu
-    name: Sản phẩm Demo
+  - category_slug: dien-tu
+    name: San pham Demo
     slug: san-pham-demo
+    description: Demo catalog item
+    brand: Demo
     status: ACTIVE
 
 product_variants:
   - product_slug: san-pham-demo
+    warehouse_code: WH-HCM
     sku: SKU-DEMO-001
     color: Black
     size: M
     price: 100000
+    compare_at_price: 120000
+    warehouse_quantity: 100
+    status: ACTIVE
 
 inventory:
-  - warehouse_code: WH-HCM-01
+  - seller_code: SEL0001
     variant_sku: SKU-DEMO-001
-    quantity_on_hand: 100
+    quantity_on_hand: 20
     reserved_quantity: 0
-    reorder_level: 10
+    reorder_level: 5
+
+carts:
+  - customer_code: CUS0001
+    status: ACTIVE
+
+cart_items:
+  - customer_code: CUS0001
+    seller_code: SEL0001
+    variant_sku: SKU-DEMO-001
+    quantity: 1
+
+addresses:
+  - customer_code: CUS0001
+    recipient_name: Nguyen Van A
+    phone: '0900000001'
+    line1: 123 Nguyen Hue
+    ward: Phuong Ben Nghe
+    district: Quan 1
+    city: TP. Ho Chi Minh
+    province: TP. Ho Chi Minh
+    postal_code: '700000'
+    is_default: true
+
+promotions:
+  - code: GIAM10
+    name: Giam 10 phan tram don hang
+    promotion_type: PERCENT
+    discount_value: 10.00
+    min_order_amount: 100000
+    max_discount: 15000
+    start_at: '2026-01-01 00:00:00'
+    end_at: '2026-12-31 23:59:59'
+    status: ACTIVE
+    usage_limit: 100
+    used_count: 1
+
+  - code: GIAM20K
+    name: Giam 20K don hang
+    promotion_type: FIXED
+    discount_value: 20000.00
+    min_order_amount: 150000
+    max_discount: null
+    start_at: '2026-01-01 00:00:00'
+    end_at: '2026-12-31 23:59:59'
+    status: ACTIVE
+    usage_limit: 50
+    used_count: 0
+
+promotion_products:
+  - promotion_code: GIAM10
+    product_slug: san-pham-demo
+
+promotion_categories:
+  - promotion_code: GIAM20K
+    category_slug: dien-tu
+
+orders:
+  - order_number: ORD-20260115-0001
+    customer_code: CUS0001
+    status: DELIVERED
+    recipient_name: Nguyen Van A
+    recipient_phone: '0900000001'
+    shipping_address: 123 Nguyen Hue, Phuong Ben Nghe, Quan 1, TP. Ho Chi Minh
+    subtotal: 200000
+    discount_total: 15000
+    shipping_fee: 30000
+    grand_total: 215000
+    placed_at: '2026-01-15 10:30:00'
+
+order_items:
+  - order_number: ORD-20260115-0001
+    seller_code: SEL0001
+    variant_sku: SKU-DEMO-001
+    product_name_snapshot: San pham Demo
+    sku_snapshot: SKU-DEMO-001
+    unit_price: 100000
+    quantity: 2
+    line_discount: 0
+    line_total: 200000
+
+order_promotions:
+  - order_number: ORD-20260115-0001
+    promotion_code: GIAM10
+    discount_amount: 15000
+    promotion_code_snapshot: GIAM10
+
+payments:
+  - order_number: ORD-20260115-0001
+    provider: VNPAY
+    transaction_ref: TXN-VNPAY-00001
+    amount: 215000
+    status: SUCCESS
+    paid_at: '2026-01-15 10:35:00'
+
+shipments:
+  - order_number: ORD-20260115-0001
+    carrier: GHN
+    tracking_number: GHN-TRACK-00001
+    status: DELIVERED
+    shipped_at: '2026-01-16 08:00:00'
+    delivered_at: '2026-01-18 14:00:00'
+
+reviews:
+  - product_slug: san-pham-demo
+    customer_code: CUS0001
+    order_number: ORD-20260115-0001
+    order_item_sku_snapshot: SKU-DEMO-001
+    rating: 5
+    title: San pham tot
+    body: Chat luong tot, giao hang nhanh, dong goi can than.
+    status: PUBLISHED

@@ -1,0 +1,23 @@
+# Concurrency T03 bổ sung - session A lấy đơn vị cuối, session B mua cùng SKU
+
+- Session A: khóa dòng inventory, đặt quantity_on_hand=0, giữ khóa 4 giây, COMMIT.
+- Session B: bắt đầu sau 2 giây, gọi sp_checkout cho CUS2002.
+
+- Session A exit code: 0
+- Session B exit code: 1 (lỗi insufficient inventory là kỳ vọng)
+- Thời gian session B (gồm chờ khóa): 2.07 giây
+
+## Session A stdout/stderr
+
+locked_stock
+1
+hold_lock_seconds
+0
+session_a
+session A: took the last unit and committed
+
+
+## Session B stdout/stderr
+
+
+ERROR 1644 (45000) at line 13: insufficient inventory

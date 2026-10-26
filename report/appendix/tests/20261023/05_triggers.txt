@@ -1,0 +1,43 @@
+# SQL: sql\05_triggers.sql
+# Exit code: 0
+
+## stdout
+
+Note (Code 1360): Trigger does not exist
+Note (Code 1360): Trigger does not exist
+Note (Code 1360): Trigger does not exist
+Note (Code 1360): Trigger does not exist
+Note (Code 1360): Trigger does not exist
+Note (Code 1360): Trigger does not exist
+Note (Code 1360): Trigger does not exist
+Note (Code 1360): Trigger does not exist
+Note (Code 1360): Trigger does not exist
+Note (Code 1360): Trigger does not exist
+Note (Code 1360): Trigger does not exist
+Note (Code 1360): Trigger does not exist
+Note (Code 1360): Trigger does not exist
+Note (Code 1360): Trigger does not exist
+Note (Code 1360): Trigger does not exist
+Note (Code 1360): Trigger does not exist
+Note (Code 1360): Trigger does not exist
+Note (Code 1360): Trigger does not exist
+Note (Code 1360): Trigger does not exist
+Note (Code 1360): Trigger does not exist
+Note (Code 1360): Trigger does not exist
+Note (Code 1360): Trigger does not exist
+Note (Code 1360): Trigger does not exist
+Note (Code 1360): Trigger does not exist
+Note (Code 1360): Trigger does not exist
+Note (Code 1360): Trigger does not exist
+Note (Code 1360): Trigger does not exist
+Note (Code 1360): Trigger does not exist
+Note (Code 1360): Trigger does not exist
+Note (Code 1360): Trigger does not exist
+Note (Code 1360): Trigger does not exist
+Note (Code 1360): Trigger does not exist
+Note (Code 1360): Trigger does not exist
+Note (Code 1360): Trigger does not exist
+
+## stderr
+
+

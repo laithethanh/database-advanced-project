@@ -1,0 +1,67 @@
+BẰNG CHỨNG DEMO SQL ĐỘNG VÀ SQL INJECTION — Phạm Thành Danh
+=================================================================
+Thời điểm chạy : 22/10/2026, khoảng 02:47 (giờ Việt Nam)
+Máy            : Laptop Windows 11, MySQL 8.4.11, Python 3.15.0, PyMySQL 1.2.3
+Database       : ecommerce_advanced, bộ dữ liệu 100.000 đơn (seed 20261003)
+                 1.001 sản phẩm, 2.502 biến thể, 10.102 tài khoản
+Lệnh           : python app\dynamic_search.py
+
+TÓM TẮT
+-------
+| Màn | Đầu vào                                               | Không an toàn (ghép chuỗi)        | An toàn (tham số + whitelist) |
+|-----|-------------------------------------------------------|-----------------------------------|-------------------------------|
+| A   | 'Áo' (bình thường)                                    | 20 dòng                           | 20 dòng (lọc giá <= 500.000)  |
+| B   | ' OR '1'='1' --                                       | 2.502 dòng (toàn bộ, mất LIMIT)   | 0 dòng                        |
+| C   | khongco' UNION SELECT email, password_hash FROM ... -- | 10.102 tài khoản bị lộ            | 0 dòng                        |
+| D   | Chèn SQL vào ô sắp xếp                                | (không áp dụng)                   | 2/2 bị whitelist chặn         |
+Bảng product sau demo: còn nguyên 1.001 sản phẩm.
+
+NHẬN XÉT
+--------
+- Màn B: dấu "--" biến phần còn lại thành chú thích nên cả "LIMIT 20" bị vô hiệu,
+  kẻ tấn công lấy được toàn bộ bảng chứ không chỉ 20 dòng.
+- Màn C: UNION ghép thêm kết quả từ bảng account vào kết quả tìm sản phẩm,
+  làm lộ email và password_hash của toàn bộ 10.102 tài khoản.
+- Bản an toàn gửi chuỗi tấn công như một GIÁ TRỊ (tham số %s), MySQL chỉ so sánh nó với tên
+  sản phẩm nên không khớp dòng nào. Tên cột ORDER BY và ASC/DESC không truyền bằng tham số
+  được nên phải lấy từ whitelist.
+
+OUTPUT NGUYÊN VĂN
+-----------------
+===== A. Tim kiem binh thuong voi tu khoa 'Áo' =====
+[Khong an toan]
+   -> 20 dong
+      {'ten': 'Áo thun Viet Tien 00001', 'gia': Decimal('1124000.00')}
+      {'ten': 'Áo thun Viet Tien 00001', 'gia': Decimal('1025000.00')}
+      {'ten': 'Áo thun Viet Tien 00001', 'gia': Decimal('166000.00')}
+[An toan, loc gia <= 500.000, sap theo gia]
+   -> 20 dong
+      {'product_id': 815, 'ten': 'Quần jean Xiaomi 00814', 'sku': 'DSKU-000814-2', 'gia': Decimal('51000.00')}
+      {'product_id': 47, 'ten': 'Áo thun Viet Tien 00046', 'sku': 'DSKU-000046-3', 'gia': Decimal('51000.00')}
+      {'product_id': 38, 'ten': 'Áo khoác Owen 00037', 'sku': 'DSKU-000037-2', 'gia': Decimal('53000.00')}
+
+===== B. Tan cong 1: lay TOAN BO san pham. Nhap: "' OR '1'='1' -- " =====
+[Khong an toan] Cau SQL thuc te:
+   SELECT p.name AS ten, v.price AS gia FROM product p JOIN product_variant v ON v.product_id = p.product_id WHERE p.name LIKE '%' OR '1'='1' -- %' LIMIT 20
+   -> 2502 dong
+      {'ten': 'San pham Demo', 'gia': Decimal('100000.00')}
+      {'ten': 'Áo thun Viet Tien 00001', 'gia': Decimal('1124000.00')}
+      {'ten': 'Áo thun Viet Tien 00001', 'gia': Decimal('1025000.00')}
+[An toan] Tham so gui di: ["%' OR '1'='1' -- %", 20]
+   -> 0 dong
+
+===== C. Tan cong 2: an cap email tai khoan. Nhap: "khongco' UNION SELECT email, password_hash FROM account -- " =====
+[Khong an toan] Cau SQL thuc te:
+   SELECT p.name AS ten, v.price AS gia FROM product p JOIN product_variant v ON v.product_id = p.product_id WHERE p.name LIKE '%khongco' UNION SELECT email, password_hash FROM account -- %' LIMIT 20
+   -> 10102 dong
+      {'ten': 'customer01@example.test', 'gia': 'demo-hash'}
+      {'ten': 'seller01@example.test', 'gia': 'demo-hash'}
+      {'ten': 'khach000001@example.test', 'gia': 'demo-hash'}
+[An toan] Tham so gui di: ["%khongco' UNION SELECT email, password_hash FROM account -- %", 20]
+   -> 0 dong
+
+===== D. Tan cong qua o sap xep (khong dung tham so duoc) -> whitelist chan =====
+   Bi chan: Khong cho phep sap xep theo: 'gia; DROP TABLE product'
+   Bi chan: Khong cho phep sap xep theo: '(SELECT password_hash FROM account LIMIT 1)'
+
+Bang product van con nguyen: 1001 san pham

@@ -1,0 +1,38 @@
+# Script: app\embedded_sql.py
+# Args: --customer DCUS000001
+# Started: 2026-10-23 00:46:21
+# Elapsed: 0.5 seconds
+# Exit code: 0
+
+## stdout
+
+
+[1] Khach hang: Duyên Nguyễn (id 1)
+    Gio hang ACTIVE: cart_id = 2998 (vua tao moi)
+
+[2] Them 2 mon con hang vao gio:
+      + Quần jean Samsung 00001 (DSKU-000001-1), gia 704.000đ, kho con 59
+      + Quần jean Samsung 00001 (DSKU-000001-2), gia 99.000đ, kho con 33
+
+[3] Duyet gio hang bang cursor:
+      - Quần jean Samsung 00001 (DSKU-000001-1) x1 = 704.000đ
+      - Quần jean Samsung 00001 (DSKU-000001-2) x1 = 99.000đ
+      Tong tien hang: 803.000đ
+
+[4] Thu dat 1059 cai 'Quần jean Samsung 00001' trong khi kho chi con 59:
+      Bi tu choi: loi 1644 - insufficient inventory
+      Truoc: 100000 don, kho 59  |  Sau: 100000 don, kho 59  -> KHONG THAY DOI (rollback dung)
+
+[5] Sua lai thanh 2 cai roi dat hang:
+      - Quần jean Samsung 00001 (DSKU-000001-1) x2 = 1.408.000đ
+      - Quần jean Samsung 00001 (DSKU-000001-2) x1 = 99.000đ
+      Tong tien hang: 1.507.000đ
+      Dat hang thanh cong! order_id = 100002
+
+[6] Don ORD-20261022174621-7e45c70ece40: trang thai PAID, tien hang 1.507.000đ + ship 30.000đ = 1.537.000đ
+    Gio hang sau khi dat: CHECKED_OUT
+    Ton kho 'Quần jean Samsung 00001': 59 -> 57 (da tru 2)
+
+## stderr
+
+
