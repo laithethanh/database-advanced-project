@@ -1,0 +1,79 @@
+mysql> source sql/07_recursive.sql
+Query OK, 0 rows affected (0.00 sec)
+
+Database changed
+Query OK, 0 rows affected (0.00 sec)
+
++-------------+--------------------+-------------------------+-------+----------------------------------------------------------+
+| category_id | parent_category_id | name                    | depth | display_path                                             |
++-------------+--------------------+-------------------------+-------+----------------------------------------------------------+
+|           1 |               NULL | Thời trang              |     0 | Thời trang                                               |
+|           2 |                  1 | Áo                      |     1 | Thời trang > Áo                                          |
+|           3 |                  2 | Áo thun                 |     2 | Thời trang > Áo > Áo thun                                |
+|           4 |                  2 | Áo sơ mi                |     2 | Thời trang > Áo > Áo sơ mi                               |
+|           5 |                  2 | Áo khoác                |     2 | Thời trang > Áo > Áo khoác                               |
+|           6 |                  1 | Quần                    |     1 | Thời trang > Quần                                        |
+|           7 |                  6 | Quần jean               |     2 | Thời trang > Quần > Quần jean                            |
+|           8 |                  6 | Quần short              |     2 | Thời trang > Quần > Quần short                           |
+|           9 |               NULL | Điện tử                 |     0 | Điện tử                                                  |
+|          10 |                  9 | Điện thoại              |     1 | Điện tử > Điện thoại                                     |
+|          11 |                 10 | Điện thoại Android      |     2 | Điện tử > Điện thoại > Điện thoại Android                |
+|          12 |                 10 | iPhone                  |     2 | Điện tử > Điện thoại > iPhone                            |
+|          13 |                  9 | Phụ kiện                |     1 | Điện tử > Phụ kiện                                       |
+|          14 |                 13 | Tai nghe                |     2 | Điện tử > Phụ kiện > Tai nghe                            |
+|          15 |                 13 | Sạc dự phòng            |     2 | Điện tử > Phụ kiện > Sạc dự phòng                        |
+|          16 |               NULL | Nhà cửa                 |     0 | Nhà cửa                                                  |
+|          17 |                 16 | Nhà bếp                 |     1 | Nhà cửa > Nhà bếp                                        |
+|          18 |                 17 | Nồi chảo                |     2 | Nhà cửa > Nhà bếp > Nồi chảo                             |
+|          19 |                 17 | Dao kéo                 |     2 | Nhà cửa > Nhà bếp > Dao kéo                              |
+|          20 |                 16 | Trang trí               |     1 | Nhà cửa > Trang trí                                      |
+|          21 |                 20 | Đèn ngủ                 |     2 | Nhà cửa > Trang trí > Đèn ngủ                            |
+|          22 |                 20 | Tranh treo tường        |     2 | Nhà cửa > Trang trí > Tranh treo tường                   |
++-------------+--------------------+-------------------------+-------+----------------------------------------------------------+
+22 rows in set (0.00 sec)
+
+Query OK, 0 rows affected (0.00 sec)
+
+Query OK, 0 rows affected (0.00 sec)
+
+Query OK, 0 rows affected (0.00 sec)
+
++-------------+-------------------------+--------------------+
+| category_id | name                    | recognized_revenue |
++-------------+-------------------------+--------------------+
+|           9 | Điện tử                 |    985151020000.00 |
+|          10 | Điện thoại              |    927330060000.00 |
+|          12 | iPhone                  |    661705753000.00 |
+|          11 | Điện thoại Android      |    265624307000.00 |
+|           1 | Thời trang              |     68143491000.00 |
+|          13 | Phụ kiện                |     57820960000.00 |
+|          16 | Nhà cửa                 |     54443161000.00 |
+|           2 | Áo                      |     45107116000.00 |
+|          14 | Tai nghe                |     37634141000.00 |
+|          20 | Trang trí               |     31601903000.00 |
+|           5 | Áo khoác                |     24163966000.00 |
+|          22 | Tranh treo tường        |     23833469000.00 |
+|           6 | Quần                    |     23036375000.00 |
+|          17 | Nhà bếp                 |     22841258000.00 |
+|          15 | Sạc dự phòng            |     20186819000.00 |
+|           7 | Quần jean               |     15355882000.00 |
+|           4 | Áo sơ mi                |     15088953000.00 |
+|          18 | Nồi chảo                |     12414568000.00 |
+|          19 | Dao kéo                 |     10426690000.00 |
+|          21 | Đèn ngủ                 |      7768434000.00 |
+|           8 | Quần short              |      7680493000.00 |
+|           3 | Áo thun                 |      5854197000.00 |
++-------------+-------------------------+--------------------+
+22 rows in set (4.16 sec)
+
+Query OK, 0 rows affected (0.00 sec)
+
+Query OK, 0 rows affected (0.00 sec)
+
+Empty set (0.00 sec)
+
+Query OK, 0 rows affected (0.00 sec)
+
+Empty set (0.00 sec)
+
+mysql> notee

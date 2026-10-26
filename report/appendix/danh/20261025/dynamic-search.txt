@@ -1,0 +1,38 @@
+
+===== A. Tim kiem binh thuong voi tu khoa 'Áo' =====
+[Khong an toan]
+   -> 20 dong
+      {'ten': 'Dao kéo Sunhouse 00005', 'gia': Decimal('234000.00')}
+      {'ten': 'Dao kéo Sunhouse 00005', 'gia': Decimal('396000.00')}
+      {'ten': 'Dao kéo Sunhouse 00005', 'gia': Decimal('443000.00')}
+[An toan, loc gia <= 500.000, sap theo gia]
+   -> 20 dong
+      {'product_id': 404, 'ten': 'Áo thun Coolmate 00404', 'sku': 'DSKU-000404-3', 'gia': Decimal('81000.00')}
+      {'product_id': 343, 'ten': 'Áo thun Coolmate 00343', 'sku': 'DSKU-000343-1', 'gia': Decimal('83000.00')}
+      {'product_id': 36, 'ten': 'Áo thun Owen 00036', 'sku': 'DSKU-000036-1', 'gia': Decimal('84000.00')}
+
+===== B. Tan cong 1: lay TOAN BO san pham. Nhap: "' OR '1'='1' -- " =====
+[Khong an toan] Cau SQL thuc te:
+   SELECT p.name AS ten, v.price AS gia FROM product p JOIN product_variant v ON v.product_id = p.product_id WHERE p.name LIKE '%' OR '1'='1' -- %' LIMIT 20
+   -> 2511 dong
+      {'ten': 'Quần jean Canifa 00001', 'gia': Decimal('627000.00')}
+      {'ten': 'Quần jean Canifa 00001', 'gia': Decimal('324000.00')}
+      {'ten': 'Quần jean Owen 00002', 'gia': Decimal('842000.00')}
+[An toan] Tham so gui di: ["%' OR '1'='1' -- %", 20]
+   -> 0 dong
+
+===== C. Tan cong 2: an cap email tai khoan. Nhap: "khongco' UNION SELECT email, password_hash FROM account -- " =====
+[Khong an toan] Cau SQL thuc te:
+   SELECT p.name AS ten, v.price AS gia FROM product p JOIN product_variant v ON v.product_id = p.product_id WHERE p.name LIKE '%khongco' UNION SELECT email, password_hash FROM account -- %' LIMIT 20
+   -> 10100 dong
+      {'ten': 'khach000001@example.test', 'gia': 'demo-hash'}
+      {'ten': 'khach000002@example.test', 'gia': 'demo-hash'}
+      {'ten': 'khach000003@example.test', 'gia': 'demo-hash'}
+[An toan] Tham so gui di: ["%khongco' UNION SELECT email, password_hash FROM account -- %", 20]
+   -> 0 dong
+
+===== D. Tan cong qua o sap xep (khong dung tham so duoc) -> whitelist chan =====
+   Bi chan: Khong cho phep sap xep theo: 'gia; DROP TABLE product'
+   Bi chan: Khong cho phep sap xep theo: '(SELECT password_hash FROM account LIMIT 1)'
+
+Bang product van con nguyen: 1000 san pham
