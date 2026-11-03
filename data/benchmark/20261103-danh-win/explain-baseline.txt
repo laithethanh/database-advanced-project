@@ -1,0 +1,40 @@
+===== B1: Top 10 san pham theo doanh thu (quet toan bo don) =====
+SELECT p.product_id, p.name, SUM(oi.line_total) AS doanh_thu FROM orders o JOIN order_item oi ON oi.order_id = o.order_id JOIN product_variant v ON v.variant_id = oi.variant_id JOIN product p ON p.product_id = v.product_id WHERE o.status IN ('PAID','PROCESSING','SHIPPED','DELIVERED') GROUP BY p.product_id, p.name ORDER BY doanh_thu DESC LIMIT 10
+
+-> Limit: 10 row(s)  (actual time=1853..1853 rows=10 loops=1)
+    -> Sort: doanh_thu DESC, limit input to 10 row(s) per chunk  (actual time=1853..1853 rows=10 loops=1)
+        -> Table scan on <temporary>  (actual time=1853..1853 rows=1000 loops=1)
+            -> Aggregate using temporary table  (actual time=1852..1852 rows=1000 loops=1)
+                -> Nested loop inner join  (cost=196284 rows=176784) (actual time=1.01..1526 rows=170166 loops=1)
+                    -> Nested loop inner join  (cost=134410 rows=176784) (actual time=1.01..1210 rows=170166 loops=1)
+                        -> Nested loop inner join  (cost=72536 rows=176784) (actual time=1..845 rows=170166 loops=1)
+                            -> Filter: (o.`status` in ('PAID','PROCESSING','SHIPPED','DELIVERED'))  (cost=10662 rows=98728) (actual time=0.985..74.3 rows=84988 loops=1)
+                                -> Covering index scan on o using idx_order_status_created  (cost=10662 rows=98728) (actual time=0.0594..30.8 rows=100000 loops=1)
+                            -> Index lookup on oi using uq_order_seller_variant (order_id=o.order_id)  (cost=0.448 rows=1.79) (actual time=0.00776..0.00878 rows=2 loops=84988)
+                        -> Single-row index lookup on v using PRIMARY (variant_id=oi.variant_id)  (cost=0.25 rows=1) (actual time=0.00191..0.00194 rows=1 loops=170166)
+                    -> Single-row index lookup on p using PRIMARY (product_id=v.product_id)  (cost=0.25 rows=1) (actual time=0.00163..0.00166 rows=1 loops=170166)
+
+
+===== B2: Doanh thu theo ngay trong thang 03/2026 (bang payment) =====
+SELECT DATE(paid_at) AS ngay, COUNT(*) AS so_giao_dich, SUM(amount) AS doanh_thu FROM payment WHERE status = 'SUCCESS' AND paid_at >= %s AND paid_at < %s GROUP BY DATE(paid_at) ORDER BY ngay
+
+-> Sort: ngay  (actual time=46.6..46.6 rows=31 loops=1)
+    -> Table scan on <temporary>  (actual time=46.6..46.6 rows=31 loops=1)
+        -> Aggregate using temporary table  (actual time=46.6..46.6 rows=31 loops=1)
+            -> Filter: ((payment.`status` = 'SUCCESS') and (payment.paid_at >= TIMESTAMP'2026-03-01 00:00:00') and (payment.paid_at < TIMESTAMP'2026-04-01 00:00:00'))  (cost=9081 rows=2489) (actual time=0.0358..42.9 rows=7651 loops=1)
+                -> Table scan on payment  (cost=9081 rows=89604) (actual time=0.0333..25.2 rows=89861 loops=1)
+
+
+===== B3: Tra cuu don theo so dien thoai nguoi nhan (cham soc khach hang) =====
+SELECT order_id, order_number, status, grand_total, created_at FROM orders WHERE recipient_phone = %s
+
+-> Filter: (orders.recipient_phone = '(06)472-4370')  (cost=10218 rows=9873) (actual time=21.2..46.9 rows=1 loops=1)
+    -> Table scan on orders  (cost=10218 rows=98728) (actual time=0.0241..38.1 rows=100000 loops=1)
+
+
+===== B4: 10 don gan nhat cua 1 khach (doi chung: da co index san) =====
+SELECT order_id, order_number, status, grand_total, created_at FROM orders WHERE customer_id = %s ORDER BY created_at DESC LIMIT 10
+
+-> Limit: 10 row(s)  (cost=3.15 rows=9) (actual time=0.0097..0.022 rows=9 loops=1)
+    -> Index lookup on orders using idx_order_customer_created (customer_id=1294) (reverse)  (cost=3.15 rows=9) (actual time=0.0093..0.0212 rows=9 loops=1)
+
