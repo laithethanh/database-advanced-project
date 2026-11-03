@@ -84,11 +84,12 @@ Thời gian thực tế, kế hoạch thực thi, thời gian chờ khóa, ảnh
 ## Bằng chứng hiện có
 
 - Benchmark và generator ngày 23/10: `data/benchmark/20261023-004420-DESKTOP-97LS755/` (`metadata.md`, `benchmark-results.md`, `explain-baseline.txt`, `explain-optimized.txt`).
-- Test SQL, transaction, concurrency và Python ngày 23/10: `report/appendix/tests/20261023/` (log T03 `21_concurrency_two_sessions.txt` là bản cũ, session B vẫn thành công).
-- Kết quả Q01–Q25 trên 100.000 đơn ngày 23/10: `report/appendix/queries/20261023/`.
-- Demo SQL động/SQL nhúng ngày 23/10: `report/appendix/danh/20261023/`.
-- Bằng chứng lịch sử 22/10: `data/benchmark/20261022-danh-win/` và `report/appendix/danh/`.
+- Test SQL, transaction và Python ngày 23/10: `report/appendix/tests/20261023/`.
+- Kết quả Q01–Q25 trên 100.000 đơn ngày 25/10: `report/appendix/queries/20261025/`.
+- Demo SQL động/SQL nhúng ngày 25/10: `report/appendix/danh/20261025/`.
+- T03 không oversell: `report/appendix/tests/20261023/` (B chờ 4,04 giây, nhận `ERROR 1644`; kho `0`; không tạo order/payment).
+- ObjectDB/OQL ngày 02/11: `report/appendix/objectdb/20261102/oql-output.md` (16/16 PASS).
 
-Lưu ý T03: `tests/concurrency_session_a.sql` hiện checkout đầy đủ trong transaction: khóa cart + inventory, tạo order/order_item/payment, chuyển `PAID`, cart `CHECKED_OUT`, giữ khóa 6 giây. Session B gọi `sp_checkout` và nhận `1644`; test xác minh cho kết quả A `PAID`, B không có order, kho `0`.
+Lưu ý T03: `tests/concurrency_session_a.sql` checkout đầy đủ trong transaction: khóa cart + inventory, tạo order/order_item/payment, chuyển `PAID`, cart `CHECKED_OUT`, giữ khóa 6 giây. B gọi `sp_checkout` và nhận `1644`, xác minh A `PAID`, B không có order, kho `0`.
 
-Còn thiếu: output ObjectDB/OQL, log T03 chính thức ngày 24/10 (`20`–`21c`) và ảnh chụp màn hình cho bài demo.
+Còn thiếu: ảnh chụp màn hình cho bài demo và nhật ký đóng góp cá nhân.

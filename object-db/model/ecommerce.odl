@@ -4,6 +4,7 @@ interface Customer : Account { relationship set<Order> orders inverse Order::cus
 interface Seller : Account { attribute string shopName; attribute string shopStatus; relationship set<ProductVariant> inventory inverse ProductVariant::sellers; decimal revenue(); };
 interface Product { attribute string name; attribute string brand; attribute string status; relationship set<ProductVariant> variants inverse ProductVariant::product; set<ProductVariant> activeVariants(); };
 interface ProductVariant { attribute string sku; attribute decimal price; attribute string status; relationship Product product inverse Product::variants; relationship set<Seller> sellers inverse Seller::inventory; boolean isAvailable(); };
-// Một dòng hàng trong đơn, gồm mã SKU, số lượng, đơn giá và thành tiền.
-struct OrderLine { string sku; long quantity; decimal unitPrice; decimal lineTotal; };
+// Một dòng hàng trong đơn, gồm mã SKU, số lượng, đơn giá, thành tiền và người bán
+// chịu trách nhiệm cho dòng hàng (tương ứng order_item.seller_id trong lược đồ quan hệ).
+struct OrderLine { string sku; long quantity; decimal unitPrice; decimal lineTotal; Seller seller; };
 interface Order { attribute string orderNumber; attribute string status; attribute decimal grandTotal; relationship Customer customer inverse Customer::orders; attribute list<OrderLine> items; decimal total(); boolean canTransitionTo(string nextStatus); };

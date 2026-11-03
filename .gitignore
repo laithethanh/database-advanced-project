@@ -7,3 +7,7 @@ data/benchmark/generated/
 *.log
 *.csv
 *.dump
+*.odb
+object-db/target/
+.vscode/
+.github/

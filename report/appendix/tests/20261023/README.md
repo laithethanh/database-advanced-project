@@ -11,7 +11,7 @@ Môi trường: MySQL 8.4.11, Python 3.13.2, PyMySQL 2.2.8, Faker 39.1.0, Window
 - `13_transaction_tests.txt`: T01 tạo đơn `PAID` với `subtotal=100000`, `grand_total=130000`, `item_sum=100000`; T05 giữ nguyên số điện thoại `0900000001`.
 - `14_python_unittest.txt`: 6/6 test PASS.
 - `15_security_tests.txt`: file `tests/security_tests.sql` chỉ là mô tả; phần kiểm thử thực tế nằm ở unittest.
-- `20_concurrency_setup.txt`, `21_concurrency_two_sessions.txt`: bản chạy T03 ngày 23/10 với script cũ. Session B chờ khóa 4,08 giây rồi **thành công**, tạo order `6` PAID; tồn kho còn `0`; CUS2001 không có đơn PAID. Không oversell nhưng log này không chứng minh được "một session thất bại". Script hiện tại đã được sửa để A checkout đầy đủ; cần chạy lại theo `docs/15` và lưu log mới.
+- `20_concurrency_setup.txt`, `21_concurrency_two_sessions.txt`: bản chạy T03 ngày 23/10 với script cũ. Session B chờ khóa 4,08 giây rồi **thành công**, tạo order `6` PAID; tồn kho còn `0`; CUS2001 không có đơn PAID. Không oversell nhưng log này không chứng minh được "một session thất bại". Script đã được sửa và chạy lại; bằng chứng mới nằm tại `70_concurrency_manual_setup.txt`, `71_concurrency_manual_two_sessions.txt`.
 - `67_manual_t04_t06.txt`: T04 `PAID → DELIVERED` và `DELIVERED → PROCESSING` đều bị từ chối; T06 dùng `GIAM10,NO-SUCH-COUPON` bị từ chối, `orders` và tồn kho không đổi, `used_count` của GIAM10 không đổi.
 - `70_concurrency_manual_setup.txt`, `71_concurrency_manual_two_sessions.txt`: kiểm tra bổ sung T03. Session A khóa dòng và lấy đơn vị cuối, session B chờ 2,07 giây rồi nhận `ERROR 1644 insufficient inventory`. Đây là bằng chứng không oversell khi session A thực sự tiêu thụ đơn vị cuối.
 
@@ -30,7 +30,8 @@ Môi trường: MySQL 8.4.11, Python 3.13.2, PyMySQL 2.2.8, Faker 39.1.0, Window
 - `../../danh/20261023/dynamic-search.txt`: demo SQL động và SQL Injection.
 - `../../danh/20261023/embedded-sql.txt`: demo SQL nhúng; rollback khi vượt tồn kho và checkout thành công.
 
-## Chưa chạy
+## Bổ sung sau ngày 23/10
 
-- ObjectDB/OQL: máy có Java 25 nhưng không có ObjectDB/JPA harness hoặc file JAR ObjectDB trong repo.
+- ObjectDB/OQL: đã chạy bằng harness Maven/JPA trong `object-db/` ngày 02/11; kết quả 16/16 PASS tại `../../objectdb/20261102/oql-output.md`.
+- T03: đã chạy lại với script sửa; bằng chứng tại `70_concurrency_manual_setup.txt`, `71_concurrency_manual_two_sessions.txt`.
 - `sql/08_benchmark.sql`: chỉ là bản tham chiếu; benchmark chuẩn đã chạy bằng `data/benchmark/run_benchmark.py`.

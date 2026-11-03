@@ -1,0 +1,50 @@
+// JPQL thực thi cho ObjectDB 2.9.5 (jakarta) — ánh xạ từ ecommerce.oql.
+// Chạy bằng: mvn -q compile exec:java (xem ../README.md).
+// Tham số đặt tên (:name) thay cho biến OQL ($name).
+
+// OQ01: Đơn hàng đã giao của một khách hàng.
+SELECT o
+FROM Order o
+WHERE o.customer.email = :email
+  AND o.status = :status
+ORDER BY o.orderNumber;
+
+// OQ02: Sản phẩm có ít nhất một biến thể giá cao hơn ngưỡng.
+SELECT DISTINCT v.product
+FROM ProductVariant v
+WHERE v.price > :price
+ORDER BY v.product.name;
+
+// OQ03: Người bán ACTIVE đang cung cấp SKU được yêu cầu.
+SELECT s
+FROM Seller s JOIN s.inventory v
+WHERE s.shopStatus = :shopStatus
+  AND v.sku = :sku
+ORDER BY s.shopName;
+
+// OQ04: Tổng giá trị đơn hàng đã ghi nhận của mỗi khách hàng.
+// ObjectDB 2.9.5 chưa hỗ trợ CASE/COALESCE, nên dùng hai truy vấn rồi ghép:
+// (1) lấy đủ danh sách khách hàng, kể cả người chưa có đơn;
+SELECT c.email
+FROM Customer c
+ORDER BY c.email;
+
+// (2) tổng grandTotal theo khách hàng với các trạng thái đã ghi nhận.
+SELECT o.customer.email, SUM(o.grandTotal)
+FROM Order o
+WHERE o.status IN :statuses
+GROUP BY o.customer.email
+ORDER BY o.customer.email;
+
+// OQ05: Đơn hàng đã thanh toán kèm danh sách dòng hàng.
+// JPQL không chiếu trực tiếp tập items lồng nhau; Order.items là
+// @ElementCollection EAGER + @OrderColumn nên được tải kèm theo Order.
+SELECT o
+FROM Order o
+WHERE o.status = :status
+ORDER BY o.orderNumber;
+
+// Ghi chú: Seller.revenue() được hiện thực trong Java bằng
+// Seller.revenue(Collection<Order>). OrderLine có tham chiếu seller để quy
+// doanh thu chính xác theo từng dòng hàng, tương ứng order_item.seller_id
+// trong lược đồ quan hệ. Phương thức được kiểm chứng trong Main.runBusinessMethods().

@@ -229,7 +229,7 @@ project/
 - Python 3.10+ (đã kiểm thử trên 3.13.2).
 - Git.
 
-> Kết quả thực nghiệm mới nhất ngày 23/10 nằm trong `data/benchmark/20261023-004420-DESKTOP-97LS755/`, `report/appendix/tests/20261023/`, `report/appendix/queries/20261023/` và `report/appendix/danh/20261023/`. Kết quả 22/10 vẫn được giữ làm lịch sử; không dùng lại kết quả cũ cho lần báo cáo mới.
+> Bằng chứng chính: benchmark 23/10 trong `data/benchmark/20261023-004420-DESKTOP-97LS755/`, Q01–Q25 ngày 25/10 trong `report/appendix/queries/20261025/`, demo SQL động/nhúng ngày 25/10 trong `report/appendix/danh/20261025/` và ObjectDB 02/11 trong `report/appendix/objectdb/20261102/`. Kết quả cũ chỉ giữ làm lịch sử; không dùng lại cho báo cáo mới.
 
 ### Quy trình tổng quát
 
@@ -269,6 +269,17 @@ python data/benchmark/run_benchmark.py
 >
 > `sql/08_benchmark.sql` chỉ là bản SQL tham chiếu; script tạo bằng chứng hiện hành là `data/benchmark/run_benchmark.py`.
 
+### Chạy ObjectDB/OQL
+
+Phần CSDL hướng đối tượng có harness Maven + ObjectDB 2.9.5 (jakarta), độc lập với MySQL:
+
+```powershell
+cd object-db
+mvn -q compile exec:java "-Dexec.args=../report/appendix/objectdb/20261102/oql-output.md"
+```
+
+Harness xóa `target/objectdb/ecommerce.odb`, seed dữ liệu mẫu, chạy OQ01–OQ05, kiểm chứng các phương thức ODL và ghi bằng chứng UTF-8. Kỳ vọng: **16/16 PASS**; output mẫu tại `report/appendix/objectdb/20261102/oql-output.md`. Chi tiết trong `object-db/README.md`.
+
 Quy trình chi tiết, cách lưu bằng chứng và kịch bản hai phiên nằm trong `docs/13-experiment-runbook.md`.
 
 > Không commit password, connection string thật hoặc `.env` chứa thông tin nhạy cảm. Dùng `.env.example`; các script Python tự đọc `.env` ở thư mục gốc.
@@ -300,10 +311,10 @@ Quy trình chi tiết, cách lưu bằng chứng và kịch bản hai phiên n�
 - [x] README có thể chạy lại từ database trắng.
 - [x] Bản nháp báo cáo và slide (`report/chapters/report-draft.md`, `slides/slides-draft.md`).
 - [x] Chạy lại toàn bộ script SQL và test trên MySQL 8.4.11, lưu log bằng chứng ngày 23/10 (`report/appendix/tests/20261023/`).
-- [ ] Chạy transaction/concurrency 2 session và lưu bằng chứng khóa dòng/không oversell theo run-date. Script `tests/concurrency_session_a.sql` đã được sửa thành checkout đầy đủ: A tạo order `PAID` + payment, B nhận `1644`, tồn kho `0`. Test xác minh ngày 23/10 đạt; cần chạy lại 24/10 và lưu log.
+- [x] Chạy transaction/concurrency 2 session và lưu bằng chứng khóa dòng/không oversell ngày 03/11. A tạo order `PAID` + payment, giữ khóa 6 giây; B chờ 4,04 giây rồi nhận `1644`; tồn kho `0`; CUS2001 đúng 1 order PAID, CUS2002 0 order.
 - [x] Chạy benchmark `EXPLAIN ANALYZE` trên 100.000 đơn ngày 23/10 (`data/benchmark/20261023-004420-DESKTOP-97LS755/`).
-- [ ] Chạy ObjectDB/OQL và lưu output 5 truy vấn (cần môi trường ObjectDB/JPA).
-- [x] Bổ sung output đầy đủ Q01–Q25 trên bộ 100.000 đơn (`report/appendix/queries/20261023/`).
+- [x] Chạy ObjectDB/OQL và lưu output 5 truy vấn (`report/appendix/objectdb/20261102/oql-output.md`, 16/16 PASS).
+- [x] Bổ sung output đầy đủ Q01–Q25 trên bộ 100.000 đơn (`report/appendix/queries/20261025/`); Q11/Q20 giữ nguyên bản gốc, các khác biệt dữ liệu được ghi trong README của lần chạy.
 - [ ] Báo cáo 20–30 trang hoàn chỉnh + phụ lục.
 - [ ] Slide + demo + mỗi thành viên nắm rõ phần của mình và phần tích hợp.
 - [ ] GitHub có lịch sử commit/phân công làm việc rõ ràng.
@@ -325,8 +336,8 @@ Quy trình chi tiết, cách lưu bằng chứng và kịch bản hai phiên n�
 
 ## 📌 Trạng thái
 
-**Đã chạy lại toàn bộ SQL/test, generator 100.000 đơn, benchmark, Q01–Q25 và demo SQL động/nhúng trên MySQL 8.4.11 ngày 23/10. Còn thiếu ObjectDB/OQL, hoàn thiện báo cáo/slide và log T03 chính thức ngày 24/10.**
+**Đã chạy lại toàn bộ SQL/test, generator 100.000 đơn, benchmark, Q01–Q25, demo SQL động/nhúng trên MySQL 8.4.11, ObjectDB/OQL trên Java 25 ngày 02/11. Còn thiếu hoàn thiện báo cáo/slide, nhật ký đóng góp và ảnh demo.**
 
-Phần đã sẵn sàng: schema + constraint, trigger/procedure/function, 25 truy vấn nâng cao + recursive SQL, SQL động/nhúng, ODL/OQL, generator 100.000 đơn, bộ test, tài liệu thiết kế, bằng chứng thực nghiệm 23/10 và bản nháp báo cáo/slide.
+Phần đã sẵn sàng: schema + constraint, trigger/procedure/function, 25 truy vấn nâng cao + recursive SQL, SQL động/nhúng, ODL/OQL + harness ObjectDB/JPA chạy thật, generator 100.000 đơn, bộ test, tài liệu thiết kế, bằng chứng benchmark 23/10, Q 25/10, ObjectDB 02/11 và bản nháp báo cáo/slide.
 
 README này mô tả mục tiêu, phạm vi, công nghệ, cấu trúc repository, quy trình chạy và tiêu chí hoàn thành. Phân công chi tiết và kế hoạch theo tuần nằm trong `PLAN_PHAN_CONG_NHOM_7_DE_TAI_7.md`.

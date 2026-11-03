@@ -68,7 +68,7 @@ WITH RECURSIVE category_scope AS (
 SET @brand_name := 'Demo';
 SELECT c.account_id,c.customer_code FROM customer c WHERE NOT EXISTS (
  SELECT 1 FROM product p JOIN product_variant v ON v.product_id=p.product_id
- WHERE p.brand=@brand_name AND p.status='ACTIVE' AND v.status='ACTIVE' AND NOT EXISTS (
+ WHERE p.brand=(@brand_name COLLATE utf8mb4_0900_ai_ci) AND p.status='ACTIVE' AND v.status='ACTIVE' AND NOT EXISTS (
   SELECT 1 FROM orders o JOIN order_item oi ON oi.order_id=o.order_id WHERE o.customer_id=c.account_id
   AND oi.variant_id=v.variant_id AND o.status IN ('PAID','PROCESSING','SHIPPED','DELIVERED')));
 

@@ -1,6 +1,6 @@
 # Slide bảo vệ — bản nháp nội dung
 
-Dùng bản này để dựng slide (PowerPoint/Google Slides/Markdown). Các mục `[CẦN ĐIỀN]` là số liệu thực nghiệm phải chụp từ MySQL/ObjectDB; không điền số ước lượng.
+Dùng bản này để dựng slide (PowerPoint/Google Slides/Markdown). Số liệu đã cập nhật từ các thư mục bằng chứng ghi ngày cụ thể; không dùng số ước lượng.
 
 ---
 
@@ -8,7 +8,14 @@ Dùng bản này để dựng slide (PowerPoint/Google Slides/Markdown). Các m�
 
 - Đề tài 7: CSDL thương mại điện tử và lập trình SQL nâng cao
 - Nhóm 7: Lại Thế Thành, Dương Tấn Tài, Trần Văn Minh Tuấn, Nguyễn Mậu Công Khoa, Phạm Thành Danh
-- Bảng ma trận đóng góp (mỗi người 1 phần, điền sau khi chốt)
+
+| Thành viên | Phụ trách chính |
+|---|---|
+| Lại Thế Thành | Trưởng nhóm, core SQL, kiến trúc, tích hợp, Git |
+| Dương Tấn Tài | Nghiệp vụ, EER/ERD, chuẩn hóa, data dictionary |
+| Trần Văn Minh Tuấn | SQL nâng cao, query catalog, recursive SQL, hiệu năng truy vấn |
+| Nguyễn Mậu Công Khoa | Constraint, trigger, procedure/function, transaction |
+| Phạm Thành Danh | Generator, embedded/dynamic SQL, security, benchmark, reproducibility |
 
 *Ghi chú: giới thiệu 60 giây, nêu vai trò từng thành viên.*
 
@@ -17,7 +24,7 @@ Dùng bản này để dựng slide (PowerPoint/Google Slides/Markdown). Các m�
 - Bài toán: giữ đúng tồn kho, tổng tiền, khuyến mãi khi bán hàng
 - Rủi ro: oversell, tổng đơn lệch dòng hàng, state transition sai
 - Phạm vi: catalog → variant → tồn kho → giỏ → đơn → thanh toán → vận chuyển → review
-- Công nghệ: MySQL 8.0, Python 3.13 (PyMySQL, Faker), ObjectDB/ODL-OQL
+- Công nghệ: MySQL 8.4.11, Python 3.13 (PyMySQL, Faker), ObjectDB 2.9.5/ODL-OQL trên Java 25
 
 *Ghi chú: 1 phút.*
 
@@ -62,10 +69,10 @@ Sơ đồ 8 bước của `sp_checkout`:
 7. Cập nhật tổng, ghi payment, chuyển PAID, đóng cart, COMMIT
 8. EXIT HANDLER → ROLLBACK
 
-Kết quả kiểm thử SQL sẽ được điền từ lần chạy mới nhất:
-- Ràng buộc: tất cả case phải trả PASS, các truy vấn bất biến trả 0 vi phạm.
-- Rollback: số đơn, tồn kho, giỏ và `used_count` phải giữ nguyên.
-- Không oversell: một session chờ khóa, session còn lại bị từ chối `insufficient inventory`.
+Kết quả kiểm thử:
+- Ràng buộc/promotion/order: các case lỗi PASS; T02 rollback giữ nguyên số đơn và tồn kho (`ORDER_DATA_OK=0`).
+- T03: A giữ khóa 6 giây, trừ kho 1 → 0, tạo order PAID; B chờ 4,04 giây rồi nhận `ERROR 1644`, không tạo order/payment.
+- Kiểm tra cuối: kho 0; CUS2001 đúng 1 order PAID; CUS2002 0 order.
 
 *Ghi chú: nhấn mạnh thứ tự khoá tránh deadlock và khóa tồn kho theo thứ tự cố định.*
 
@@ -73,11 +80,12 @@ Kết quả kiểm thử SQL sẽ được điền từ lần chạy mới nhấ
 
 | Nhóm | Ví dụ |
 |---|---|
-| JOIN/OUTER/NOT EXISTS | Q03, Q11 |
-| Phép chia | Q09 |
-| Correlated subquery | Q12, Q14 |
-| Window | Q13 (DENSE_RANK), Q15 (LAG), Q17 (rolling 30 ngày lịch) |
-| Recursive CTE | Q18 (category tree), Q19/Q20 (subtree doanh thu) |
+| JOIN/OUTER/NOT EXISTS | Q03, Q04, Q05, Q13 |
+| Phép chia | Q11 |
+| Correlated subquery | Q08 |
+| GROUP BY/HAVING | Q02, Q07, Q12 |
+| Window | Q01/Q15 (DENSE_RANK), Q14 (ROW_NUMBER), Q16 (LAG), Q17 (rolling 30 ngày lịch) |
+| Recursive CTE | Q18 (category tree), Q19 (subtree doanh thu), Q20 (breadcrumb) |
 | So sánh cách viết | Q21A vs Q21B |
 | Kiểm tra bất biến | Q25 (phải 0 dòng) |
 
@@ -90,12 +98,13 @@ Kết quả kiểm thử SQL sẽ được điền từ lần chạy mới nhấ
 - `app/embedded_sql.py`: cursor PyMySQL, parameterized query, cập nhật giỏ hàng có kiểm tra dòng
 - Test: `python -m unittest tests.test_dynamic_search -v` → 6/6 PASS
 
-Đã chạy thật ngày 22/10 (`report/appendix/danh/sql-injection-demo.txt`, `report/appendix/danh/embedded-sql-demo.txt`):
-- Payload `'; DROP TABLE product; --` → 0 dòng, không lỗi, bảng `product` còn nguyên
-- Các giá trị sort ngoài whitelist đều bị từ chối trước khi tạo SQL
-- `checkout` qua PyMySQL tạo đơn `PAID`; lần đặt vượt tồn kho bị rollback, dữ liệu trước/sau không đổi
+Đã chạy thật ngày 25/10 trên database 100.000 đơn (`report/appendix/danh/20261025/`):
+- Payload `' OR '1'='1' -- `: bản ghép chuỗi trả 2.511 dòng, bản an toàn trả 0 dòng
+- Payload `UNION SELECT email, password_hash FROM account`: bản ghép chuỗi lộ 10.100 tài khoản, bản an toàn 0 dòng
+- Sort ngoài whitelist bị từ chối; bảng `product` còn nguyên 1.000 sản phẩm
+- `embedded_sql.py`: giỏ 5 món 5.744.000đ; đặt 1.059 cái khi kho còn 59 bị `ERROR 1644` và rollback; đặt 2 cái thành công, tổng 6.401.000đ, kho 59 → 57
 
-Ghi chú: dùng ảnh terminal trong `report/appendix/danh/` cho phần demo.
+Ghi chú: dùng ảnh terminal trong `report/appendix/danh/20261025/` cho phần demo.
 
 ## Slide 9 — Mô hình đệ quy và ObjectDB/OQL
 
@@ -104,7 +113,7 @@ Ghi chú: dùng ảnh terminal trong `report/appendix/danh/` cho phần demo.
 - ODL: 6 lớp bền vững + struct `OrderLine`
 - OQL: OQ01–OQ05 có kết quả mong đợi; `lifetimeValue()`, `revenue()`, `canTransitionTo()`
 
-Ghi chú: `[CẦN ĐIỀN output ObjectDB thật]`
+Ghi chú: output ObjectDB thật nằm trong `report/appendix/objectdb/20261102/oql-output.md` (16/16 PASS).
 
 ## Slide 10 — Bộ dữ liệu và phương pháp đo
 
@@ -113,21 +122,21 @@ Ghi chú: `[CẦN ĐIỀN output ObjectDB thật]`
 - Đo: warmup → `EXPLAIN ANALYZE` baseline → tối ưu index → đo lại → đo storage
 - Cùng máy, cùng dữ liệu, ghi lại metadata môi trường
 
-Ghi chú: số liệu benchmark 22/10 nằm trong `data/benchmark/20261022-danh-win/`; lần chạy sau lưu thư mục mới.
+Ghi chú: số liệu benchmark 23/10 nằm trong `data/benchmark/20261023-004420-DESKTOP-97LS755/`; lần chạy sau lưu thư mục mới.
 
 ## Slide 11 — Kết quả thực nghiệm hiện có
 
 | Hạng mục | Kết quả |
 |---|---|
-| Script SQL 01→05 + test | Script sẵn sàng; kết quả test SQL cập nhật theo lần chạy mới |
-| Test constraint/promotion/order | `[điền từ output lần chạy mới]` |
-| Concurrency 2 session | `[điền từ output lần chạy mới]` |
-| Q01–Q25 + recursive | Q25 bắt buộc 0 dòng; output lưu theo run-date |
-| Generator (22/10) | 100.000 đơn, 200.176 dòng hàng, 89.920 thanh toán, 12.423 review, 492,9 s |
-| Benchmark (22/10) | B1 1,6×; B2 5,5×; B3 ~305×; B4 không đổi; chi phí ghi +8% |
-| App (22/10) | Injection bị vô hiệu; checkout/rollback đúng |
+| Test constraint/promotion/order (23/10) | Constraint 7/7 PASS; promotion 4/4 case lỗi PASS; order 7/7 PASS, `ORDER_DATA_OK=0` |
+| T03 concurrency | B chờ 4,04 giây, nhận `ERROR 1644`; kho 0; không oversell |
+| Q01–Q25 + recursive (25/10) | Q25 = 0 vi phạm; Q11/Q20 giữ bản gốc, khác biệt dữ liệu đã ghi rõ |
+| Generator (25/10) | 100.000 đơn, 200.294 dòng hàng, 89.861 payment, 12.425 review, 406,5 s |
+| Benchmark (23/10) | B1 1,6×; B2 6,7×; B3 108,5×; B4 không đổi; chi phí ghi +18% |
+| ObjectDB (02/11) | 5 OQL (7 kiểm tra) + 9 kiểm tra phương thức; 16/16 PASS |
+| App (25/10) | Injection bị vô hiệu; checkout/rollback đúng |
 
-*Ghi chú: số liệu 22/10 lấy từ `data/benchmark/20261022-danh-win/` và `report/appendix/danh/`; các mục còn lại chờ lần chạy mới.*
+*Ghi chú: số liệu lấy từ `data/benchmark/20261023-004420-DESKTOP-97LS755/`, `report/appendix/queries/20261025/`, `report/appendix/danh/20261025/` và `report/appendix/objectdb/20261102/`.*
 
 ## Slide 12 — Demo trực tiếp
 
@@ -142,9 +151,9 @@ Ghi chú: chuẩn bị sẵn 2 terminal, DB sẵn sàng, mọi lệnh trong `doc
 ## Slide 13 — Kết luận
 
 - Thiết kế dữ liệu + ràng buộc + trigger + transaction tạo nền tảng đúng đắn
-- Bộ truy vấn nâng cao, SQL động/nhúng, recursive SQL, ODL/OQL và generator đã sẵn sàng
-- Hạn chế: kết quả test SQL/concurrency/ObjectDB cần chạy lại theo run-date; invariant liên bảng phải dùng trigger do MySQL thiếu ASSERTION
-- Hướng mở rộng: partition theo thời gian, read replica cho báo cáo, cache tồn kho
+- Bộ truy vấn nâng cao, SQL động/nhúng, recursive SQL, ODL/OQL và generator đã có bằng chứng chạy thật
+- Hạn chế: benchmark một máy, dữ liệu tổng hợp 100.000 đơn; Q11 cần diễn giải theo phép chia tập rỗng; invariant liên bảng phải dùng trigger do MySQL thiếu ASSERTION
+- Hướng mở rộng: partition theo thời gian, read replica cho báo cáo, cache tồn kho, đo trên dữ liệu lớn hơn
 
 Ghi chú: cảm ơn, mời hỏi.
 

@@ -13,9 +13,10 @@ Quy trình gồm:
 
 Không thuộc phạm vi tài liệu này:
 
-- ObjectDB/OQL: repo chưa có JAR và harness JPA.
 - `sql/08_benchmark.sql`: chỉ là bản tham chiếu; benchmark chuẩn dùng `data/benchmark/run_benchmark.py`.
 - `tests/security_tests.sql`: chỉ chứa mô tả; kiểm thử thật nằm ở unittest.
+
+ObjectDB/OQL có harness riêng trong `object-db/`; xem mục 7.
 
 ## 2. Chuẩn bị
 
@@ -156,7 +157,7 @@ Kỳ vọng: 6/6 `PASS`.
 Chạy Q01–Q25 trên database mẫu:
 
 ```sql
-TEE report/appendix/queries/20261023/sample_queries.txt;
+TEE report/appendix/queries/20261025/sample_queries.txt;
 SOURCE sql/06_queries.sql;
 SOURCE sql/07_recursive.sql;
 NOTEE;
@@ -175,7 +176,7 @@ python app\embedded_sql.py --customer CUS0001
 
 ### 4.1. Chuẩn bị dữ liệu
 
-Database phải là database mẫu mới, đã nạp `03_seed_small.sql`.
+Database phải là database mẫu mới, đã nạp `03_seed_small.sql`. Có thể dùng database riêng (ví dụ `ecommerce_t03`) để không làm ảnh hưởng database 100.000 đơn; bằng chứng dùng cách này.
 
 ```sql
 SOURCE tests/concurrency_setup.sql;
@@ -200,7 +201,7 @@ Mở **hai terminal** riêng và kết nối đúng database:
 Trong terminal A:
 
 ```sql
-TEE report/appendix/tests/20261023/70_concurrency_a.txt;
+TEE tests/21a_concurrency_session_a.txt;
 SOURCE tests/concurrency_session_a.sql;
 NOTEE;
 ```
@@ -208,7 +209,7 @@ NOTEE;
 Trong terminal B, chạy sau khi A bắt đầu khoảng 2 giây:
 
 ```sql
-TEE report/appendix/tests/20261023/71_concurrency_b.txt;
+TEE tests/21b_concurrency_session_b.txt;
 SOURCE tests/concurrency_session_b.sql;
 NOTEE;
 ```
@@ -242,6 +243,8 @@ Session B:
 - Không tạo order/payment cho B (`order_b = NULL` nếu kiểm tra).
 - `stock = 0`.
 - `cus2001_paid_orders = 1`.
+
+Kết quả đo: B bắt đầu sau 2 giây, chờ khóa **4,04 giây**, nhận `ERROR 1644`; kho cuối `0`; `CUS2001` có đúng 1 order PAID; `CUS2002` có 0 order. Bằng chứng: `tests/21a_concurrency_session_a.txt`, `tests/21b_concurrency_session_b.txt`.
 
 MySQL client dừng khi gặp lỗi 1644 nên các `SELECT` cuối trong session B có thể không chạy. Chạy query xác nhận riêng:
 
@@ -301,16 +304,16 @@ Kỳ vọng tối thiểu: `orders = 100000`.
 ### 5.3. Chạy Q01–Q25 trên dữ liệu lớn
 
 ```sql
-TEE report/appendix/queries/20261023/06_queries_100k.txt;
+TEE report/appendix/queries/20261025/06_queries_100k.txt;
 SOURCE sql/06_queries.sql;
 NOTEE;
 
-TEE report/appendix/queries/20261023/07_recursive_100k.txt;
+TEE report/appendix/queries/20261025/07_recursive_100k.txt;
 SOURCE sql/07_recursive.sql;
 NOTEE;
 ```
 
-Q01–Q25 phải chạy đủ; Q25 phải trả về 0 dòng vi phạm.
+Q01–Q25 phải chạy đủ; Q25 phải trả về 0 dòng vi phạm. Lần chạy 25/10 đạt Q25 = 0. Q11 và Q20 giữ nguyên đầu vào bản gốc (`'Demo'`, `slug='dien-tu'`); khác biệt giữa database mẫu và dữ liệu generator được ghi trong README của lần chạy, không sửa truy vấn.
 
 ### 5.4. Benchmark
 
@@ -379,7 +382,45 @@ sys
 
 Không drop `military_management`. Xóa file cấu hình tạm chứa mật khẩu nếu có; giữ `.env` local nhưng không commit.
 
-## 7. Checklist
+## 7. ObjectDB/OQL
+
+Phần này chạy độc lập với MySQL, dùng Maven + ObjectDB 2.9.5 (jakarta) và dữ liệu mẫu cố định.
+
+### 7.1. Chuẩn bị
+
+- JDK 17+ (đã chạy thực tế trên Java 25).
+- Maven 3.9+.
+- Internet ở lần chạy đầu để tải `com.objectdb:objectdb-jk:2.9.5` từ `https://m2.objectdb.com` và `jakarta.persistence-api:3.1.0` từ Maven Central.
+
+### 7.2. Chạy harness
+
+Từ thư mục `object-db`:
+
+```powershell
+mvn -q compile exec:java `
+  "-Dexec.args=../report/appendix/objectdb/20261102/oql-output.md"
+```
+
+Harness sẽ xóa `target/objectdb/ecommerce.odb`, seed dữ liệu mẫu, chạy OQ01–OQ05, kiểm chứng các phương thức ODL và ghi báo cáo UTF-8.
+
+### 7.3. Kết quả mong đợi
+
+- OQ01: `ORD-1001`.
+- OQ02: `Laptop Pro`.
+- OQ03: `Shop Alpha`.
+- OQ04: Alice `3350.00`, Bob `50.00`, Carol `0.00`.
+- OQ05: `ORD-1002`, 1 dòng `SKU-LAP-16`, total `1800.00`.
+- Self-check: **16/16 PASS**.
+
+Bằng chứng ngày 02/11: `report/appendix/objectdb/20261102/oql-output.md`.
+
+### 7.4. Ghi chú
+
+- ObjectDB 2.9.5 chưa hỗ trợ `CASE`/`COALESCE`; OQ04 dùng hai truy vấn rồi ghép trong Java.
+- Cảnh báo `sun.misc.Unsafe` trên Java 25 là cảnh báo của thư viện, không ảnh hưởng kết quả.
+- Không commit `object-db/target/` hoặc file `.odb`.
+
+## 8. Checklist
 
 - [ ] MySQL 8.4.11 đang chạy, đúng client.
 - [ ] `.env` đã cấu hình, không bị commit.
@@ -391,5 +432,6 @@ Không drop `military_management`. Xóa file cấu hình tạm chứa mật kh�
 - [ ] Q01–Q25 chạy đủ, Q25 không vi phạm.
 - [ ] Benchmark hoàn tất, không còn index `idx_bench_*`.
 - [ ] Demo SQL động/nhúng chạy đúng.
+- [ ] ObjectDB: 16/16 PASS, output lưu trong `report/appendix/objectdb/<run-date>/`.
 - [ ] Bằng chứng được lưu dưới dạng `.txt`/`.md`.
 - [ ] `ecommerce_advanced` đã drop; `military_management` còn nguyên.

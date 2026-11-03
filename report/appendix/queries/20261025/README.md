@@ -67,7 +67,7 @@ Hai lần chạy độc lập cho dữ liệu giống hệt nhau. File `00_tong_
 | Q08 SKU giá trên trung bình danh mục | 1.244 | 1,43 s | |
 | Q09 Khách vừa mua vừa đánh giá | 12.425 | 0,41 s | Khớp số review |
 | Q10 Người bán không bán gì trong nhánh danh mục | 0 | 0,00 s | |
-| Q11 Phép chia theo thương hiệu | **10.000** | 4,16 s | **Cần sửa — xem bên dưới** |
+| Q11 Phép chia theo thương hiệu (`@brand_name='Demo'`) | **10.000** | 4,16 s | Tập chia rỗng do 'Demo' không có SKU hoạt động trên dữ liệu lớn |
 | Q12 Người bán đạt ngưỡng doanh thu | 100 | 1,24 s | |
 | Q13 Danh mục không có sản phẩm trực tiếp | 9 | 0,00 s | Đúng 3 danh mục tầng 1 + 6 tầng 2 |
 | Q14 Top 3 SKU mỗi danh mục | 39 | 1,93 s | 13 danh mục lá × 3 |
@@ -84,7 +84,15 @@ Hai lần chạy độc lập cho dữ liệu giống hệt nhau. File `00_tong_
 Truy vấn đệ quy (`07_recursive_100k.txt`): cây danh mục 22 dòng với độ sâu và đường dẫn đầy đủ; doanh thu theo nhánh
 22 dòng (Điện tử 985,2 tỷ, trong đó iPhone 661,7 tỷ); **2 truy vấn cuối trả rỗng — xem bên dưới**.
 
-## Vấn đề phát hiện (gửi Tuấn — owner `sql/06_queries.sql`, `sql/07_recursive.sql`)
+## Vấn đề phát hiện và diễn giải (giữ nguyên Q11/Q20)
+
+> Đây chỉ là khác biệt đầu vào giữa seed nhỏ và bộ dữ liệu 100.000 đơn; truy vấn vẫn giữ bản gốc.
+
+1. **Q11 trả về toàn bộ 10.000 khách.** `@brand_name := 'Demo'` chỉ có trong seed nhỏ. Trên dữ liệu lớn không có SKU nào
+   của thương hiệu này nên `NOT EXISTS` bên trong luôn đúng ("chia cho tập rỗng") → mọi khách đều "đã mua hết".
+   Cần diễn giải: khi thương hiệu không có SKU active, kết quả thỏa mãn là logic đúng theo tập rỗng, nhưng ý nghiệp vụ mong muốn là thương hiệu có dữ liệu. Không coi là lỗi truy vấn.
+2. **Hai truy vấn cuối của `07_recursive.sql` trả rỗng trên dữ liệu lớn.** `@leaf_category_id` lấy theo `slug='dien-tu'`, chỉ có
+   trong seed nhỏ; generator đặt slug dạng `dcat-xxx`. Đề xuất bổ sung kiểm tra hoặc chạy trên seed nhỏ để thấy breadcrumb đầy đủ, nhưng trên dữ liệu lớn Q20 rỗng và đây là hạn chế đầu vào.
 
 1. **Q11 trả về toàn bộ 10.000 khách.** `@brand_name := 'Demo'` chỉ có trong seed nhỏ. Trên dữ liệu lớn không có SKU nào
    của thương hiệu này nên `NOT EXISTS` bên trong luôn đúng ("chia cho tập rỗng") → mọi khách đều "đã mua hết".

@@ -9,6 +9,7 @@
 7. SQL nâng cao và các kỹ thuật trong Q01–Q25
 8. Minh họa bảo mật SQL động/SQL nhúng
 9. Mô hình SQL đệ quy và ObjectDB/OQL
-10. Bộ dữ liệu, phương pháp đo hiệu năng và kết quả thực tế
-11. Luồng demo trực tiếp: tìm kiếm → giỏ hàng → đặt hàng → truy vấn → kiểm tra bất biến
-12. Kết luận và hỏi đáp
+10. Bộ dữ liệu, phương pháp đo hiệu năng
+11. Kết quả thực nghiệm: test, Q01–Q25, benchmark, ObjectDB
+12. Luồng demo trực tiếp: tìm kiếm → giỏ hàng → đặt hàng → truy vấn → kiểm tra bất biến
+13. Kết luận và hỏi đáp

@@ -43,8 +43,13 @@ database-advanced-project/
 │   ├── dynamic_search.py
 │   └── requirements.txt
 ├── object-db/
-│   ├── model/
-│   └── queries/
+│   ├── model/                  # ODL + ánh xạ mô hình
+│   ├── queries/                # OQL + JPQL
+│   ├── src/main/java/          # entity, seed, harness ObjectDB/JPA
+│   ├── src/main/resources/
+│   ├── evidence/               # output chạy gần nhất
+│   ├── pom.xml
+│   └── README.md
 ├── tests/
 │   ├── concurrency_setup.sql
 │   ├── concurrency_session_a.sql
