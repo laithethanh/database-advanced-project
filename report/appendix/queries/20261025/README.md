@@ -94,13 +94,6 @@ Truy vấn đệ quy (`07_recursive_100k.txt`): cây danh mục 22 dòng với �
 2. **Hai truy vấn cuối của `07_recursive.sql` trả rỗng trên dữ liệu lớn.** `@leaf_category_id` lấy theo `slug='dien-tu'`, chỉ có
    trong seed nhỏ; generator đặt slug dạng `dcat-xxx`. Đề xuất bổ sung kiểm tra hoặc chạy trên seed nhỏ để thấy breadcrumb đầy đủ, nhưng trên dữ liệu lớn Q20 rỗng và đây là hạn chế đầu vào.
 
-1. **Q11 trả về toàn bộ 10.000 khách.** `@brand_name := 'Demo'` chỉ có trong seed nhỏ. Trên dữ liệu lớn không có SKU nào
-   của thương hiệu này nên `NOT EXISTS` bên trong luôn đúng ("chia cho tập rỗng") → mọi khách đều "đã mua hết".
-   Đề xuất: chọn thương hiệu có trên dữ liệu lớn (vd. thương hiệu có ít SKU nhất) và chặn trường hợp tập SKU rỗng.
-2. **Hai truy vấn cuối của `07_recursive.sql` trả rỗng.** `@leaf_category_id` lấy theo `slug='dien-tu'`, chỉ có trong
-   seed nhỏ; generator đặt slug dạng `dcat-xxx`. Đề xuất: chọn danh mục theo điều kiện có trên cả hai bộ dữ liệu
-   (vd. một danh mục lá bất kỳ có sản phẩm).
-
 ## Lưu ý khi chạy lại
 
 - **Phải mở MySQL client với `--default-character-set=utf8mb4`.** Trên Windows, client mặc định theo bảng mã của console:

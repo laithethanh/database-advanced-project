@@ -1,0 +1,12 @@
+# SQL: data/seed/reset_sample_db.sql (01 → 02 → 03 → 04 → 05)
+# Exit code: 0
+# Thời gian: 2.69 giây
+
+## stdout
+
+ket_qua	so_khach	so_don
+database mau da dung lai (co seed nho)	1	1
+
+## stderr
+
+

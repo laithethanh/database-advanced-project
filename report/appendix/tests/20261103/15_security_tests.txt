@@ -1,0 +1,14 @@
+# SQL: tests/security_tests.sql
+# Exit code: 0
+# Thời gian: 0.06 giây
+
+## stdout
+
+test_name	rows_concat	rows_param	all_products	result
+S1 OR 1=1 bypasses WHERE and status filter	1	0	1	PASS
+test_name	rows_concat	rows_param	all_accounts	result
+S2 UNION leaks account emails	2	0	2	PASS
+
+## stderr
+
+

@@ -46,3 +46,14 @@ thiết kế tìm kiếm tiếng Việt.
 
 Hai file này được chạy hai lần trên hai lần dựng dữ liệu độc lập (cùng seed) trong ngày 25/10 và cho **kết quả giống hệt**:
 cùng số dòng bị lộ, cùng giỏ hàng, cùng tồn kho 59 → 57, cùng `order_id = 100002` (chỉ khác `order_number` vì chứa thời điểm đặt).
+
+## Ảnh chụp terminal (03/11/2026)
+
+| Ảnh | Nội dung |
+|---|---|
+| `dynamic-search.png` | `python app\dynamic_search.py`: đủ 4 màn A–D, câu SQL thực tế bị chèn, 2.511 dòng / 10.100 tài khoản bị lộ ở bản ghép chuỗi, 0 dòng ở bản an toàn, whitelist chặn 2/2 |
+| `embedded-sql.png` | `python app\embedded_sql.py`: 6 bước mua hàng, checkout vượt kho bị rollback (trước = sau), checkout hợp lệ `PAID` 6.401.000đ, kho 59 → 57 |
+
+Ảnh chụp ngày 03/11 trên bộ dữ liệu dựng lại cùng seed (dấu vân tay trùng với bộ 25/10, xem
+`data/benchmark/20261103-danh-win/README.md`), chạy sau benchmark. Kết quả trên ảnh **trùng khớp** với hai file `.txt`
+ngày 25/10 ở trên — lần chạy thứ ba cho cùng kết quả. Dùng hai ảnh này cho slide và mục demo của báo cáo.
