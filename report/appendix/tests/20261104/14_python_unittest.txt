@@ -1,0 +1,21 @@
+# python -m unittest tests.test_dynamic_search -v
+# Exit code: 0
+# Thời gian: 0.14 giây
+
+## stdout
+
+
+## stderr
+
+test_direction_whitelist_rejects_injection (tests.test_dynamic_search.DynamicSearchTests.test_direction_whitelist_rejects_injection) ... ok
+test_filters_are_parameterized (tests.test_dynamic_search.DynamicSearchTests.test_filters_are_parameterized) ... ok
+test_invalid_ranges_are_rejected (tests.test_dynamic_search.DynamicSearchTests.test_invalid_ranges_are_rejected) ... ok
+test_keyword_is_bound_not_interpolated (tests.test_dynamic_search.DynamicSearchTests.test_keyword_is_bound_not_interpolated) ... ok
+test_price_sort_uses_selected_alias (tests.test_dynamic_search.DynamicSearchTests.test_price_sort_uses_selected_alias) ... ok
+test_sort_whitelist_rejects_injection (tests.test_dynamic_search.DynamicSearchTests.test_sort_whitelist_rejects_injection) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.001s
+
+OK
+

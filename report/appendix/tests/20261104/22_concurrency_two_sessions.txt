@@ -1,0 +1,45 @@
+# T03 hai phiên tranh mua đơn vị hàng cuối cùng (SKU-DEMO-001 của SEL0001, tồn kho = 1)
+
+- Session A: tests/concurrency_session_a.sql — checkout cho CUS2001, giữ khóa 6 giây rồi COMMIT.
+- Session B: tests/concurrency_session_b.sql — bắt đầu sau 2 giây, CALL sp_checkout cho CUS2002.
+
+- Session A exit code: 0
+- Session B exit code: 1 (mong đợi khác 0: lỗi 1644 insufficient inventory)
+- Thời gian session B (gồm chờ khóa): 4.06 giây
+
+## Session A stdout
+
+locked_stock
+1
+consumed_rows
+1
+order_a	stock_before	stock_after	order_status	grand_total	payment_rows
+2	1	0	PAID	100000.00	1
+hold_lock_seconds
+0
+session_a
+session A: completed checkout and released the lock
+
+## Session A stderr
+
+
+## Session B stdout
+
+
+## Session B stderr
+
+--------------
+CALL sp_checkout(
+  (SELECT account_id FROM customer WHERE customer_code = 'CUS2002'),
+  'Concurrent Two', '0900000102', 'HCM', 0, NULL, @order_b
+)
+--------------
+
+ERROR 1020 (HY000) at line 14: Record has changed since last read in table 'inventory'
+
+## Kiểm tra sau T03 (exit code 0)
+
+stock	cus2001_paid	cus2002_orders
+0	1	0
+
+
